@@ -49,9 +49,9 @@ export default function MessagesPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get('user');
     if (userId) {
-      setSelectedChat(parseInt(userId));
+      setSelectedChat(userId);
       // Add user to conversations if not already there
-      addUserToConversations(parseInt(userId));
+      addUserToConversations(userId);
     }
   }, []);
 
