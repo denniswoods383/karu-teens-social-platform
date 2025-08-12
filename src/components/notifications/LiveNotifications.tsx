@@ -1,7 +1,7 @@
 import { useNotifications } from '../../hooks/useNotifications';
 
 export default function LiveNotifications() {
-  const { notifications, isConnected } = useNotifications();
+  const { notifications } = useNotifications();
 
   if (notifications.length === 0) return null;
 
