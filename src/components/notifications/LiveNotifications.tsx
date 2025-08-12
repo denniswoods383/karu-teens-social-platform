@@ -20,9 +20,7 @@ export default function LiveNotifications() {
               <p className="text-sm text-gray-900">{notification.message}</p>
               <div className="flex items-center justify-between mt-2">
                 <span className="text-xs text-gray-500">Just now</span>
-                {isConnected && (
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                )}
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
               </div>
             </div>
           </div>
