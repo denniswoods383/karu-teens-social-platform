@@ -5,17 +5,17 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useSupabase';
 
 interface Message {
-  id: number;
-  sender_id: number;
-  receiver_id: number;
+  id: string;
+  sender_id: string;
+  receiver_id: string;
   content: string;
-  is_delivered: boolean;
-  is_read: boolean;
+  is_delivered?: boolean;
+  is_read?: boolean;
   created_at: string;
 }
 
 interface Conversation {
-  id: number;
+  id: string;
   username: string;
   full_name: string;
   last_message?: string;
