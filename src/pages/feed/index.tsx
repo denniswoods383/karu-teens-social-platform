@@ -15,7 +15,7 @@ export default function FeedPage() {
         <div className="pt-20 pb-8 max-w-3xl mx-auto px-4">
           <div className="space-y-6">
             <CreatePost onPostCreated={() => setRefreshPosts(prev => !prev)} />
-            <PostFeed key={refreshPosts} />
+            <PostFeed key={refreshPosts.toString()} />
           </div>
 
           {/* Mobile Bottom Navigation */}
