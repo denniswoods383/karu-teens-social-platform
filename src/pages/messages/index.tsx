@@ -68,7 +68,7 @@ export default function MessagesPage() {
           schema: 'public',
           table: 'messages'
         }, (payload) => {
-          const newMessage = payload.new;
+          const newMessage = payload.new as Message;
           console.log('Real-time message received:', newMessage);
           
           // Only add if it's for this conversation
