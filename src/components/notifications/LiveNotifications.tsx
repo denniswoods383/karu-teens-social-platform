@@ -14,9 +14,7 @@ export default function LiveNotifications() {
         >
           <div className="flex items-start space-x-3">
             <div className="flex-shrink-0">
-              {notification.type === 'like' && <span className="text-red-500">❤️</span>}
-              {notification.type === 'comment' && <span className="text-blue-500">💬</span>}
-              {notification.type === 'follow' && <span className="text-green-500">👥</span>}
+              <span className="text-blue-500">🔔</span>
             </div>
             <div className="flex-1">
               <p className="text-sm text-gray-900">{notification.message}</p>
