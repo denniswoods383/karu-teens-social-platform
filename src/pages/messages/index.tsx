@@ -24,7 +24,7 @@ interface Conversation {
 
 export default function MessagesPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedChat, setSelectedChat] = useState<number | null>(null);
+  const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [showNewChat, setShowNewChat] = useState(false);
@@ -125,7 +125,7 @@ export default function MessagesPage() {
     }
   };
 
-  const loadMessages = async (userId: number) => {
+  const loadMessages = async (userId: string) => {
     try {
       const { data } = await supabase
         .from('messages')
