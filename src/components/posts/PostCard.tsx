@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useSupabase';
 import { getRelativeTime } from '../../utils/timeUtils';
+import { Post } from '../../types/post';
 
 interface PostCardProps {
   post: Post;
