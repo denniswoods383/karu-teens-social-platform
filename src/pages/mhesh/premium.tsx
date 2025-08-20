@@ -20,10 +20,13 @@ export default function PremiumManager() {
   };
 
   const loadUsers = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .order('created_at', { ascending: false });
+    
+    console.log('Loaded users:', data);
+    console.log('Load error:', error);
     setUsers(data || []);
   };
 
@@ -31,13 +34,16 @@ export default function PremiumManager() {
     const premiumUntil = new Date();
     premiumUntil.setDate(premiumUntil.getDate() + (weeks * 7));
     
-    const { error } = await supabase
+    const { error, data } = await supabase
       .from('profiles')
       .update({ 
         is_premium: true,
         premium_until: premiumUntil.toISOString()
       })
-      .eq('id', userId);
+      .eq('id', userId)
+      .select();
+    
+    console.log('Premium update result:', { error, data, userId, premiumUntil });
     
     if (!error) {
       // Send notification to user
@@ -50,8 +56,9 @@ export default function PremiumManager() {
           type: 'success'
         });
       
-      loadUsers();
+      await loadUsers();
       alert(`Premium access granted for ${weeks} weeks`);
+      console.log('Premium granted successfully');
     }
   };
   
