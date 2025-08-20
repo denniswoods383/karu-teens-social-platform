@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useSupabase';
 import { supabase } from '../../lib/supabase';
+import ThemeToggle from '../ui/ThemeToggle';
 
 export default function AutoHideNavbar() {
   const { user } = useAuth();
@@ -34,7 +35,7 @@ export default function AutoHideNavbar() {
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 right-0 bg-white shadow-sm border-b z-50 transition-transform duration-300 ${
+      <nav className={`fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 z-50 transition-transform duration-300 ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
       }`}>
         <div className="max-w-7xl mx-auto px-4">
@@ -46,7 +47,7 @@ export default function AutoHideNavbar() {
                 <input
                   type="text"
                   placeholder="Search..."
-                  className="w-full px-3 py-1 bg-gray-100 rounded-full text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-1 bg-gray-100 dark:bg-gray-700 dark:text-white rounded-full text-sm focus:outline-none focus:bg-white dark:focus:bg-gray-600 focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -99,6 +100,7 @@ export default function AutoHideNavbar() {
 
             {/* Right Section - Profile */}
             <div className="flex items-center space-x-4">
+              <ThemeToggle />
               <div className="md:hidden">
                 <button className="p-2 hover:bg-gray-100 rounded-full">
                   <span className="text-xl">🔍</span>
