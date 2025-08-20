@@ -41,7 +41,7 @@ export default function EnhancedNavbar() {
   const navigationItems = [
     { name: 'Home', icon: '🏠', href: '/feed', active: false },
     { name: 'Study Groups', icon: '📚', href: '/study-groups', active: false },
-    { name: 'Stories', icon: '📱', href: '/stories', active: false },
+    { name: 'MWAKS', icon: '📖', href: '/mwaks', active: false },
     { name: 'Marketplace', icon: '🛍️', href: '/marketplace', active: false },
     { name: 'AI Study Buddy', icon: '🤖', href: '/ai-study-buddy', active: false },
     { name: 'Comrades', icon: '👥', href: '/comrades', active: false },
