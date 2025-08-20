@@ -50,7 +50,7 @@ export default function QuickActionsWidget() {
       return;
     }
     
-    addPoints(action.points, action.name.toLowerCase());
+    addPoints(action.points);
     window.location.href = action.href;
   };
 
