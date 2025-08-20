@@ -169,7 +169,7 @@ export default function MarketplacePage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+      <div className="min-h-screen bg-gradient-to-br from-blue-100 via-cyan-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900 transition-colors duration-300">
         <EnhancedNavbar />
         
         <div className="max-w-7xl mx-auto px-4 pt-20 pb-24">
@@ -202,7 +202,7 @@ export default function MarketplacePage() {
           </div>
 
           {/* Filters & Search */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl shadow-lg p-6 mb-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Search */}
               <div className="lg:col-span-2">

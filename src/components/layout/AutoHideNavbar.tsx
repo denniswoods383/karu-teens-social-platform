@@ -84,14 +84,21 @@ export default function AutoHideNavbar() {
               </button>
               <button 
                 onClick={() => window.location.href = '/ai'}
-                className="flex flex-col items-center py-2 text-gray-600 hover:bg-gray-100 px-4 rounded-lg hover:text-blue-600"
+                className="flex flex-col items-center py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-4 rounded-lg hover:text-blue-600"
               >
                 <span className="text-xl">🤖</span>
                 <span className="text-xs font-medium">AI Tools</span>
               </button>
               <button 
+                onClick={() => window.location.href = '/mwaks'}
+                className="flex flex-col items-center py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-4 rounded-lg hover:text-blue-600"
+              >
+                <span className="text-xl">📚</span>
+                <span className="text-xs font-medium">MWAKS</span>
+              </button>
+              <button 
                 onClick={() => window.location.href = '/menu'}
-                className="flex flex-col items-center py-2 text-gray-600 hover:bg-gray-100 px-4 rounded-lg hover:text-blue-600"
+                className="flex flex-col items-center py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-4 rounded-lg hover:text-blue-600"
               >
                 <span className="text-xl">☰</span>
                 <span className="text-xs font-medium">Menu</span>

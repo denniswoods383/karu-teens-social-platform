@@ -19,6 +19,8 @@ interface SubscriptionPlan {
 
 interface PremiumState {
   isPremium: boolean;
+  isFreeTrial: boolean;
+  freeTrialEndsAt: Date | null;
   subscription: SubscriptionPlan | null;
   subscriptionEndDate: Date | null;
   plans: SubscriptionPlan[];
@@ -28,6 +30,7 @@ interface PremiumState {
   
   // Actions
   checkPremiumStatus: () => void;
+  startFreeTrial: () => void;
   upgradeToPremium: (planId: string) => Promise<boolean>;
   setUpgradeModal: (open: boolean) => void;
   setSelectedPlan: (plan: SubscriptionPlan | null) => void;
@@ -48,9 +51,9 @@ const premiumPlans: SubscriptionPlan[] = [
     ]
   },
   {
-    id: 'student_pro',
-    name: 'Student Pro',
-    price: 4.99,
+    id: 'student_pro_weekly',
+    name: 'Student Pro (Weekly)',
+    price: 10,
     interval: 'monthly',
     popular: true,
     features: [
@@ -65,13 +68,13 @@ const premiumPlans: SubscriptionPlan[] = [
     ]
   },
   {
-    id: 'student_pro_yearly',
-    name: 'Student Pro (Yearly)',
-    price: 39.99,
-    interval: 'yearly',
-    savings: 'Save 33%',
+    id: 'student_pro_monthly',
+    name: 'Student Pro (Monthly)',
+    price: 40,
+    interval: 'monthly',
+    savings: 'Most Popular',
     features: [
-      'All Student Pro features',
+      'All Weekly Pro features',
       'Exclusive badges & achievements',
       'Early access to new features',
       'Campus marketplace priority',
@@ -91,6 +94,8 @@ const premiumFeaturesList: PremiumFeature[] = [
 
 export const usePremiumStore = create<PremiumState>((set, get) => ({
   isPremium: false,
+  isFreeTrial: false,
+  freeTrialEndsAt: null,
   subscription: null,
   subscriptionEndDate: null,
   plans: premiumPlans,
@@ -99,13 +104,36 @@ export const usePremiumStore = create<PremiumState>((set, get) => ({
   selectedPlan: null,
 
   checkPremiumStatus: () => {
-    // Check localStorage or API for premium status
+    const now = new Date();
+    
+    // Check free trial
+    const trialData = localStorage.getItem('free_trial');
+    if (trialData) {
+      try {
+        const trial = JSON.parse(trialData);
+        const trialEnd = new Date(trial.endsAt);
+        
+        if (trialEnd > now) {
+          set({
+            isFreeTrial: true,
+            freeTrialEndsAt: trialEnd,
+            isPremium: true
+          });
+          return;
+        } else {
+          localStorage.removeItem('free_trial');
+        }
+      } catch (error) {
+        console.error('Failed to parse trial data:', error);
+      }
+    }
+    
+    // Check premium subscription
     const premiumData = localStorage.getItem('premium_subscription');
     if (premiumData) {
       try {
         const data = JSON.parse(premiumData);
         const endDate = new Date(data.endDate);
-        const now = new Date();
         
         if (endDate > now) {
           set({
@@ -114,7 +142,6 @@ export const usePremiumStore = create<PremiumState>((set, get) => ({
             subscriptionEndDate: endDate
           });
         } else {
-          // Subscription expired
           localStorage.removeItem('premium_subscription');
           set({
             isPremium: false,
@@ -126,6 +153,25 @@ export const usePremiumStore = create<PremiumState>((set, get) => ({
         console.error('Failed to parse premium data:', error);
       }
     }
+  },
+
+  startFreeTrial: () => {
+    const trialEnd = new Date();
+    trialEnd.setDate(trialEnd.getDate() + 7); // 7 days free trial
+    
+    const trialData = {
+      startedAt: new Date().toISOString(),
+      endsAt: trialEnd.toISOString()
+    };
+    
+    localStorage.setItem('free_trial', JSON.stringify(trialData));
+    
+    set({
+      isFreeTrial: true,
+      freeTrialEndsAt: trialEnd,
+      isPremium: true,
+      upgradeModal: false
+    });
   },
 
   upgradeToPremium: async (planId: string) => {
@@ -174,14 +220,14 @@ export const usePremiumStore = create<PremiumState>((set, get) => ({
   },
 
   hasFeatureAccess: (featureId: string) => {
-    const { isPremium } = get();
+    const { isPremium, isFreeTrial } = get();
     
     // Free features available to everyone
     const freeFeatures = ['basic_social', 'limited_ai', 'basic_analytics'];
     
     if (freeFeatures.includes(featureId)) return true;
     
-    // Premium features require subscription
-    return isPremium;
+    // Premium features require subscription or active free trial
+    return isPremium || isFreeTrial;
   }
 }));

@@ -160,7 +160,7 @@ export default function StudyGroupsPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+      <div className="min-h-screen bg-gradient-to-br from-blue-100 via-cyan-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900 transition-colors duration-300">
         <EnhancedNavbar />
         
         <div className="max-w-7xl mx-auto px-4 pt-20 pb-24">
@@ -188,7 +188,7 @@ export default function StudyGroupsPage() {
           </div>
 
           {/* Filters */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl shadow-lg p-6 mb-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -242,7 +242,7 @@ export default function StudyGroupsPage() {
           {/* Study Groups Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredGroups.map((group) => (
-              <div key={group.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+              <div key={group.id} className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
                 {/* Header */}
                 <div className="p-6 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-start justify-between mb-3">

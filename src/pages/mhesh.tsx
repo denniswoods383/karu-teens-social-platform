@@ -140,9 +140,9 @@ const AdminPanel = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-cyan-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900 transition-colors duration-300 p-6">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow p-8">
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl shadow-lg p-8">
           <h1 className="text-3xl font-bold mb-8">Admin Panel</h1>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -182,25 +182,57 @@ const AdminPanel = () => {
 
             <div>
               <h2 className="text-xl font-semibold mb-4">Admin Actions</h2>
-              <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => window.location.href = '/mhesh/users'}
-                  className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700"
+                  className="bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 text-sm font-medium"
                 >
-                  Manage Users
+                  👥 Manage Users
                 </button>
                 <button
                   onClick={() => window.location.href = '/mhesh/posts'}
-                  className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700"
+                  className="bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 text-sm font-medium"
                 >
-                  Manage Posts
+                  📝 Manage Posts
                 </button>
                 <button
                   onClick={() => window.location.href = '/mhesh/messaging'}
-                  className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700"
+                  className="bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 text-sm font-medium"
                 >
-                  Send Messages
+                  💬 Send Messages
                 </button>
+                <button
+                  onClick={() => window.location.href = '/mhesh/analytics'}
+                  className="bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 text-sm font-medium"
+                >
+                  📈 Analytics
+                </button>
+                <button
+                  onClick={() => window.location.href = '/mhesh/reports'}
+                  className="bg-orange-600 text-white py-3 px-4 rounded-lg hover:bg-orange-700 text-sm font-medium"
+                >
+                  🚨 Reports
+                </button>
+                <button
+                  onClick={() => window.location.href = '/mhesh/settings'}
+                  className="bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 text-sm font-medium"
+                >
+                  ⚙️ Settings
+                </button>
+              </div>
+              
+              <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Quick Stats</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">150+</div>
+                    <div className="text-gray-600 dark:text-gray-300">Active Users</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">500+</div>
+                    <div className="text-gray-600 dark:text-gray-300">Posts Created</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
