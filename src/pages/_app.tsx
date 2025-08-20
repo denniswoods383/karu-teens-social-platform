@@ -30,6 +30,7 @@ export default function App({ Component, pageProps }: AppProps) {
     <ThemeProvider>
       <Component {...pageProps} />
       <FloatingFeedbackButton />
+      <QuickActionsWidget />
       <UpgradeModal />
       
       {/* Global Toast Notifications */}
