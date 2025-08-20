@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
-import AutoHideNavbar from '../../components/layout/AutoHideNavbar';
+import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useSupabase';
 
@@ -268,8 +268,8 @@ export default function MessagesPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-100" style={{backgroundImage: 'url(/ui/messagesbackground.jpeg)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed'}}>
-        <AutoHideNavbar />
+      <div className="min-h-screen bg-gradient-to-br from-blue-100 via-cyan-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900 transition-colors duration-300">
+        <EnhancedNavbar />
         
         <div className="max-w-6xl mx-auto px-4 pt-20 pb-6">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-[calc(100vh-8rem)] flex">
