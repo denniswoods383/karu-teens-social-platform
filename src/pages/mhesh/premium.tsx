@@ -40,6 +40,16 @@ export default function PremiumManager() {
       .eq('id', userId);
     
     if (!error) {
+      // Send notification to user
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: userId,
+          title: '✨ Premium Access Granted!',
+          message: `You have been granted premium access for ${weeks} weeks. Enjoy unlimited access to MWAKS and premium features!`,
+          type: 'success'
+        });
+      
       loadUsers();
       alert(`Premium access granted for ${weeks} weeks`);
     }
@@ -55,6 +65,16 @@ export default function PremiumManager() {
       .eq('id', userId);
     
     if (!error) {
+      // Send notification to user
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: userId,
+          title: '⚠️ Premium Access Removed',
+          message: 'Your premium access has been removed by an administrator.',
+          type: 'warning'
+        });
+      
       loadUsers();
       alert('Premium access removed');
     }

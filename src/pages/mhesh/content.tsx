@@ -30,19 +30,31 @@ export default function ContentControl() {
     setPosts(data || []);
   };
 
-  const togglePremium = async (postId: string, isPremium: boolean) => {
+  const togglePremium = async (postId: string, isPremium: boolean, authorId: string) => {
     const { error } = await supabase
       .from('posts')
       .update({ is_premium: !isPremium })
       .eq('id', postId);
     
     if (!error) {
+      // Send notification to post author
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: authorId,
+          title: !isPremium ? '🔒 Post Made Premium' : '🎆 Post Made Free',
+          message: !isPremium 
+            ? 'One of your posts has been marked as premium content by an administrator.'
+            : 'One of your premium posts has been made free by an administrator.',
+          type: 'info'
+        });
+      
       loadPosts();
       alert(`Post ${!isPremium ? 'marked as premium' : 'made free'}`);
     }
   };
 
-  const deletePost = async (postId: string) => {
+  const deletePost = async (postId: string, authorId: string) => {
     if (confirm('Are you sure you want to delete this post?')) {
       const { error } = await supabase
         .from('posts')
@@ -50,6 +62,16 @@ export default function ContentControl() {
         .eq('id', postId);
       
       if (!error) {
+        // Send notification to post author
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: authorId,
+            title: '🗑️ Post Deleted',
+            message: 'One of your posts has been deleted by an administrator for violating community guidelines.',
+            type: 'warning'
+          });
+        
         loadPosts();
         alert('Post deleted successfully');
       }
@@ -105,7 +127,7 @@ export default function ContentControl() {
                 
                 <div className="flex space-x-2">
                   <button
-                    onClick={() => togglePremium(post.id, post.is_premium)}
+                    onClick={() => togglePremium(post.id, post.is_premium, post.user_id)}
                     className={`px-3 py-1 rounded text-sm font-medium ${
                       post.is_premium
                         ? 'bg-gray-600 text-white hover:bg-gray-700'
@@ -115,7 +137,7 @@ export default function ContentControl() {
                     {post.is_premium ? 'Make Free' : 'Make Premium'}
                   </button>
                   <button
-                    onClick={() => deletePost(post.id)}
+                    onClick={() => deletePost(post.id, post.user_id)}
                     className="px-3 py-1 bg-red-600 text-white rounded text-sm font-medium hover:bg-red-700"
                   >
                     Delete

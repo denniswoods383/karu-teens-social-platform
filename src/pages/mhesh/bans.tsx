@@ -40,6 +40,16 @@ export default function UserBans() {
       .eq('id', userId);
     
     if (!error) {
+      // Send notification to user
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: userId,
+          title: '🚫 Account Suspended',
+          message: `Your account has been suspended for ${days} days due to policy violations. You will be automatically unbanned on ${banUntil.toLocaleDateString()}.`,
+          type: 'error'
+        });
+      
       loadUsers();
       alert(`User banned for ${days} days`);
     }
@@ -55,6 +65,16 @@ export default function UserBans() {
       .eq('id', userId);
     
     if (!error) {
+      // Send notification to user
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: userId,
+          title: '✅ Account Restored',
+          message: 'Your account suspension has been lifted. Welcome back to the platform!',
+          type: 'success'
+        });
+      
       loadUsers();
       alert('User unbanned successfully');
     }
