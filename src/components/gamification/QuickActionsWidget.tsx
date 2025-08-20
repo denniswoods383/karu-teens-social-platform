@@ -5,7 +5,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 
 export default function QuickActionsWidget() {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { userStats, addPoints } = useGamificationStore();
+  const { points, level, addPoints } = useGamificationStore();
   const { isPremium, setUpgradeModal } = usePremiumStore();
   const { isDark } = useTheme();
 
@@ -101,26 +101,26 @@ export default function QuickActionsWidget() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 border border-gray-200 dark:border-gray-700 min-w-[200px]">
             <div className="text-center">
               <div className="text-lg font-bold text-gray-900 dark:text-white">
-                Level {userStats.level}
+                Level {level}
               </div>
               <div className="flex items-center justify-between text-sm mt-2">
                 <span className="text-gray-600 dark:text-gray-400">XP</span>
                 <span className="font-medium text-blue-600 dark:text-blue-400">
-                  {userStats.xp}/100
+                  {points % 100}/100
                 </span>
               </div>
               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-2">
                 <div 
                   className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-500"
-                  style={{ width: `${userStats.xp}%` }}
+                  style={{ width: `${(points % 100)}%` }}
                 />
               </div>
               <div className="flex items-center justify-between text-xs mt-2">
                 <span className="text-yellow-600 dark:text-yellow-400">
-                  🔥 {userStats.currentStreak}
+                  🔥 0
                 </span>
                 <span className="text-green-600 dark:text-green-400">
-                  ⚡ {userStats.totalPoints}
+                  ⚡ {points}
                 </span>
               </div>
             </div>
