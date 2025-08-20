@@ -40,6 +40,7 @@ export default function EnhancedNavbar() {
 
   const navigationItems = [
     { name: 'Home', icon: '🏠', href: '/feed', active: true },
+    { name: 'Study Groups', icon: '📚', href: '/study-groups' },
     { name: 'Comrades', icon: '👥', href: '/comrades' },
     { name: 'Messages', icon: '💬', href: '/messages' },
     { name: 'AI Tools', icon: '🤖', href: '/ai' },
