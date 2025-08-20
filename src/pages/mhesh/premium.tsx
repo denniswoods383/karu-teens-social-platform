@@ -25,9 +25,8 @@ export default function PremiumManager() {
       .select('*')
       .order('created_at', { ascending: false });
     
-    console.log('Loaded users:', data);
-    console.log('First user structure:', data?.[0]);
-    console.log('Load error:', error);
+
+
     setUsers(data || []);
   };
 
@@ -44,23 +43,7 @@ export default function PremiumManager() {
       .eq('id', userId)
       .select();
     
-    console.log('Premium update result:', { error, data, userId, premiumUntil });
-    console.log('Trying to update user with ID:', userId);
-    
-    // Also try updating by user_id field if id doesn't work
-    if (data && data.length === 0) {
-      console.log('No rows updated with id field, trying user_id field...');
-      const { error: error2, data: data2 } = await supabase
-        .from('profiles')
-        .update({ 
-          is_premium: true,
-          premium_until: premiumUntil.toISOString()
-        })
-        .eq('user_id', userId)
-        .select();
-      
-      console.log('Update with user_id result:', { error: error2, data: data2 });
-    }
+
     
     if (!error) {
       // Send notification to user
@@ -75,7 +58,7 @@ export default function PremiumManager() {
       
       await loadUsers();
       alert(`Premium access granted for ${weeks} weeks`);
-      console.log('Premium granted successfully');
+
     }
   };
   
@@ -105,7 +88,6 @@ export default function PremiumManager() {
   };
   
   const handlePremiumClick = (userId: string, isPremium: boolean) => {
-    console.log('Clicked user ID:', userId);
     if (isPremium) {
       removePremium(userId);
     } else {
@@ -204,10 +186,7 @@ export default function PremiumManager() {
                     )}
                   </div>
                   <button
-                    onClick={() => {
-                      console.log('Button clicked for user:', user);
-                      handlePremiumClick(user.id, checkPremiumStatus(user));
-                    }}
+                    onClick={() => handlePremiumClick(user.id, checkPremiumStatus(user))}
                     className={`px-4 py-2 rounded-lg text-sm font-medium ${
                       checkPremiumStatus(user)
                         ? 'bg-red-600 text-white hover:bg-red-700'
