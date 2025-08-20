@@ -26,8 +26,7 @@ export default function ContentControl() {
         *,
         profiles(username, email)
       `)
-      .order('created_at', { ascending: false })
-      .limit(50);
+      .order('created_at', { ascending: false });
     setPosts(data || []);
   };
 
@@ -67,6 +66,7 @@ export default function ContentControl() {
       <div className="max-w-6xl mx-auto">
         <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl shadow-lg p-8">
           <h1 className="text-3xl font-bold mb-6">🔒 Content Control</h1>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">Total Posts: {posts.length}</p>
           
           <div className="mb-6">
             <input

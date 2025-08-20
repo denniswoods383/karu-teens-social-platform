@@ -27,15 +27,47 @@ export default function PremiumManager() {
     setUsers(data || []);
   };
 
-  const togglePremium = async (userId: string, isPremium: boolean) => {
+  const grantPremium = async (userId: string, weeks: number) => {
+    const premiumUntil = new Date();
+    premiumUntil.setDate(premiumUntil.getDate() + (weeks * 7));
+    
     const { error } = await supabase
       .from('profiles')
-      .update({ is_premium: !isPremium })
+      .update({ 
+        is_premium: true,
+        premium_until: premiumUntil.toISOString()
+      })
       .eq('id', userId);
     
     if (!error) {
       loadUsers();
-      alert(`User ${!isPremium ? 'granted' : 'removed'} premium access`);
+      alert(`Premium access granted for ${weeks} weeks`);
+    }
+  };
+  
+  const removePremium = async (userId: string) => {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ 
+        is_premium: false,
+        premium_until: null
+      })
+      .eq('id', userId);
+    
+    if (!error) {
+      loadUsers();
+      alert('Premium access removed');
+    }
+  };
+  
+  const handlePremiumClick = (userId: string, isPremium: boolean) => {
+    if (isPremium) {
+      removePremium(userId);
+    } else {
+      const weeks = prompt('Grant premium for how many weeks?', '1');
+      if (weeks && parseInt(weeks) > 0) {
+        grantPremium(userId, parseInt(weeks));
+      }
     }
   };
 
@@ -75,16 +107,23 @@ export default function PremiumManager() {
                   }`}>
                     {user.is_premium ? '✨ Premium' : 'Free'}
                   </span>
-                  <button
-                    onClick={() => togglePremium(user.id, user.is_premium)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                      user.is_premium
-                        ? 'bg-red-600 text-white hover:bg-red-700'
-                        : 'bg-yellow-600 text-white hover:bg-yellow-700'
-                    }`}
-                  >
-                    {user.is_premium ? 'Remove Premium' : 'Grant Premium'}
-                  </button>
+                  <div className="flex flex-col space-y-1">
+                    {user.premium_until && new Date(user.premium_until) > new Date() && (
+                      <span className="text-xs text-yellow-600">
+                        Until: {new Date(user.premium_until).toLocaleDateString()}
+                      </span>
+                    )}
+                    <button
+                      onClick={() => handlePremiumClick(user.id, user.is_premium)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                        user.is_premium
+                          ? 'bg-red-600 text-white hover:bg-red-700'
+                          : 'bg-yellow-600 text-white hover:bg-yellow-700'
+                      }`}
+                    >
+                      {user.is_premium ? 'Remove Premium' : 'Grant Premium'}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

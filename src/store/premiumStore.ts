@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { supabase } from '../lib/supabase';
 
 interface PremiumFeature {
   id: string;
@@ -103,10 +104,44 @@ export const usePremiumStore = create<PremiumState>((set, get) => ({
   upgradeModal: false,
   selectedPlan: null,
 
-  checkPremiumStatus: () => {
+  checkPremiumStatus: async () => {
     const now = new Date();
     
-    // Check free trial
+    // Check database for premium status
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('is_premium, premium_until')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile) {
+          const premiumUntil = profile.premium_until ? new Date(profile.premium_until) : null;
+          const isPremiumActive = profile.is_premium && (!premiumUntil || premiumUntil > now);
+          
+          set({
+            isPremium: isPremiumActive,
+            subscriptionEndDate: premiumUntil
+          });
+          
+          // If premium expired, update database
+          if (profile.is_premium && premiumUntil && premiumUntil <= now) {
+            await supabase
+              .from('profiles')
+              .update({ is_premium: false })
+              .eq('id', user.id);
+          }
+          
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check database premium status:', error);
+    }
+    
+    // Fallback to localStorage for free trial
     const trialData = localStorage.getItem('free_trial');
     if (trialData) {
       try {
@@ -119,38 +154,11 @@ export const usePremiumStore = create<PremiumState>((set, get) => ({
             freeTrialEndsAt: trialEnd,
             isPremium: true
           });
-          return;
         } else {
           localStorage.removeItem('free_trial');
         }
       } catch (error) {
         console.error('Failed to parse trial data:', error);
-      }
-    }
-    
-    // Check premium subscription
-    const premiumData = localStorage.getItem('premium_subscription');
-    if (premiumData) {
-      try {
-        const data = JSON.parse(premiumData);
-        const endDate = new Date(data.endDate);
-        
-        if (endDate > now) {
-          set({
-            isPremium: true,
-            subscription: data.plan,
-            subscriptionEndDate: endDate
-          });
-        } else {
-          localStorage.removeItem('premium_subscription');
-          set({
-            isPremium: false,
-            subscription: null,
-            subscriptionEndDate: null
-          });
-        }
-      } catch (error) {
-        console.error('Failed to parse premium data:', error);
       }
     }
   },

@@ -27,15 +27,47 @@ export default function UserBans() {
     setUsers(data || []);
   };
 
-  const toggleBan = async (userId: string, isBanned: boolean) => {
+  const banUser = async (userId: string, days: number) => {
+    const banUntil = new Date();
+    banUntil.setDate(banUntil.getDate() + days);
+    
     const { error } = await supabase
       .from('profiles')
-      .update({ is_banned: !isBanned })
+      .update({ 
+        is_banned: true,
+        banned_until: banUntil.toISOString()
+      })
       .eq('id', userId);
     
     if (!error) {
       loadUsers();
-      alert(`User ${!isBanned ? 'banned' : 'unbanned'} successfully`);
+      alert(`User banned for ${days} days`);
+    }
+  };
+  
+  const unbanUser = async (userId: string) => {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ 
+        is_banned: false,
+        banned_until: null
+      })
+      .eq('id', userId);
+    
+    if (!error) {
+      loadUsers();
+      alert('User unbanned successfully');
+    }
+  };
+  
+  const handleBanClick = (userId: string, isBanned: boolean) => {
+    if (isBanned) {
+      unbanUser(userId);
+    } else {
+      const days = prompt('Ban for how many days?', '7');
+      if (days && parseInt(days) > 0) {
+        banUser(userId, parseInt(days));
+      }
     }
   };
 
@@ -76,16 +108,23 @@ export default function UserBans() {
                   }`}>
                     {user.is_banned ? '🚫 Banned' : '✅ Active'}
                   </span>
-                  <button
-                    onClick={() => toggleBan(user.id, user.is_banned)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                      user.is_banned
-                        ? 'bg-green-600 text-white hover:bg-green-700'
-                        : 'bg-red-600 text-white hover:bg-red-700'
-                    }`}
-                  >
-                    {user.is_banned ? 'Unban User' : 'Ban User'}
-                  </button>
+                  <div className="flex flex-col space-y-1">
+                    {user.banned_until && new Date(user.banned_until) > new Date() && (
+                      <span className="text-xs text-red-600">
+                        Until: {new Date(user.banned_until).toLocaleDateString()}
+                      </span>
+                    )}
+                    <button
+                      onClick={() => handleBanClick(user.id, user.is_banned)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                        user.is_banned
+                          ? 'bg-green-600 text-white hover:bg-green-700'
+                          : 'bg-red-600 text-white hover:bg-red-700'
+                      }`}
+                    >
+                      {user.is_banned ? 'Unban User' : 'Ban User'}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
