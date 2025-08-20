@@ -20,14 +20,37 @@ export default function ContentControl() {
   };
 
   const loadPosts = async () => {
-    const { data } = await supabase
+    // First try to get posts with user info
+    const { data: postsData, error: postsError } = await supabase
       .from('posts')
-      .select(`
-        *,
-        profiles(username, email)
-      `)
+      .select('*')
       .order('created_at', { ascending: false });
-    setPosts(data || []);
+    
+    console.log('Posts loaded:', postsData);
+    console.log('Posts error:', postsError);
+    console.log('Posts count:', postsData?.length || 0);
+    
+    if (postsData) {
+      // Get user info separately for each post
+      const postsWithProfiles = await Promise.all(
+        postsData.map(async (post) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('username, email')
+            .eq('id', post.user_id)
+            .single();
+          
+          return {
+            ...post,
+            profiles: profile
+          };
+        })
+      );
+      
+      setPosts(postsWithProfiles);
+    } else {
+      setPosts([]);
+    }
   };
 
   const togglePremium = async (postId: string, isPremium: boolean, authorId: string) => {
