@@ -10,6 +10,7 @@ import { useGamificationStore } from '../store/gamificationStore'
 import { usePremiumStore } from '../store/premiumStore'
 import { useEffect } from 'react'
 import UpgradeModal from '../components/premium/UpgradeModal'
+import QuickActionsWidget from '../components/gamification/QuickActionsWidget'
 
 export default function App({ Component, pageProps }: AppProps) {
   useAutoLogout();
