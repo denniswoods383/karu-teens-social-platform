@@ -1,8 +1,41 @@
 import Link from 'next/link';
+import { useEffect } from 'react';
+import { usePremiumStore } from '../../store/premiumStore';
+import ProtectedRoute from '../../components/auth/ProtectedRoute';
 
 const MWAKSHome = () => {
+  const { isPremium, isFreeTrial, setUpgradeModal } = usePremiumStore();
+  
+  useEffect(() => {
+    if (!isPremium && !isFreeTrial) {
+      setUpgradeModal(true);
+    }
+  }, [isPremium, isFreeTrial, setUpgradeModal]);
+  
+  if (!isPremium && !isFreeTrial) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+              <div className="text-6xl mb-4">🔒</div>
+              <h1 className="text-3xl font-bold text-gray-800 mb-4">Premium Feature</h1>
+              <p className="text-gray-600 mb-6">Access to MWAKS (600+ study materials) requires a premium subscription.</p>
+              <button
+                onClick={() => setUpgradeModal(true)}
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700"
+              >
+                🚀 Start Free Trial (7 Days)
+              </button>
+            </div>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="text-center mb-8">
@@ -52,6 +85,7 @@ const MWAKSHome = () => {
         </div>
       </div>
     </div>
+    </ProtectedRoute>
   );
 };
 
