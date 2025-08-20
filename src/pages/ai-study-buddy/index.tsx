@@ -147,7 +147,7 @@ export default function AIStudyBuddyPage() {
   };
 
   const handleStartStudySession = (recommendation: StudyRecommendation) => {
-    addPoints(5, 'starting study session');
+    addPoints(5);
     alert(`📚 Starting study session: ${recommendation.title}. Good luck! +5 XP`);
   };
 

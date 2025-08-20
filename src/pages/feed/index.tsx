@@ -12,7 +12,7 @@ export default function FeedPage() {
   
   const handlePostCreated = () => {
     setRefreshPosts(prev => !prev);
-    addPoints(5, 'creating a post');
+    addPoints(5);
   };
   
   return (

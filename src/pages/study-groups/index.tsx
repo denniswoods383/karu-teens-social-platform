@@ -118,7 +118,7 @@ export default function StudyGroupsPage() {
   });
 
   const handleJoinGroup = (groupId: string) => {
-    addPoints(15, 'joining a study group');
+    addPoints(15);
     unlockAchievement('study_master');
     alert('🎉 Successfully joined the study group! +15 XP');
   };

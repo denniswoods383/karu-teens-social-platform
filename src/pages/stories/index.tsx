@@ -148,7 +148,7 @@ export default function StoriesPage() {
   const handleViewStory = (story: Story) => {
     setSelectedStory(story);
     if (!story.isViewed) {
-      addPoints(1, 'viewing a story');
+      addPoints(1);
       // Mark as viewed
       setStories(prev => prev.map(s => 
         s.id === story.id ? { ...s, isViewed: true, views: s.views + 1 } : s
@@ -157,7 +157,7 @@ export default function StoriesPage() {
   };
 
   const handleCreateStory = () => {
-    addPoints(8, 'creating a story');
+    addPoints(8);
     alert('📱 Story created! +8 XP for sharing your campus life!');
     setShowCreateModal(false);
   };

@@ -142,7 +142,7 @@ export default function MarketplacePage() {
   };
 
   const handleContactSeller = (item: MarketplaceItem) => {
-    addPoints(2, 'contacting seller');
+    addPoints(2);
     alert(`💬 Opening chat with ${item.seller.name}... +2 XP for networking!`);
   };
 
