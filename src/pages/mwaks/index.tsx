@@ -7,7 +7,7 @@ const MWAKSHome = () => {
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-gray-800 mb-4">MWAKS</h1>
-            <p className="text-lg text-gray-600">Moi University West Academic Knowledge System</p>
+            <p className="text-lg text-gray-600">Karatina University Academic Knowledge System</p>
             <p className="text-sm text-gray-500 mt-2">Access study materials by year level</p>
           </div>
 
