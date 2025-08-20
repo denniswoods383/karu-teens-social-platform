@@ -14,7 +14,7 @@ export default function AnalyticsPage() {
     following: 0
   });
   const { user } = useAuthStore();
-  const { userStats } = useGamificationStore();
+  const { points, level } = useGamificationStore();
 
   useEffect(() => {
     loadStats();
@@ -25,9 +25,9 @@ export default function AnalyticsPage() {
       const token = localStorage.getItem('token');
       // Simulating stats for demo purposes
       setStats({
-        posts: Math.floor(Math.random() * 50) + userStats.totalPosts,
-        likes: Math.floor(Math.random() * 200) + userStats.totalLikes,
-        comments: Math.floor(Math.random() * 100) + userStats.totalComments,
+        posts: Math.floor(Math.random() * 50) + 10,
+        likes: Math.floor(Math.random() * 200) + 50,
+        comments: Math.floor(Math.random() * 100) + 25,
         followers: Math.floor(Math.random() * 75) + 12,
         following: Math.floor(Math.random() * 50) + 8
       });
@@ -91,13 +91,13 @@ export default function AnalyticsPage() {
                   <div className="flex justify-between items-center p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg">
                     <span className="text-gray-700 dark:text-gray-300 font-medium">Current Streak</span>
                     <span className="font-bold text-blue-600 dark:text-blue-400 text-lg">
-                      🔥 {userStats.currentStreak} days
+                      🔥 0 days
                     </span>
                   </div>
                   <div className="flex justify-between items-center p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg">
                     <span className="text-gray-700 dark:text-gray-300 font-medium">Total XP Earned</span>
                     <span className="font-bold text-purple-600 dark:text-purple-400 text-lg">
-                      ⚡ {userStats.totalPoints} XP
+                      ⚡ {points} XP
                     </span>
                   </div>
                 </div>
