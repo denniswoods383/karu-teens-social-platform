@@ -36,9 +36,11 @@ export default function ContentControl() {
         postsData.map(async (post) => {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('username, email')
+            .select('username, email, full_name, avatar_url')
             .eq('id', post.user_id)
             .single();
+          
+          console.log('Profile for post:', post.id, profile);
           
           return {
             ...post,
