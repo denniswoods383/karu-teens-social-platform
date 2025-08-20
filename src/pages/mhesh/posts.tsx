@@ -26,7 +26,7 @@ const PostsManagement = () => {
         .select('*')
         .order('created_at', { ascending: false });
       
-      const userIds = [...new Set(postsData?.map(post => post.user_id) || [])];
+      const userIds = Array.from(new Set(postsData?.map(post => post.user_id) || []));
       const { data: profilesData } = await supabase
         .from('profiles')
         .select('id, username, full_name, avatar_url')
