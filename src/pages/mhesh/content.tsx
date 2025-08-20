@@ -161,100 +161,110 @@ export default function ContentControl() {
             />
           </div>
 
-          <div className="grid gap-4">
+          <div className="space-y-6">
             {filteredPosts.map((post: any) => (
-              <div key={post.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
-                {/* Post Header */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                      {post.profiles?.email?.charAt(0).toUpperCase() || '🎓'}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900 dark:text-white">
-                        {post.profiles?.username || post.profiles?.email?.split('@')[0] || 'Student'}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {new Date(post.created_at).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      post.is_premium 
-                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' 
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                    }`}>
-                      {post.is_premium ? '✨ Premium' : '🆓 Free'}
-                    </span>
-                  </div>
-                </div>
-                
-                {/* Post Content */}
-                <div className="mb-4">
-                  <p className="text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
-                    {post.content}
-                  </p>
-                  
-                  {/* Post Media */}
-                  {post.media_url && (
-                    <div className="mt-4">
-                      {post.media_url.includes('image') || post.media_url.includes('.jpg') || post.media_url.includes('.png') ? (
-                        <img 
-                          src={post.media_url} 
-                          alt="Post media" 
-                          className="w-full max-w-md rounded-lg shadow-md"
-                        />
+              <div key={post.id} className="bg-white rounded-2xl shadow-xl border border-blue-100 overflow-hidden hover:shadow-2xl transition-all duration-300">
+                {/* Header */}
+                <div className="p-4">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg ring-4 ring-blue-100 overflow-hidden">
+                      {post.profiles?.avatar_url ? (
+                        <img src={post.profiles.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                       ) : (
-                        <video 
-                          src={post.media_url} 
-                          controls 
-                          className="w-full max-w-md rounded-lg shadow-md"
-                        />
+                        '🎓'
                       )}
                     </div>
-                  )}
+                    <div className="ml-3 flex-1">
+                      <h3 className="font-bold text-gray-900 text-lg">
+                        {post.profiles?.full_name || post.profiles?.username || 'Student'}
+                      </h3>
+                      {post.profiles?.username && (
+                        <p className="text-sm text-blue-500 font-medium">@{post.profiles.username}</p>
+                      )}
+                      <div className="flex items-center text-sm text-blue-500 font-medium">
+                        <span>⏰ {new Date(post.created_at).toLocaleDateString()}</span>
+                        <span className="mx-2">•</span>
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          post.is_premium 
+                            ? 'bg-yellow-100 text-yellow-800' 
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {post.is_premium ? '✨ Premium' : '🆓 Free'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 
-                {/* Post Stats */}
-                <div className="flex items-center space-x-6 text-sm text-gray-500 dark:text-gray-400 mb-4">
-                  <span className="flex items-center space-x-1">
-                    <span>👍</span>
-                    <span>{post.likes_count || 0} likes</span>
-                  </span>
-                  <span className="flex items-center space-x-1">
-                    <span>💬</span>
-                    <span>{post.comments_count || 0} comments</span>
-                  </span>
-                  <span className="flex items-center space-x-1">
-                    <span>👁️</span>
-                    <span>{post.views_count || 0} views</span>
-                  </span>
+                {/* Content */}
+                <div className="px-6 pb-4">
+                  <p className="text-gray-800 text-lg leading-relaxed font-medium">{post.content}</p>
+                </div>
+                
+                {/* Media */}
+                {post.image_url && (
+                  <div className="px-6 pb-4">
+                    {post.image_url.includes('.mp4') || post.image_url.includes('.webm') || post.image_url.includes('video') ? (
+                      <video 
+                        src={post.image_url}
+                        controls 
+                        className="w-full max-h-96 rounded-2xl shadow-lg border-2 border-blue-100"
+                        preload="metadata"
+                      />
+                    ) : (
+                      <img 
+                        src={post.image_url}
+                        alt="Post media"
+                        className="w-full max-h-96 object-cover rounded-2xl shadow-lg border-2 border-blue-100"
+                      />
+                    )}
+                  </div>
+                )}
+                
+                {/* Stats */}
+                <div className="px-4 py-2 border-b border-gray-100">
+                  <div className="flex items-center justify-between text-sm text-gray-500">
+                    <div className="flex items-center space-x-4">
+                      <span className="flex items-center space-x-1">
+                        <span>👍</span>
+                        <span>{post.likes_count || 0}</span>
+                      </span>
+                      <span className="flex items-center space-x-1">
+                        <span>💬</span>
+                        <span>{post.comments_count || 0}</span>
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 {/* Admin Actions */}
-                <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200 dark:border-gray-600">
-                  <button
-                    onClick={() => togglePremium(post.id, post.is_premium, post.user_id)}
-                    className={`px-3 py-1 rounded text-sm font-medium ${
-                      post.is_premium
-                        ? 'bg-gray-600 text-white hover:bg-gray-700'
-                        : 'bg-yellow-600 text-white hover:bg-yellow-700'
-                    }`}
-                  >
-                    {post.is_premium ? 'Make Free' : 'Make Premium'}
-                  </button>
-                  <button
-                    onClick={() => deletePost(post.id, post.user_id)}
-                    className="px-3 py-1 bg-red-600 text-white rounded text-sm font-medium hover:bg-red-700"
-                  >
-                    Delete
-                  </button>
-                  <button
-                    onClick={() => messageUser(post.user_id, post.profiles?.email)}
-                    className="px-3 py-1 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700"
-                  >
-                    Message User
-                  </button>
+                <div className="px-6 py-4 bg-gradient-to-r from-red-50 to-orange-50 border-t-2 border-red-200">
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => togglePremium(post.id, post.is_premium, post.user_id)}
+                      className={`flex items-center px-4 py-2 rounded-full font-semibold text-sm transition-all duration-300 ${
+                        post.is_premium
+                          ? 'bg-gray-600 text-white hover:bg-gray-700'
+                          : 'bg-yellow-600 text-white hover:bg-yellow-700'
+                      }`}
+                    >
+                      <span className="mr-2">{post.is_premium ? '🔓' : '✨'}</span>
+                      {post.is_premium ? 'Make Free' : 'Make Premium'}
+                    </button>
+                    <button
+                      onClick={() => deletePost(post.id, post.user_id)}
+                      className="flex items-center px-4 py-2 bg-red-600 text-white rounded-full font-semibold text-sm hover:bg-red-700 transition-all duration-300"
+                    >
+                      <span className="mr-2">🗑️</span>
+                      Delete
+                    </button>
+                    <button
+                      onClick={() => messageUser(post.user_id, post.profiles?.email)}
+                      className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-full font-semibold text-sm hover:bg-blue-700 transition-all duration-300"
+                    >
+                      <span className="mr-2">📧</span>
+                      Message
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
