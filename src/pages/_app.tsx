@@ -5,16 +5,31 @@ import { useRealtimeNotifications } from '../hooks/useRealtimeNotifications'
 import FloatingFeedbackButton from '../components/feedback/FloatingFeedbackButton'
 import ToastNotification from '../components/notifications/ToastNotification'
 import { useNotifications } from '../hooks/useNotifications'
+import { ThemeProvider } from '../contexts/ThemeContext'
+import { useGamificationStore } from '../store/gamificationStore'
+import { usePremiumStore } from '../store/premiumStore'
+import { useEffect } from 'react'
+import UpgradeModal from '../components/premium/UpgradeModal'
 
 export default function App({ Component, pageProps }: AppProps) {
   useAutoLogout();
   useRealtimeNotifications();
   const { notifications, removeNotification } = useNotifications();
+  const { loadUserStats, updateStreak } = useGamificationStore();
+  const { checkPremiumStatus } = usePremiumStore();
+  
+  useEffect(() => {
+    // Initialize gamification and premium features
+    loadUserStats();
+    updateStreak();
+    checkPremiumStatus();
+  }, []);
   
   return (
-    <>
+    <ThemeProvider>
       <Component {...pageProps} />
       <FloatingFeedbackButton />
+      <UpgradeModal />
       
       {/* Global Toast Notifications */}
       <div className="fixed top-4 right-4 z-[9999] space-y-2 pointer-events-none">
@@ -28,6 +43,6 @@ export default function App({ Component, pageProps }: AppProps) {
           </div>
         ))}
       </div>
-    </>
+    </ThemeProvider>
   )
 }
