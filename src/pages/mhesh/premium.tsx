@@ -95,12 +95,53 @@ export default function PremiumManager() {
     user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.username?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  
+  const checkPremiumStatus = (user: any) => {
+    if (!user.is_premium) return false;
+    if (!user.premium_until) return true; // Permanent premium
+    return new Date(user.premium_until) > new Date();
+  };
+  
+  const getPremiumStatusText = (user: any) => {
+    if (!user.is_premium) return 'Free User';
+    if (!user.premium_until) return '✨ Premium (Permanent)';
+    const expiry = new Date(user.premium_until);
+    const now = new Date();
+    if (expiry <= now) return '⏰ Premium Expired';
+    const daysLeft = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    return `✨ Premium (${daysLeft} days left)`;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-cyan-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900 p-6">
       <div className="max-w-6xl mx-auto">
         <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl shadow-lg p-8">
           <h1 className="text-3xl font-bold mb-6">✨ Premium Manager</h1>
+          
+          <div className="grid grid-cols-4 gap-4 mb-6">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg text-center">
+              <div className="text-2xl font-bold text-yellow-600">
+                {users.filter((u: any) => u.is_premium && (!u.premium_until || new Date(u.premium_until) > new Date())).length}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-300">Active Premium</div>
+            </div>
+            <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg text-center">
+              <div className="text-2xl font-bold text-red-600">
+                {users.filter((u: any) => u.is_premium && u.premium_until && new Date(u.premium_until) <= new Date()).length}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-300">Expired Premium</div>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg text-center">
+              <div className="text-2xl font-bold text-gray-600">
+                {users.filter((u: any) => !u.is_premium).length}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-300">Free Users</div>
+            </div>
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-center">
+              <div className="text-2xl font-bold text-blue-600">{users.length}</div>
+              <div className="text-sm text-gray-600 dark:text-gray-300">Total Users</div>
+            </div>
+          </div>
           
           <div className="mb-6">
             <input
@@ -118,32 +159,35 @@ export default function PremiumManager() {
                 <div>
                   <p className="font-medium">{user.email}</p>
                   <p className="text-sm text-gray-600 dark:text-gray-300">@{user.username || user.id}</p>
+                  <p className="text-xs text-gray-500">Joined: {new Date(user.created_at).toLocaleDateString()}</p>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <span className={`px-3 py-1 rounded-full text-sm ${
-                    user.is_premium 
-                      ? 'bg-yellow-100 text-yellow-800' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {user.is_premium ? '✨ Premium' : 'Free'}
-                  </span>
-                  <div className="flex flex-col space-y-1">
-                    {user.premium_until && new Date(user.premium_until) > new Date() && (
-                      <span className="text-xs text-yellow-600">
-                        Until: {new Date(user.premium_until).toLocaleDateString()}
+                  <div className="text-right">
+                    <span className={`px-3 py-1 rounded-full text-sm block mb-1 ${
+                      checkPremiumStatus(user)
+                        ? 'bg-yellow-100 text-yellow-800' 
+                        : user.is_premium && user.premium_until && new Date(user.premium_until) <= new Date()
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {getPremiumStatusText(user)}
+                    </span>
+                    {user.premium_until && (
+                      <span className="text-xs text-gray-500">
+                        Expires: {new Date(user.premium_until).toLocaleDateString()}
                       </span>
                     )}
-                    <button
-                      onClick={() => handlePremiumClick(user.id, user.is_premium)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                        user.is_premium
-                          ? 'bg-red-600 text-white hover:bg-red-700'
-                          : 'bg-yellow-600 text-white hover:bg-yellow-700'
-                      }`}
-                    >
-                      {user.is_premium ? 'Remove Premium' : 'Grant Premium'}
-                    </button>
                   </div>
+                  <button
+                    onClick={() => handlePremiumClick(user.id, checkPremiumStatus(user))}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                      checkPremiumStatus(user)
+                        ? 'bg-red-600 text-white hover:bg-red-700'
+                        : 'bg-yellow-600 text-white hover:bg-yellow-700'
+                    }`}
+                  >
+                    {checkPremiumStatus(user) ? 'Remove Premium' : 'Grant Premium'}
+                  </button>
                 </div>
               </div>
             ))}
