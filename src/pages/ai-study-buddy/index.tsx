@@ -137,7 +137,7 @@ export default function AIStudyBuddyPage() {
     }
 
     setIsAnalyzing(true);
-    addPoints(10, 'using AI study buddy');
+    addPoints(10);
 
     // Simulate AI analysis
     setTimeout(() => {
