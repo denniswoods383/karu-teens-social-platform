@@ -7,8 +7,8 @@ import { usePremiumStore } from '../../store/premiumStore';
 
 export default function EnhancedNavbar() {
   const { user } = useAuth();
-  const { theme, toggleTheme, isDark } = useTheme();
-  const { userStats } = useGamificationStore();
+  const { toggleTheme, isDark } = useTheme();
+  const { points, level } = useGamificationStore();
   const { isPremium, setUpgradeModal } = usePremiumStore();
   
   const handleLogout = async () => {
@@ -132,14 +132,14 @@ export default function EnhancedNavbar() {
               <div className="hidden md:flex items-center space-x-3">
                 <div className="flex items-center space-x-2 px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full text-white text-sm font-medium">
                   <span>🔥</span>
-                  <span>{userStats.currentStreak}</span>
+                  <span>0</span>
                 </div>
                 <div className="flex items-center space-x-2 px-3 py-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-full text-white text-sm font-medium">
                   <span>⚡</span>
-                  <span>{userStats.totalPoints}</span>
+                  <span>{points}</span>
                 </div>
                 <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Lvl {userStats.level}
+                  Lvl {level}
                 </div>
               </div>
 
@@ -198,7 +198,7 @@ export default function EnhancedNavbar() {
                           <p className="text-sm text-gray-600 dark:text-gray-400">{user?.email}</p>
                           <div className="flex items-center space-x-2 mt-1">
                             <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
-                              Level {userStats.level}
+                              Level {level}
                             </span>
                             {isPremium && (
                               <span className="text-xs bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-2 py-1 rounded">
