@@ -16,12 +16,11 @@ export default function App({ Component, pageProps }: AppProps) {
   useAutoLogout();
   useRealtimeNotifications();
   const { notifications, removeNotification } = useNotifications();
-  const { loadUserStats, updateStreak } = useGamificationStore();
+  const { updateStreak } = useGamificationStore();
   const { checkPremiumStatus } = usePremiumStore();
   
   useEffect(() => {
     // Initialize gamification and premium features
-    loadUserStats();
     updateStreak();
     checkPremiumStatus();
   }, []);
