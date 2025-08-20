@@ -105,6 +105,7 @@ export default function PremiumManager() {
   };
   
   const handlePremiumClick = (userId: string, isPremium: boolean) => {
+    console.log('Clicked user ID:', userId);
     if (isPremium) {
       removePremium(userId);
     } else {
@@ -203,7 +204,10 @@ export default function PremiumManager() {
                     )}
                   </div>
                   <button
-                    onClick={() => handlePremiumClick(user.id, checkPremiumStatus(user))}
+                    onClick={() => {
+                      console.log('Button clicked for user:', user);
+                      handlePremiumClick(user.id, checkPremiumStatus(user));
+                    }}
                     className={`px-4 py-2 rounded-lg text-sm font-medium ${
                       checkPremiumStatus(user)
                         ? 'bg-red-600 text-white hover:bg-red-700'
