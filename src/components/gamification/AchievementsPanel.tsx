@@ -3,7 +3,7 @@ import { useGamificationStore } from '../../store/gamificationStore';
 import { usePremiumStore } from '../../store/premiumStore';
 
 export default function AchievementsPanel() {
-  const { userStats, achievements, recentAchievements } = useGamificationStore();
+  const { points, level, achievements } = useGamificationStore();
   const { isPremium } = usePremiumStore();
 
   const unlockedAchievements = achievements.filter(a => a.unlocked);
@@ -32,14 +32,14 @@ export default function AchievementsPanel() {
       <div className="mb-8 p-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg text-white">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h3 className="text-lg font-bold">Level {userStats.level}</h3>
+            <h3 className="text-lg font-bold">Level {level}</h3>
             <p className="text-blue-100">
-              {userStats.totalPoints} Total XP • {userStats.currentStreak}🔥 Streak
+              {points} Total XP
             </p>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold">{userStats.xp}</div>
-            <div className="text-sm text-blue-200">/{userStats.xpToNextLevel} to next level</div>
+            <div className="text-2xl font-bold">{points % 100}</div>
+            <div className="text-sm text-blue-200">/100 to next level</div>
           </div>
         </div>
         
@@ -47,34 +47,12 @@ export default function AchievementsPanel() {
         <div className="w-full bg-blue-400/30 rounded-full h-3">
           <div 
             className={`h-3 rounded-full transition-all duration-500 ${getProgressColor(userStats.xp)}`}
-            style={{ width: `${(userStats.xp / 100) * 100}%` }}
+            style={{ width: `${(points % 100)}%` }}
           />
         </div>
       </div>
 
-      {/* Recent Achievements */}
-      {recentAchievements.length > 0 && (
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-            🎉 Recently Unlocked
-          </h3>
-          <div className="space-y-2">
-            {recentAchievements.map((achievement) => (
-              <div key={achievement.id} className="flex items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                <span className="text-2xl mr-3">{achievement.icon}</span>
-                <div className="flex-1">
-                  <h4 className="font-medium text-green-800 dark:text-green-300">
-                    {achievement.title}
-                  </h4>
-                  <p className="text-sm text-green-600 dark:text-green-400">
-                    {achievement.description} • +{achievement.points} XP
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+
 
       {/* All Achievements */}
       <div className="space-y-4">
