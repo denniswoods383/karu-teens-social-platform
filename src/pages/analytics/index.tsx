@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
-import AutoHideNavbar from '../../components/layout/AutoHideNavbar';
+import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import { useAuthStore } from '../../store/authStore';
+import { useGamificationStore } from '../../store/gamificationStore';
+import AchievementsPanel from '../../components/gamification/AchievementsPanel';
 
 export default function AnalyticsPage() {
   const [stats, setStats] = useState({
