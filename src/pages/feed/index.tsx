@@ -1,8 +1,9 @@
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import PostFeed from '../../components/posts/PostFeed';
 import CreatePost from '../../components/posts/CreatePost';
-import AutoHideNavbar from '../../components/layout/AutoHideNavbar';
+import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import { useState } from 'react';
+import { useGamificationStore } from '../../store/gamificationStore';
 
 export default function FeedPage() {
   const [refreshPosts, setRefreshPosts] = useState(false);
