@@ -33,7 +33,7 @@ export default function AIStudyBuddyPage() {
   const [studyGoal, setStudyGoal] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [activeTab, setActiveTab] = useState('recommendations');
-  const { addPoints, userStats } = useGamificationStore();
+  const { addPoints, points, level } = useGamificationStore();
   const { isPremium, hasFeatureAccess, setUpgradeModal } = usePremiumStore();
 
   useEffect(() => {
@@ -245,10 +245,10 @@ export default function AIStudyBuddyPage() {
                     ✨ PRO Feature
                   </span>
                   <span className="text-gray-500 dark:text-gray-400">
-                    🔥 Streak: {userStats.currentStreak} days
+                    🔥 Streak: 0 days
                   </span>
                   <span className="text-gray-500 dark:text-gray-400">
-                    ⚡ Level: {userStats.level}
+                    ⚡ Level: {level}
                   </span>
                 </div>
               </div>
