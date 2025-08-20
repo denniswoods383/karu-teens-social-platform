@@ -163,30 +163,76 @@ export default function ContentControl() {
 
           <div className="grid gap-4">
             {filteredPosts.map((post: any) => (
-              <div key={post.id} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <p className="font-medium">{post.profiles?.email}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                      {new Date(post.created_at).toLocaleDateString()}
-                    </p>
+              <div key={post.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
+                {/* Post Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                      {post.profiles?.email?.charAt(0).toUpperCase() || '🎓'}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-white">
+                        {post.profiles?.username || post.profiles?.email?.split('@')[0] || 'Student'}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {new Date(post.created_at).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span className={`px-2 py-1 rounded-full text-xs ${
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                       post.is_premium 
-                        ? 'bg-yellow-100 text-yellow-800' 
-                        : 'bg-gray-100 text-gray-800'
+                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' 
+                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                     }`}>
-                      {post.is_premium ? '✨ Premium' : 'Free'}
+                      {post.is_premium ? '✨ Premium' : '🆓 Free'}
                     </span>
                   </div>
                 </div>
                 
-                <p className="text-gray-800 dark:text-gray-200 mb-4 line-clamp-3">
-                  {post.content}
-                </p>
+                {/* Post Content */}
+                <div className="mb-4">
+                  <p className="text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
+                    {post.content}
+                  </p>
+                  
+                  {/* Post Media */}
+                  {post.media_url && (
+                    <div className="mt-4">
+                      {post.media_url.includes('image') || post.media_url.includes('.jpg') || post.media_url.includes('.png') ? (
+                        <img 
+                          src={post.media_url} 
+                          alt="Post media" 
+                          className="w-full max-w-md rounded-lg shadow-md"
+                        />
+                      ) : (
+                        <video 
+                          src={post.media_url} 
+                          controls 
+                          className="w-full max-w-md rounded-lg shadow-md"
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
                 
-                <div className="flex flex-wrap gap-2">
+                {/* Post Stats */}
+                <div className="flex items-center space-x-6 text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  <span className="flex items-center space-x-1">
+                    <span>👍</span>
+                    <span>{post.likes_count || 0} likes</span>
+                  </span>
+                  <span className="flex items-center space-x-1">
+                    <span>💬</span>
+                    <span>{post.comments_count || 0} comments</span>
+                  </span>
+                  <span className="flex items-center space-x-1">
+                    <span>👁️</span>
+                    <span>{post.views_count || 0} views</span>
+                  </span>
+                </div>
+                {/* Admin Actions */}
+                <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200 dark:border-gray-600">
                   <button
                     onClick={() => togglePremium(post.id, post.is_premium, post.user_id)}
                     className={`px-3 py-1 rounded text-sm font-medium ${
