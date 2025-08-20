@@ -3,7 +3,7 @@ import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import { useAuthStore } from '../../store/authStore';
 import { useGamificationStore } from '../../store/gamificationStore';
-import AchievementsPanel from '../../components/gamification/AchievementsPanel';
+
 
 export default function AnalyticsPage() {
   const [stats, setStats] = useState({
@@ -106,7 +106,10 @@ export default function AnalyticsPage() {
 
             {/* Right Column - Achievements */}
             <div>
-              <AchievementsPanel />
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">🏆 Achievements</h2>
+                <p className="text-gray-600 dark:text-gray-300">Achievement system coming soon!</p>
+              </div>
             </div>
           </div>
         </div>
