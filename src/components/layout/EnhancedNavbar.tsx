@@ -39,13 +39,22 @@ export default function EnhancedNavbar() {
   }, [lastScrollY]);
 
   const navigationItems = [
-    { name: 'Home', icon: '🏠', href: '/feed', active: true },
-    { name: 'Study Groups', icon: '📚', href: '/study-groups' },
-    { name: 'Comrades', icon: '👥', href: '/comrades' },
-    { name: 'Messages', icon: '💬', href: '/messages' },
-    { name: 'AI Tools', icon: '🤖', href: '/ai' },
-    { name: 'Analytics', icon: '📊', href: '/analytics' },
+    { name: 'Home', icon: '🏠', href: '/feed', active: false },
+    { name: 'Study Groups', icon: '📚', href: '/study-groups', active: false },
+    { name: 'Stories', icon: '📱', href: '/stories', active: false },
+    { name: 'Marketplace', icon: '🛍️', href: '/marketplace', active: false },
+    { name: 'AI Study Buddy', icon: '🤖', href: '/ai-study-buddy', active: false },
+    { name: 'Comrades', icon: '👥', href: '/comrades', active: false },
+    { name: 'Messages', icon: '💬', href: '/messages', active: false },
+    { name: 'Analytics', icon: '📊', href: '/analytics', active: false },
   ];
+
+  // Set active state based on current path
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  const updatedNavItems = navigationItems.map(item => ({
+    ...item,
+    active: currentPath === item.href || (item.href === '/feed' && currentPath === '/')
+  }));
 
   return (
     <>
@@ -78,21 +87,43 @@ export default function EnhancedNavbar() {
             </div>
 
             {/* Center Navigation */}
-            <div className="hidden lg:flex items-center space-x-1">
-              {navigationItems.map((item) => (
+            <div className="hidden xl:flex items-center space-x-1">
+              {updatedNavItems.slice(0, 6).map((item) => (
                 <button 
                   key={item.name}
                   onClick={() => window.location.href = item.href}
-                  className={`flex flex-col items-center py-3 px-4 rounded-xl transition-all duration-200 ${
+                  className={`flex flex-col items-center py-3 px-3 rounded-xl transition-all duration-200 ${
                     item.active 
                       ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' 
                       : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-blue-600 dark:hover:text-blue-400'
                   }`}
                 >
-                  <span className="text-xl mb-1">{item.icon}</span>
+                  <span className="text-lg mb-1">{item.icon}</span>
                   <span className="text-xs font-medium">{item.name}</span>
                 </button>
               ))}
+              
+              {/* More Menu for Additional Items */}
+              <div className="relative group">
+                <button className="flex flex-col items-center py-3 px-3 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200">
+                  <span className="text-lg mb-1">⋯</span>
+                  <span className="text-xs font-medium">More</span>
+                </button>
+                
+                {/* Dropdown */}
+                <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                  {updatedNavItems.slice(6).map((item) => (
+                    <button
+                      key={item.name}
+                      onClick={() => window.location.href = item.href}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center space-x-3 transition-colors duration-200"
+                    >
+                      <span className="text-lg">{item.icon}</span>
+                      <span className="text-gray-700 dark:text-gray-300">{item.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Right Section - User Stats & Profile */}
@@ -246,19 +277,19 @@ export default function EnhancedNavbar() {
       </nav>
 
       {/* Mobile Bottom Navigation */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-700 px-4 py-2 z-40">
+      <div className="xl:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-700 px-4 py-2 z-40">
         <div className="flex justify-around items-center">
-          {navigationItems.slice(0, 5).map((item) => (
+          {updatedNavItems.slice(0, 5).map((item) => (
             <button 
               key={item.name}
               onClick={() => window.location.href = item.href}
-              className={`flex flex-col items-center py-2 px-3 rounded-xl transition-all duration-200 ${
+              className={`flex flex-col items-center py-2 px-2 rounded-xl transition-all duration-200 ${
                 item.active 
                   ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' 
                   : 'text-gray-600 dark:text-gray-400'
               }`}
             >
-              <span className="text-xl mb-1">{item.icon}</span>
+              <span className="text-lg mb-1">{item.icon}</span>
               <span className="text-xs font-medium">{item.name}</span>
             </button>
           ))}
