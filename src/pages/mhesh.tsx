@@ -196,10 +196,22 @@ const AdminPanel = () => {
                   📝 Manage Posts
                 </button>
                 <button
-                  onClick={() => window.location.href = '/mhesh/messaging'}
-                  className="bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 text-sm font-medium"
+                  onClick={() => window.location.href = '/mhesh/premium'}
+                  className="bg-yellow-600 text-white py-3 px-4 rounded-lg hover:bg-yellow-700 text-sm font-medium"
                 >
-                  💬 Send Messages
+                  ✨ Premium Manager
+                </button>
+                <button
+                  onClick={() => window.location.href = '/mhesh/content'}
+                  className="bg-pink-600 text-white py-3 px-4 rounded-lg hover:bg-pink-700 text-sm font-medium"
+                >
+                  🔒 Content Control
+                </button>
+                <button
+                  onClick={() => window.location.href = '/mhesh/bans'}
+                  className="bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 text-sm font-medium"
+                >
+                  🚫 User Bans
                 </button>
                 <button
                   onClick={() => window.location.href = '/mhesh/analytics'}
@@ -207,30 +219,22 @@ const AdminPanel = () => {
                 >
                   📈 Analytics
                 </button>
-                <button
-                  onClick={() => window.location.href = '/mhesh/reports'}
-                  className="bg-orange-600 text-white py-3 px-4 rounded-lg hover:bg-orange-700 text-sm font-medium"
-                >
-                  🚨 Reports
-                </button>
-                <button
-                  onClick={() => window.location.href = '/mhesh/settings'}
-                  className="bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 text-sm font-medium"
-                >
-                  ⚙️ Settings
-                </button>
               </div>
               
               <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg">
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Quick Stats</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-3 gap-4 text-sm">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-blue-600">150+</div>
                     <div className="text-gray-600 dark:text-gray-300">Active Users</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">500+</div>
-                    <div className="text-gray-600 dark:text-gray-300">Posts Created</div>
+                    <div className="text-2xl font-bold text-yellow-600">25</div>
+                    <div className="text-gray-600 dark:text-gray-300">Premium Users</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-red-600">3</div>
+                    <div className="text-gray-600 dark:text-gray-300">Banned Users</div>
                   </div>
                 </div>
               </div>
