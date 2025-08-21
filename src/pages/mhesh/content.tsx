@@ -56,12 +56,14 @@ export default function ContentControl() {
   const messageUser = async (userId: string, userEmail?: string) => {
     // Get user info if email not provided
     if (!userEmail) {
-      const { data: profile } = await supabase
+      const { data: profile, error } = await supabase
         .from('profiles')
-        .select('username, email')
+        .select('username')
         .eq('id', userId)
         .single();
-      userEmail = profile?.username || profile?.email || 'User';
+      
+      console.log('Profile lookup:', { profile, error, userId });
+      userEmail = profile?.username || 'User';
     }
     
     const message = prompt(`Send message to ${userEmail}:`);
