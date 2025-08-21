@@ -36,101 +36,47 @@ export default function StoriesPage() {
     loadStories();
   }, []);
 
-  const loadStories = () => {
-    const sampleStories: Story[] = [
-      {
-        id: '1',
-        author: {
-          name: 'Sarah Kim',
-          avatar: '/api/placeholder/40/40',
-          isVerified: true
-        },
-        content: {
-          type: 'text',
-          text: 'Just aced my Calculus exam! 🎉 The study group sessions really helped. Thanks everyone!',
-          backgroundColor: 'bg-gradient-to-br from-green-400 to-blue-500'
-        },
-        timestamp: '2025-01-20T10:30:00',
-        views: 234,
-        isViewed: false,
-        category: 'achievement',
-        tags: ['calculus', 'exam', 'success']
-      },
-      {
-        id: '2',
-        author: {
-          name: 'Alex Chen',
-          avatar: '/api/placeholder/40/40',
-          isVerified: false
-        },
-        content: {
-          type: 'image',
-          media: '/api/placeholder/400/600',
-          text: 'Late night coding session in the library 💻 Building my final project!'
-        },
-        timestamp: '2025-01-20T02:15:00',
-        views: 89,
-        isViewed: true,
-        category: 'study',
-        tags: ['coding', 'library', 'project']
-      },
-      {
-        id: '3',
-        author: {
-          name: 'Maria Rodriguez',
-          avatar: '/api/placeholder/40/40',
-          isVerified: true
-        },
-        content: {
-          type: 'text',
-          text: 'Chemistry lab explosion today! 🧪💥 Everyone is safe, just a colorful surprise 😅',
-          backgroundColor: 'bg-gradient-to-br from-purple-400 to-pink-500'
-        },
-        timestamp: '2025-01-19T14:45:00',
-        views: 456,
-        isViewed: false,
-        category: 'campus',
-        tags: ['chemistry', 'lab', 'science']
-      },
-      {
-        id: '4',
-        author: {
-          name: 'David Liu',
-          avatar: '/api/placeholder/40/40',
-          isVerified: true
-        },
-        content: {
-          type: 'image',
-          media: '/api/placeholder/400/600',
-          text: 'Study group meetup at the campus café ☕ Physics problems made easier with friends!'
-        },
-        timestamp: '2025-01-19T16:20:00',
-        views: 167,
-        isViewed: true,
-        category: 'social',
-        tags: ['study-group', 'physics', 'friends']
-      },
-      {
-        id: '5',
-        author: {
-          name: 'Jessica Park',
-          avatar: '/api/placeholder/40/40',
-          isVerified: false
-        },
-        content: {
-          type: 'text',
-          text: 'Reached Level 15 on KaruTeens! 🏆 The gamification system really motivates me to stay active.',
-          backgroundColor: 'bg-gradient-to-br from-yellow-400 to-orange-500'
-        },
-        timestamp: '2025-01-19T12:00:00',
-        views: 203,
-        isViewed: false,
-        category: 'achievement',
-        tags: ['level-up', 'gamification', 'milestone']
+  const loadStories = async () => {
+    try {
+      const { data: storiesData, error } = await supabase
+        .from('stories')
+        .select(`
+          *,
+          profiles(username, full_name, avatar_url),
+          story_views!left(viewer_id)
+        `)
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error loading stories:', error);
+        return;
       }
-    ];
-    
-    setStories(sampleStories);
+      
+      const formattedStories = storiesData?.map(story => ({
+        id: story.id,
+        author: {
+          name: story.profiles?.full_name || story.profiles?.username || 'Student',
+          avatar: story.profiles?.avatar_url || '',
+          isVerified: false
+        },
+        content: {
+          type: story.media_type || 'text',
+          text: story.content,
+          media: story.media_url,
+          backgroundColor: story.background_color
+        },
+        timestamp: story.created_at,
+        views: story.views_count || 0,
+        isViewed: story.story_views?.some((view: any) => view.viewer_id === user?.id) || false,
+        category: story.category,
+        tags: []
+      })) || [];
+      
+      setStories(formattedStories);
+    } catch (error) {
+      console.error('Failed to load stories:', error);
+    }
   };
 
   const categories = [
@@ -145,21 +91,118 @@ export default function StoriesPage() {
     filterCategory === 'all' || story.category === filterCategory
   );
 
-  const handleViewStory = (story: Story) => {
+  const handleViewStory = async (story: Story) => {
     setSelectedStory(story);
-    if (!story.isViewed) {
-      addPoints(1);
-      // Mark as viewed
-      setStories(prev => prev.map(s => 
-        s.id === story.id ? { ...s, isViewed: true, views: s.views + 1 } : s
-      ));
+    
+    if (!story.isViewed && user) {
+      try {
+        // Record view
+        await supabase
+          .from('story_views')
+          .insert({
+            story_id: story.id,
+            viewer_id: user.id
+          });
+        
+        // Update views count
+        await supabase
+          .from('stories')
+          .update({ views_count: story.views + 1 })
+          .eq('id', story.id);
+        
+        addPoints(1);
+        
+        // Update local state
+        setStories(prev => prev.map(s => 
+          s.id === story.id ? { ...s, isViewed: true, views: s.views + 1 } : s
+        ));
+      } catch (error) {
+        console.error('Failed to record story view:', error);
+      }
     }
   };
 
-  const handleCreateStory = () => {
-    addPoints(8);
-    alert('📱 Story created! +8 XP for sharing your campus life!');
-    setShowCreateModal(false);
+  const handleCreateStory = async () => {
+    const content = (document.getElementById('story-content') as HTMLTextAreaElement)?.value;
+    const category = (document.getElementById('story-category') as HTMLSelectElement)?.value;
+    
+    if (!content?.trim()) {
+      alert('Please enter some content for your story');
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('stories')
+        .insert({
+          user_id: user?.id,
+          content: content.trim(),
+          media_type: 'text',
+          category: category || 'social',
+          background_color: 'bg-gradient-to-br from-blue-400 to-purple-500'
+        });
+      
+      if (error) {
+        console.error('Error creating story:', error);
+        alert('Failed to create story');
+        return;
+      }
+      
+      addPoints(8);
+      alert('📱 Story created! +8 XP for sharing your campus life!');
+      setShowCreateModal(false);
+      loadStories(); // Reload stories
+    } catch (error) {
+      console.error('Failed to create story:', error);
+      alert('Failed to create story');
+    }
+  };
+  
+  const handleLikeStory = async (storyId: string) => {
+    if (!user) return;
+    
+    try {
+      // Check if already liked
+      const { data: existingLike } = await supabase
+        .from('story_likes')
+        .select('id')
+        .eq('story_id', storyId)
+        .eq('user_id', user.id)
+        .single();
+      
+      if (existingLike) {
+        // Unlike
+        await supabase
+          .from('story_likes')
+          .delete()
+          .eq('id', existingLike.id);
+        
+        await supabase
+          .from('stories')
+          .update({ likes_count: Math.max(0, (selectedStory?.views || 1) - 1) })
+          .eq('id', storyId);
+        
+        alert('Story unliked!');
+      } else {
+        // Like
+        await supabase
+          .from('story_likes')
+          .insert({
+            story_id: storyId,
+            user_id: user.id
+          });
+        
+        await supabase
+          .from('stories')
+          .update({ likes_count: (selectedStory?.views || 0) + 1 })
+          .eq('id', storyId);
+        
+        addPoints(2);
+        alert('Story liked! +2 XP');
+      }
+    } catch (error) {
+      console.error('Failed to like story:', error);
+    }
   };
 
   const getTimeAgo = (timestamp: string) => {
@@ -375,7 +418,7 @@ export default function StoriesPage() {
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Category
                       </label>
-                      <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                      <select id="story-category" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                         <option value="study">📚 Study Life</option>
                         <option value="campus">🏫 Campus Life</option>
                         <option value="achievement">🏆 Achievement</option>
@@ -388,6 +431,7 @@ export default function StoriesPage() {
                         Caption
                       </label>
                       <textarea
+                        id="story-content"
                         placeholder="Share what's happening in your academic journey..."
                         rows={3}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -466,7 +510,10 @@ export default function StoriesPage() {
                   <div className="p-4 bg-white dark:bg-gray-800">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
-                        <button className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-red-500 transition-colors">
+                        <button 
+                          onClick={() => handleLikeStory(selectedStory.id)}
+                          className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-red-500 transition-colors"
+                        >
                           <span>❤️</span>
                           <span>Like</span>
                         </button>
