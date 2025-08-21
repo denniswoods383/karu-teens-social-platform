@@ -29,36 +29,18 @@ export default function ComradesPage() {
     try {
       setLoading(true);
       
-      // Get random users quickly (exclude followed users later)
-      const { data: allUsers, error } = await supabase
+      // Just get users quickly - no complex filtering
+      const { data: users, error } = await supabase
         .from('profiles')
         .select('id, username, full_name, avatar_url')
         .neq('id', user.id)
-        .limit(15);
+        .limit(6);
       
-      if (error) {
-        console.error('Error loading suggestions:', error);
-        setSuggestions([]);
-        return;
-      }
-      
-      // Show users immediately, filter follows in background
-      setSuggestions(allUsers?.slice(0, 8) || []);
-      setLoading(false);
-      
-      // Background: Remove already followed users
-      const { data: followingData } = await supabase
-        .from('follows')
-        .select('following_id')
-        .eq('follower_id', user.id);
-      
-      const followingIds = followingData?.map(f => f.following_id) || [];
-      const filtered = allUsers?.filter(u => !followingIds.includes(u.id)).slice(0, 8) || [];
-      
-      setSuggestions(filtered);
+      setSuggestions(users || []);
     } catch (error) {
       console.error('Failed to load data:', error);
       setSuggestions([]);
+    } finally {
       setLoading(false);
     }
   };
