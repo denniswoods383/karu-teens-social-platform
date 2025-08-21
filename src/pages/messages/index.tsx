@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/router';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import { supabase } from '../../lib/supabase';
@@ -35,6 +36,7 @@ export default function MessagesPage() {
   const [uploadProgress, setUploadProgress] = useState<{[key: string]: number}>({});
   const [isTyping, setIsTyping] = useState(false);
   const { user } = useAuth();
+  const router = useRouter();
   const typingTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -44,16 +46,19 @@ export default function MessagesPage() {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
-    
-    // Check if user parameter is in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get('user');
-    if (userId) {
+  }, []);
+  
+  useEffect(() => {
+    // Handle URL parameters for direct conversation links
+    if (router.query.conversation) {
+      const conversationId = router.query.conversation as string;
+      loadConversationFromId(conversationId);
+    } else if (router.query.user) {
+      const userId = router.query.user as string;
       setSelectedChat(userId);
-      // Add user to conversations if not already there
       addUserToConversations(userId);
     }
-  }, []);
+  }, [router.query]);
 
   useEffect(() => {
     if (selectedChat) {
@@ -201,6 +206,46 @@ export default function MessagesPage() {
     }
   };
 
+  const loadConversationFromId = async (conversationId: string) => {
+    try {
+      // Get conversation details
+      const { data: conversation } = await supabase
+        .from('conversations')
+        .select('user1_id, user2_id')
+        .eq('id', conversationId)
+        .single();
+      
+      if (conversation) {
+        // Determine the other user in the conversation
+        const otherUserId = conversation.user1_id === user?.id ? conversation.user2_id : conversation.user1_id;
+        
+        // Load other user's profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id, username, full_name')
+          .eq('id', otherUserId)
+          .single();
+        
+        if (profile) {
+          // Add to conversations if not exists
+          const userExists = conversations.find(c => c.id === otherUserId);
+          if (!userExists) {
+            setConversations(prev => [...prev, {
+              id: profile.id,
+              username: profile.username || profile.id,
+              full_name: profile.full_name || 'Student'
+            }]);
+          }
+          
+          // Set as selected chat
+          setSelectedChat(otherUserId);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load conversation:', error);
+    }
+  };
+  
   const addUserToConversations = async (userId: string) => {
     try {
       const { data } = await supabase
