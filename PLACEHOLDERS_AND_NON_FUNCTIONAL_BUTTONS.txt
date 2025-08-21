@@ -1,0 +1,159 @@
+KARU TEENS SOCIAL PLATFORM - PLACEHOLDERS & NON-FUNCTIONAL BUTTONS AUDIT
+==========================================================================
+
+📍 LOCATION: /pages/comrades/index.tsx
+❌ ISSUES:
+- API endpoints pointing to hardcoded IP (10.0.0.122:8001) - should use Supabase
+- Follow/Unfollow buttons use external API instead of Supabase
+- Message button redirects to messages page but doesn't create conversation
+- Suggestions API uses wrong endpoint (/api/v1/auth/login)
+
+🔧 FUNCTIONS TO IMPLEMENT:
+- Replace external API calls with Supabase queries
+- Create follow/unfollow functionality in Supabase
+- Implement user suggestions based on mutual connections
+- Fix message button to create actual conversations
+
+📍 LOCATION: /pages/stories/index.tsx
+❌ ISSUES:
+- All stories are hardcoded sample data
+- "Create Story" modal doesn't actually create stories
+- Story viewer doesn't save view counts
+- Like/Reply buttons in story viewer are non-functional
+- Image/video upload not implemented
+
+🔧 FUNCTIONS TO IMPLEMENT:
+- Create stories table in Supabase
+- Implement story creation with media upload
+- Add real-time story viewing and analytics
+- Implement story reactions (likes, replies)
+- Add story expiration (24-hour auto-delete)
+
+📍 LOCATION: /pages/marketplace/index.tsx
+❌ ISSUES:
+- All marketplace items are hardcoded sample data
+- "Sell Item" button only shows upgrade modal for non-premium users
+- "Contact Seller" button only shows alert, doesn't create conversation
+- "Save" button is completely non-functional
+- No actual item creation functionality
+
+🔧 FUNCTIONS TO IMPLEMENT:
+- Create marketplace_items table in Supabase
+- Implement item creation form with image upload
+- Add real messaging system between buyers/sellers
+- Implement save/bookmark functionality
+- Add item search and filtering
+- Create transaction/payment system
+
+📍 LOCATION: /pages/profile/index.tsx
+❌ ISSUES:
+- Profile editing may not save to database properly
+- Social stats (followers, following) may be hardcoded
+- Achievement system not fully implemented
+
+🔧 FUNCTIONS TO IMPLEMENT:
+- Ensure profile updates save to Supabase
+- Connect social stats to real follow system
+- Implement achievement tracking system
+
+📍 LOCATION: /pages/ai/* (Multiple AI Tools)
+❌ ISSUES:
+- Most AI tools have placeholder functionality
+- API calls may not be properly implemented
+- Results may be hardcoded or simulated
+
+🔧 FUNCTIONS TO IMPLEMENT:
+- Connect to real AI APIs (OpenAI, etc.)
+- Implement proper error handling
+- Add usage tracking and limits
+
+📍 LOCATION: /pages/settings/index.tsx
+❌ ISSUES:
+- Settings changes may not persist
+- Notification preferences not connected to real system
+- Privacy settings may be non-functional
+
+🔧 FUNCTIONS TO IMPLEMENT:
+- Connect settings to user preferences in database
+- Implement notification system integration
+- Add privacy controls
+
+📍 LOCATION: /pages/notifications/index.tsx
+❌ ISSUES:
+- Mark as read functionality may not persist
+- Real-time notifications not implemented
+- Notification filtering may be client-side only
+
+🔧 FUNCTIONS TO IMPLEMENT:
+- Implement real-time notification updates
+- Add notification categories and preferences
+- Connect to push notification system
+
+📍 LOCATION: /components/posts/PostCard.tsx
+❌ ISSUES:
+- Like/Unlike functionality works but may need optimization
+- Comment system may have issues
+- Share button is non-functional
+- Report/Hide functionality uses alerts
+
+🔧 FUNCTIONS TO IMPLEMENT:
+- Implement proper share functionality
+- Add real reporting system
+- Optimize like/comment performance
+
+📍 LOCATION: /pages/menu/index.tsx
+❌ ISSUES:
+- Menu items may link to non-existent pages
+- Quick actions may be non-functional
+
+🔧 FUNCTIONS TO IMPLEMENT:
+- Ensure all menu links work
+- Implement quick action functionality
+
+📍 LOCATION: /pages/help/index.tsx
+❌ ISSUES:
+- Help content may be placeholder text
+- Contact forms may not send emails
+- FAQ search may be non-functional
+
+🔧 FUNCTIONS TO IMPLEMENT:
+- Add real help content
+- Implement contact form with email sending
+- Add FAQ search functionality
+
+📍 LOCATION: /pages/feedback/index.tsx
+❌ ISSUES:
+- Feedback form may not submit to database
+- Anonymous feedback system may not work
+
+🔧 FUNCTIONS TO IMPLEMENT:
+- Connect feedback form to database
+- Implement admin feedback review system
+
+PRIORITY IMPLEMENTATION ORDER:
+=============================
+1. 🔥 HIGH PRIORITY:
+   - Fix Comrades page API calls (use Supabase)
+   - Implement real Stories functionality
+   - Create working Marketplace system
+   - Fix Profile social stats
+
+2. 🟡 MEDIUM PRIORITY:
+   - Complete AI tools integration
+   - Implement Settings persistence
+   - Add real-time notifications
+   - Fix PostCard share functionality
+
+3. 🟢 LOW PRIORITY:
+   - Complete Help/FAQ system
+   - Enhance Feedback system
+   - Add Menu quick actions
+   - Optimize existing features
+
+ESTIMATED DEVELOPMENT TIME:
+==========================
+- High Priority: 2-3 weeks
+- Medium Priority: 1-2 weeks  
+- Low Priority: 1 week
+
+TOTAL: 4-6 weeks for complete functionality
