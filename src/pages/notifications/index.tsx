@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
-import AutoHideNavbar from '../../components/layout/AutoHideNavbar';
+import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useSupabase';
 
 interface Notification {
   id: number;
@@ -15,14 +17,25 @@ interface Notification {
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [filter, setFilter] = useState('all');
+  const { user } = useAuth();
 
   useEffect(() => {
-    loadNotifications();
-  }, []);
+    if (user) {
+      loadNotifications();
+    }
+  }, [user]);
 
   const loadNotifications = async () => {
-    // Using real-time notifications now
-    setNotifications([]);
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    
+    console.log('Notifications loaded:', data, error);
+    setNotifications(data || []);
   };
 
   const markAsRead = async (id: number) => {
@@ -48,8 +61,8 @@ export default function NotificationsPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-100">
-        <AutoHideNavbar />
+      <div className="min-h-screen bg-gradient-to-br from-blue-100 via-cyan-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900 transition-colors duration-300">
+        <EnhancedNavbar />
         
         <div className="max-w-2xl mx-auto px-4 pt-20 pb-6">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
