@@ -53,23 +53,34 @@ export default function ContentControl() {
     }
   };
 
-  const messageUser = async (userId: string, userEmail: string) => {
+  const messageUser = async (userId: string, userEmail?: string) => {
+    // Get user info if email not provided
+    if (!userEmail) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, email')
+        .eq('id', userId)
+        .single();
+      userEmail = profile?.username || profile?.email || 'User';
+    }
+    
     const message = prompt(`Send message to ${userEmail}:`);
     if (!message) return;
     
-    // Send as direct message
+    // Send as notification instead of message
     const { error } = await supabase
-      .from('messages')
+      .from('notifications')
       .insert({
-        sender_id: 'admin', // Admin identifier
-        receiver_id: userId,
-        content: `📢 ADMIN MESSAGE: ${message}`,
-        is_admin_message: true
+        user_id: userId,
+        title: '📢 Admin Message',
+        message: `ADMIN: ${message}`,
+        type: 'warning'
       });
     
     if (!error) {
       alert('Message sent successfully!');
     } else {
+      console.error('Error sending message:', error);
       alert('Failed to send message');
     }
   };
@@ -165,7 +176,7 @@ export default function ContentControl() {
                       Delete
                     </button>
                     <button
-                      onClick={() => messageUser(post.user_id, post.profiles?.email)}
+                      onClick={() => messageUser(post.user_id)}
                       className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-full font-semibold text-sm hover:bg-blue-700 transition-all duration-300"
                     >
                       <span className="mr-2">📧</span>
