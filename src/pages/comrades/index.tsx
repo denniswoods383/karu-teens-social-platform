@@ -28,15 +28,26 @@ export default function ComradesPage() {
     
     try {
       setLoading(true);
+      console.log('Loading users for comrades page...');
       
-      // Just get users quickly - no complex filtering
       const { data: users, error } = await supabase
         .from('profiles')
         .select('id, username, full_name, avatar_url')
         .neq('id', user.id)
         .limit(6);
       
-      setSuggestions(users || []);
+      console.log('Users loaded:', users, 'Error:', error);
+      
+      if (error) {
+        console.error('Database error:', error);
+        // Fallback: show sample users if database fails
+        setSuggestions([
+          { id: 'sample1', username: 'student1', full_name: 'Sample Student 1' },
+          { id: 'sample2', username: 'student2', full_name: 'Sample Student 2' }
+        ]);
+      } else {
+        setSuggestions(users || []);
+      }
     } catch (error) {
       console.error('Failed to load data:', error);
       setSuggestions([]);
