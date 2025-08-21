@@ -3,6 +3,8 @@ import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import { useGamificationStore } from '../../store/gamificationStore';
 import { usePremiumStore } from '../../store/premiumStore';
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useSupabase';
 
 interface Story {
   id: string;
@@ -31,6 +33,7 @@ export default function StoriesPage() {
   const [filterCategory, setFilterCategory] = useState('all');
   const { addPoints } = useGamificationStore();
   const { isPremium } = usePremiumStore();
+  const { user } = useAuth();
 
   useEffect(() => {
     loadStories();
@@ -125,21 +128,52 @@ export default function StoriesPage() {
   const handleCreateStory = async () => {
     const content = (document.getElementById('story-content') as HTMLTextAreaElement)?.value;
     const category = (document.getElementById('story-category') as HTMLSelectElement)?.value;
+    const fileInput = document.getElementById('story-media') as HTMLInputElement;
+    const selectedFile = fileInput?.files?.[0];
     
-    if (!content?.trim()) {
-      alert('Please enter some content for your story');
+    if (!content?.trim() && !selectedFile) {
+      alert('Please enter some content or select a photo/video for your story');
       return;
     }
     
     try {
+      let mediaUrl = '';
+      let mediaType = 'text';
+      
+      // Upload media to Cloudinary if selected
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('upload_preset', 'karu_teens');
+        
+        const uploadUrl = selectedFile.type.startsWith('video/') 
+          ? 'https://api.cloudinary.com/v1_1/dybwvr0tn/video/upload'
+          : 'https://api.cloudinary.com/v1_1/dybwvr0tn/image/upload';
+        
+        const response = await fetch(uploadUrl, {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          mediaUrl = data.secure_url;
+          mediaType = selectedFile.type.startsWith('video/') ? 'video' : 'image';
+        } else {
+          alert('Failed to upload media');
+          return;
+        }
+      }
+      
       const { error } = await supabase
         .from('stories')
         .insert({
           user_id: user?.id,
-          content: content.trim(),
-          media_type: 'text',
+          content: content?.trim() || '',
+          media_url: mediaUrl,
+          media_type: mediaType,
           category: category || 'social',
-          background_color: 'bg-gradient-to-br from-blue-400 to-purple-500'
+          background_color: mediaType === 'text' ? 'bg-gradient-to-br from-blue-400 to-purple-500' : ''
         });
       
       if (error) {
@@ -290,10 +324,20 @@ export default function StoriesPage() {
               >
                 {/* Story Preview */}
                 <div className="aspect-[9/16] relative">
-                  {story.content.type === 'image' ? (
-                    <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
-                      <span className="text-4xl">📷</span>
-                    </div>
+                  {story.content.type === 'image' && story.content.media ? (
+                    <img 
+                      src={story.content.media} 
+                      alt="Story" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : story.content.type === 'video' && story.content.media ? (
+                    <video 
+                      src={story.content.media} 
+                      className="w-full h-full object-cover"
+                      muted
+                      loop
+                      autoPlay
+                    />
                   ) : (
                     <div className={`w-full h-full ${story.content.backgroundColor || 'bg-gradient-to-br from-blue-400 to-purple-500'} flex items-center justify-center p-4`}>
                       <p className="text-white font-medium text-center text-sm leading-relaxed">
@@ -396,22 +440,15 @@ export default function StoriesPage() {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Story Type
+                        Add Photo or Video (Optional)
                       </label>
-                      <div className="grid grid-cols-3 gap-3">
-                        <button className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                          <div className="text-2xl mb-1">📝</div>
-                          <div className="text-xs">Text</div>
-                        </button>
-                        <button className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                          <div className="text-2xl mb-1">📷</div>
-                          <div className="text-xs">Photo</div>
-                        </button>
-                        <button className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                          <div className="text-2xl mb-1">🎥</div>
-                          <div className="text-xs">Video</div>
-                        </button>
-                      </div>
+                      <input
+                        id="story-media"
+                        type="file"
+                        accept="image/*,video/*"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Supports images and videos up to 10MB</p>
                     </div>
 
                     <div>
@@ -471,10 +508,18 @@ export default function StoriesPage() {
               <div className="max-w-md w-full mx-4">
                 <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-2xl">
                   <div className="aspect-[9/16] relative">
-                    {selectedStory.content.type === 'image' ? (
-                      <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
-                        <span className="text-6xl">📷</span>
-                      </div>
+                    {selectedStory.content.type === 'image' && selectedStory.content.media ? (
+                      <img 
+                        src={selectedStory.content.media} 
+                        alt="Story" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : selectedStory.content.type === 'video' && selectedStory.content.media ? (
+                      <video 
+                        src={selectedStory.content.media} 
+                        controls 
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <div className={`w-full h-full ${selectedStory.content.backgroundColor} flex items-center justify-center p-6`}>
                         <p className="text-white font-medium text-center text-lg leading-relaxed">
