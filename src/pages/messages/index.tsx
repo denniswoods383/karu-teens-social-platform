@@ -413,13 +413,21 @@ export default function MessagesPage() {
                         >
                           <div
                             className={`max-w-sm px-4 py-3 rounded-2xl shadow-md transition-all duration-300 hover:shadow-lg ${
-                              message.sender_id === user?.id
+                              message.is_admin_message
+                                ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white border-2 border-red-300'
+                                : message.sender_id === user?.id
                                 ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white'
                                 : 'bg-white text-gray-900 border border-gray-200'
                             }`}
                           >
+                            {message.is_admin_message && (
+                              <div className="flex items-center mb-2 text-yellow-200">
+                                <span className="text-xs font-bold">🚫 ADMIN MESSAGE - NO REPLY</span>
+                              </div>
+                            )}
                             <p className="text-sm leading-relaxed">{message.content}</p>
                             <div className={`flex items-center justify-between mt-2 ${
+                              message.is_admin_message ? 'text-red-100' :
                               message.sender_id === user?.id ? 'text-blue-100' : 'text-gray-500'
                             }`}>
                               <p className="text-xs font-medium">
@@ -451,8 +459,9 @@ export default function MessagesPage() {
                     )}
                   </div>
                   
-                  {/* Message Input */}
-                  <form onSubmit={sendMessage} className="p-4 border-t bg-gradient-to-r from-blue-50 to-cyan-50">
+                  {/* Message Input - Disabled for admin conversations */}
+                  {selectedChat !== 'admin' ? (
+                    <form onSubmit={sendMessage} className="p-4 border-t bg-gradient-to-r from-blue-50 to-cyan-50">
                     {/* File Preview */}
                     {selectedFiles.length > 0 && (
                       <div className="mb-3 flex flex-wrap gap-2">
@@ -527,6 +536,11 @@ export default function MessagesPage() {
                       </button>
                     </div>
                   </form>
+                  ) : (
+                    <div className="p-4 border-t bg-red-50 text-center">
+                      <p className="text-red-600 font-medium">🚫 Admin messages are read-only. You cannot reply.</p>
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="flex-1 flex items-center justify-center text-gray-500">

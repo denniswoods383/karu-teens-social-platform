@@ -57,13 +57,14 @@ export default function ContentControl() {
     const message = prompt(`Send message to ${userEmail}:`);
     if (!message) return;
     
+    // Send as direct message
     const { error } = await supabase
-      .from('notifications')
+      .from('messages')
       .insert({
-        user_id: userId,
-        title: '📧 Message from Admin',
-        message: message,
-        type: 'info'
+        sender_id: 'admin', // Admin identifier
+        receiver_id: userId,
+        content: `📢 ADMIN MESSAGE: ${message}`,
+        is_admin_message: true
       });
     
     if (!error) {
@@ -173,7 +174,7 @@ export default function ContentControl() {
                   </div>
                 </div>
               </div>
-            ))
+            ))}
           </div>
         </div>
       </div>
