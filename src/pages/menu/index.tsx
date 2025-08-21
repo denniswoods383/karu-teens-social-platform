@@ -1,5 +1,5 @@
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
-import AutoHideNavbar from '../../components/layout/AutoHideNavbar';
+import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import { useAuthStore } from '../../store/authStore';
 
 export default function MenuPage() {
@@ -20,7 +20,7 @@ export default function MenuPage() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-100">
-        <AutoHideNavbar />
+        <EnhancedNavbar />
         
         <div className="max-w-2xl mx-auto px-4 pt-20 pb-6">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">

@@ -1,5 +1,5 @@
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
-import AutoHideNavbar from '../../components/layout/AutoHideNavbar';
+import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import Link from 'next/link';
 
 export default function AIPage() {
@@ -51,7 +51,7 @@ export default function AIPage() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-100">
-        <AutoHideNavbar />
+        <EnhancedNavbar />
         
         <div className="max-w-6xl mx-auto px-4 pt-20 pb-6">
           <div className="text-center mb-8">

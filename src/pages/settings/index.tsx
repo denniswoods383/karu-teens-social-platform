@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
-import AutoHideNavbar from '../../components/layout/AutoHideNavbar';
+import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import { useAuthStore } from '../../store/authStore';
 
 export default function SettingsPage() {
@@ -173,7 +173,7 @@ export default function SettingsPage() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-100">
-        <AutoHideNavbar />
+        <EnhancedNavbar />
         
         <div className="max-w-4xl mx-auto px-4 pt-20 pb-6">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
