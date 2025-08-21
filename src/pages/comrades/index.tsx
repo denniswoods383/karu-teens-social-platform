@@ -29,33 +29,36 @@ export default function ComradesPage() {
     try {
       setLoading(true);
       
-      // Get user suggestions (users not being followed)
+      // Get random users quickly (exclude followed users later)
       const { data: allUsers, error } = await supabase
         .from('profiles')
         .select('id, username, full_name, avatar_url')
         .neq('id', user.id)
-        .limit(10);
+        .limit(15);
       
       if (error) {
         console.error('Error loading suggestions:', error);
+        setSuggestions([]);
         return;
       }
       
-      // Check which users are already being followed
+      // Show users immediately, filter follows in background
+      setSuggestions(allUsers?.slice(0, 8) || []);
+      setLoading(false);
+      
+      // Background: Remove already followed users
       const { data: followingData } = await supabase
         .from('follows')
         .select('following_id')
         .eq('follower_id', user.id);
       
       const followingIds = followingData?.map(f => f.following_id) || [];
+      const filtered = allUsers?.filter(u => !followingIds.includes(u.id)).slice(0, 8) || [];
       
-      // Filter out already followed users
-      const suggestedUsers = allUsers?.filter(u => !followingIds.includes(u.id)) || [];
-      
-      setSuggestions(suggestedUsers);
+      setSuggestions(filtered);
     } catch (error) {
       console.error('Failed to load data:', error);
-    } finally {
+      setSuggestions([]);
       setLoading(false);
     }
   };
@@ -186,9 +189,22 @@ export default function ComradesPage() {
               <div>
                 <h3 className="font-semibold text-gray-900 mb-4">People you may know</h3>
                 {loading ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="text-gray-500 mt-2">Loading suggestions...</p>
+                  <div className="space-y-3">
+                    {[1,2,3].map(i => (
+                      <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg animate-pulse">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
+                          <div>
+                            <div className="h-4 bg-gray-300 rounded w-24 mb-2"></div>
+                            <div className="h-3 bg-gray-300 rounded w-16"></div>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <div className="h-8 bg-gray-300 rounded w-20"></div>
+                          <div className="h-8 bg-gray-300 rounded w-16"></div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : suggestions.length > 0 ? (
                   renderUserList(suggestions)
