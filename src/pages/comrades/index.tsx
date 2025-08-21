@@ -20,15 +20,19 @@ export default function ComradesPage() {
   const { user } = useAuth();
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (user) {
+      loadData();
+    }
+  }, [user]);
 
   const loadData = async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     
     try {
       setLoading(true);
-      console.log('Loading users for comrades page...');
       
       const { data: users, error } = await supabase
         .from('profiles')
@@ -36,15 +40,9 @@ export default function ComradesPage() {
         .neq('id', user.id)
         .limit(6);
       
-      console.log('Users loaded:', users, 'Error:', error);
-      
       if (error) {
         console.error('Database error:', error);
-        // Fallback: show sample users if database fails
-        setSuggestions([
-          { id: 'sample1', username: 'student1', full_name: 'Sample Student 1' },
-          { id: 'sample2', username: 'student2', full_name: 'Sample Student 2' }
-        ]);
+        setSuggestions([]);
       } else {
         setSuggestions(users || []);
       }
