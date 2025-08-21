@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
+import PostCard from '../../components/posts/PostCard';
 
 export default function ContentControl() {
   const router = useRouter();
@@ -20,39 +21,12 @@ export default function ContentControl() {
   };
 
   const loadPosts = async () => {
-    // First try to get posts with user info
     const { data: postsData, error: postsError } = await supabase
       .from('posts')
       .select('*')
       .order('created_at', { ascending: false });
     
-    console.log('Posts loaded:', postsData);
-    console.log('Posts error:', postsError);
-    console.log('Posts count:', postsData?.length || 0);
-    
-    if (postsData) {
-      // Get user info separately for each post
-      const postsWithProfiles = await Promise.all(
-        postsData.map(async (post) => {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('username, email, full_name, avatar_url')
-            .eq('id', post.user_id)
-            .single();
-          
-          console.log('Profile for post:', post.id, profile);
-          
-          return {
-            ...post,
-            profiles: profile
-          };
-        })
-      );
-      
-      setPosts(postsWithProfiles);
-    } else {
-      setPosts([]);
-    }
+    setPosts(postsData || []);
   };
 
   const togglePremium = async (postId: string, isPremium: boolean, authorId: string) => {
@@ -165,88 +139,18 @@ export default function ContentControl() {
 
           <div className="space-y-6">
             {filteredPosts.map((post: any) => (
-              <div key={post.id} className="bg-white rounded-2xl shadow-xl border border-blue-100 overflow-hidden hover:shadow-2xl transition-all duration-300">
-                {/* Header */}
-                <div className="p-4">
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg ring-4 ring-blue-100 overflow-hidden">
-                      {post.profiles?.avatar_url ? (
-                        <img src={post.profiles.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-                      ) : (
-                        '🎓'
-                      )}
-                    </div>
-                    <div className="ml-3 flex-1">
-                      <h3 className="font-bold text-gray-900 text-lg">
-                        {post.profiles?.full_name || post.profiles?.username || 'Student'}
-                      </h3>
-                      {post.profiles?.username && (
-                        <p className="text-sm text-blue-500 font-medium">@{post.profiles.username}</p>
-                      )}
-                      <div className="flex items-center text-sm text-blue-500 font-medium">
-                        <span>⏰ {new Date(post.created_at).toLocaleDateString()}</span>
-                        <span className="mx-2">•</span>
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          post.is_premium 
-                            ? 'bg-yellow-100 text-yellow-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {post.is_premium ? '✨ Premium' : '🆓 Free'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div key={post.id} className="relative">
+                <PostCard post={post} />
                 
-                {/* Content */}
-                <div className="px-6 pb-4">
-                  <p className="text-gray-800 text-lg leading-relaxed font-medium">{post.content}</p>
-                </div>
-                
-                {/* Media */}
-                {post.image_url && (
-                  <div className="px-6 pb-4">
-                    {post.image_url.includes('.mp4') || post.image_url.includes('.webm') || post.image_url.includes('video') ? (
-                      <video 
-                        src={post.image_url}
-                        controls 
-                        className="w-full max-h-96 rounded-2xl shadow-lg border-2 border-blue-100"
-                        preload="metadata"
-                      />
-                    ) : (
-                      <img 
-                        src={post.image_url}
-                        alt="Post media"
-                        className="w-full max-h-96 object-cover rounded-2xl shadow-lg border-2 border-blue-100"
-                      />
-                    )}
-                  </div>
-                )}
-                
-                {/* Stats */}
-                <div className="px-4 py-2 border-b border-gray-100">
-                  <div className="flex items-center justify-between text-sm text-gray-500">
-                    <div className="flex items-center space-x-4">
-                      <span className="flex items-center space-x-1">
-                        <span>👍</span>
-                        <span>{post.likes_count || 0}</span>
-                      </span>
-                      <span className="flex items-center space-x-1">
-                        <span>💬</span>
-                        <span>{post.comments_count || 0}</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                {/* Admin Actions */}
-                <div className="px-6 py-4 bg-gradient-to-r from-red-50 to-orange-50 border-t-2 border-red-200">
+                {/* Admin Actions Overlay */}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-red-500/90 to-orange-500/90 backdrop-blur-sm p-4 rounded-b-2xl">
                   <div className="flex items-center justify-center gap-2">
                     <button
                       onClick={() => togglePremium(post.id, post.is_premium, post.user_id)}
                       className={`flex items-center px-4 py-2 rounded-full font-semibold text-sm transition-all duration-300 ${
                         post.is_premium
-                          ? 'bg-gray-600 text-white hover:bg-gray-700'
-                          : 'bg-yellow-600 text-white hover:bg-yellow-700'
+                          ? 'bg-white/20 text-white hover:bg-white/30'
+                          : 'bg-yellow-500 text-white hover:bg-yellow-600'
                       }`}
                     >
                       <span className="mr-2">{post.is_premium ? '🔓' : '✨'}</span>
@@ -269,7 +173,7 @@ export default function ContentControl() {
                   </div>
                 </div>
               </div>
-            ))}
+            ))
           </div>
         </div>
       </div>
