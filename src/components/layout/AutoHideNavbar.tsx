@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useSupabase';
 import { supabase } from '../../lib/supabase';
 import ThemeToggle from '../ui/ThemeToggle';
+import Image from 'next/image';
 
 export default function AutoHideNavbar() {
   const { user } = useAuth();
@@ -42,7 +43,7 @@ export default function AutoHideNavbar() {
           <div className="flex items-center justify-between h-14">
             {/* Left Section */}
             <div className="flex items-center space-x-4">
-              <img src="/ui/karu_logo.png" alt="KarU teens" className="h-8" />
+              <Image src="/ui/karu_logo.png" alt="KarU teens" width={32} height={32} className="h-8" priority />
               <div className="hidden md:block w-64">
                 <input
                   type="text"
@@ -58,28 +59,28 @@ export default function AutoHideNavbar() {
                 onClick={() => window.location.href = '/feed'}
                 className="flex flex-col items-center py-2 text-blue-600 hover:bg-gray-100 px-4 rounded-lg"
               >
-                <img src="/ui/home.jpeg" alt="Home" className="w-6 h-6" />
+                <Image src="/ui/home.jpeg" alt="Home" width={24} height={24} className="w-6 h-6" />
                 <span className="text-xs font-medium">Home</span>
               </button>
               <button 
                 onClick={() => window.location.href = '/comrades'}
                 className="flex flex-col items-center py-2 text-gray-600 hover:bg-gray-100 px-4 rounded-lg hover:text-blue-600"
               >
-                <img src="/ui/comrades.jpeg" alt="Comrades" className="w-6 h-6" />
+                <Image src="/ui/comrades.jpeg" alt="Comrades" width={24} height={24} className="w-6 h-6" />
                 <span className="text-xs font-medium">Comrades</span>
               </button>
               <button 
                 onClick={() => window.location.href = '/messages'}
                 className="flex flex-col items-center py-2 text-gray-600 hover:bg-gray-100 px-4 rounded-lg hover:text-blue-600"
               >
-                <img src="/ui/messages.jpeg" alt="Messages" className="w-6 h-6" />
+                <Image src="/ui/messages.jpeg" alt="Messages" width={24} height={24} className="w-6 h-6" />
                 <span className="text-xs font-medium">Messages</span>
               </button>
               <button 
                 onClick={() => window.location.href = '/notifications'}
                 className="flex flex-col items-center py-2 text-gray-600 hover:bg-gray-100 px-4 rounded-lg hover:text-blue-600"
               >
-                <img src="/ui/notification.jpeg" alt="Notifications" className="w-6 h-6" />
+                <Image src="/ui/notification.jpeg" alt="Notifications" width={24} height={24} className="w-6 h-6" />
                 <span className="text-xs font-medium">Notifications</span>
               </button>
               <button 

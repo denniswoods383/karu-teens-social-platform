@@ -222,20 +222,20 @@ const AdminPanel = () => {
               </div>
               
               <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg">
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Quick Stats</h3>
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">150+</div>
-                    <div className="text-gray-600 dark:text-gray-300">Active Users</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-yellow-600">25</div>
-                    <div className="text-gray-600 dark:text-gray-300">Premium Users</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-red-600">3</div>
-                    <div className="text-gray-600 dark:text-gray-300">Banned Users</div>
-                  </div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Reports & Moderation</h3>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => window.location.href = '/mhesh/reports'}
+                    className="w-full text-left p-2 hover:bg-white/50 rounded text-sm"
+                  >
+                    🚨 Pending Reports (5)
+                  </button>
+                  <button
+                    onClick={() => window.location.href = '/mhesh/flagged'}
+                    className="w-full text-left p-2 hover:bg-white/50 rounded text-sm"
+                  >
+                    🔍 Flagged Content (2)
+                  </button>
                 </div>
               </div>
             </div>

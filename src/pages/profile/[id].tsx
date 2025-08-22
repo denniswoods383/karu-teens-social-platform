@@ -4,6 +4,7 @@ import { useAuth } from '../../hooks/useSupabase';
 import { supabase } from '../../lib/supabase';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import AutoHideNavbar from '../../components/layout/AutoHideNavbar';
+import Image from 'next/image';
 
 export default function UserProfilePage() {
   const router = useRouter();
@@ -163,7 +164,7 @@ export default function UserProfilePage() {
               {/* Profile Photo */}
               <div className="w-32 h-32 rounded-full overflow-hidden bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center text-white text-4xl font-bold shadow-2xl">
                 {profile.avatar_url ? (
-                  <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                  <Image src={profile.avatar_url} alt="Profile" width={128} height={128} className="w-full h-full object-cover" />
                 ) : (
                   '🎓'
                 )}
@@ -230,7 +231,7 @@ export default function UserProfilePage() {
                         {post.image_url.includes('.mp4') || post.image_url.includes('.webm') ? (
                           <video src={post.image_url} className="w-full h-40 object-cover rounded-lg" />
                         ) : (
-                          <img src={post.image_url} alt="Post" className="w-full h-40 object-cover rounded-lg" />
+                          <Image src={post.image_url} alt="Post" width={400} height={160} className="w-full h-40 object-cover rounded-lg" />
                         )}
                       </div>
                     )}

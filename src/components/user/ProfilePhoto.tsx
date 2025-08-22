@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 interface Badge {
   id: number;
@@ -99,9 +100,11 @@ export default function ProfilePhoto({
       {/* Profile Photo */}
       <div className={`${sizeClasses[size]} rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold shadow-lg`}>
         {profilePhoto && profilePhoto !== 'null' && profilePhoto !== '' ? (
-          <img 
+          <Image 
             src={profilePhoto} 
             alt={username}
+            width={96}
+            height={96}
             className="w-full h-full object-cover"
             onError={(e) => {
               // Fallback to letter if image fails to load

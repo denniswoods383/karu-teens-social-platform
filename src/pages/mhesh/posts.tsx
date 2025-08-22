@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
+import Image from 'next/image';
 
 const PostsManagement = () => {
   const router = useRouter();
@@ -106,7 +107,7 @@ const PostsManagement = () => {
                     {post.image_url.includes('video') ? (
                       <video src={post.image_url} controls className="w-full max-w-md rounded-lg" />
                     ) : (
-                      <img src={post.image_url} alt="Post" className="w-full max-w-md rounded-lg" />
+                      <Image src={post.image_url} alt="Post" width={400} height={300} className="w-full max-w-md rounded-lg" />
                     )}
                   </div>
                 )}

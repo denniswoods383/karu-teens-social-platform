@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import { supabase } from '../../lib/supabase';
@@ -8,7 +8,31 @@ export default function HelpPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [faqItems, setFaqItems] = useState([]);
   const { user } = useAuth();
+  
+  useEffect(() => {
+    loadFAQ();
+  }, []);
+  
+  const loadFAQ = async () => {
+    try {
+      const { data } = await supabase
+        .from('faq_items')
+        .select('*')
+        .order('created_at', { ascending: true });
+      
+      if (data && data.length > 0) {
+        setFaqItems(data);
+      } else {
+        // Fallback to hardcoded FAQ if table is empty
+        setFaqItems(defaultFAQ);
+      }
+    } catch (error) {
+      console.error('Failed to load FAQ:', error);
+      setFaqItems(defaultFAQ);
+    }
+  };
   
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +61,7 @@ export default function HelpPage() {
     }
   };
   
-  const faqItems = [
+  const defaultFAQ = [
     {
       question: "How do I create a post?",
       answer: "Click the 'What's on your mind?' box on your feed, type your message, and click 'Post'."
@@ -63,7 +87,7 @@ export default function HelpPage() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-100">
-        <AutoHideNavbar />
+        <EnhancedNavbar />
         
         <div className="max-w-3xl mx-auto px-4 pt-20 pb-6">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">

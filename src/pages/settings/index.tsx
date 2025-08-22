@@ -3,9 +3,11 @@ import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import { useAuth } from '../../hooks/useSupabase';
 import { supabase } from '../../lib/supabase';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function SettingsPage() {
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('account');
   const [settings, setSettings] = useState({
     profile_visibility: 'public',
@@ -133,7 +135,18 @@ export default function SettingsPage() {
       <div>
         <h3 className="text-lg font-semibold mb-4">Password</h3>
         <button 
-          onClick={() => alert('Password change feature coming soon!')}
+          onClick={async () => {
+            try {
+              const { error } = await supabase.auth.resetPasswordForEmail(user?.email || '', {
+                redirectTo: `${window.location.origin}/auth/reset-password`
+              });
+              if (!error) {
+                alert('Password reset email sent! Check your inbox.');
+              }
+            } catch (error) {
+              alert('Failed to send reset email.');
+            }
+          }}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
         >
           Change Password
@@ -190,15 +203,43 @@ export default function SettingsPage() {
         <h3 className="text-lg font-semibold mb-4">Data & Privacy</h3>
         <div className="space-y-3">
           <button 
-            onClick={() => alert('Data export feature coming soon!')}
+            onClick={async () => {
+              try {
+                const { data: userData } = await supabase
+                  .from('profiles')
+                  .select('*')
+                  .eq('id', user?.id)
+                  .single();
+                
+                const { data: posts } = await supabase
+                  .from('posts')
+                  .select('*')
+                  .eq('user_id', user?.id);
+                
+                const exportData = { profile: userData, posts };
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'karu-teens-data.json';
+                a.click();
+              } catch (error) {
+                alert('Failed to export data.');
+              }
+            }}
             className="block w-full text-left p-3 border border-gray-300 rounded-lg hover:bg-gray-50"
           >
             📥 Download my data
           </button>
           <button 
-            onClick={() => {
+            onClick={async () => {
               if (confirm('Are you sure you want to delete your account? This cannot be undone.')) {
-                alert('Account deletion feature coming soon!');
+                try {
+                  await supabase.auth.signOut();
+                  alert('Account deletion requested. Contact support to complete the process.');
+                } catch (error) {
+                  alert('Failed to process deletion request.');
+                }
               }
             }}
             className="block w-full text-left p-3 border border-red-300 rounded-lg hover:bg-red-50 text-red-600"
@@ -286,7 +327,10 @@ export default function SettingsPage() {
         <h3 className="text-lg font-semibold mb-4">Theme</h3>
         <div className="grid grid-cols-3 gap-4">
           <button 
-            onClick={() => updateSetting('theme', 'light')}
+            onClick={() => {
+              updateSetting('theme', 'light');
+              setTheme('light');
+            }}
             className={`p-4 border-2 rounded-lg bg-white ${
               settings.theme === 'light' ? 'border-blue-500' : 'border-gray-300'
             }`}
@@ -295,7 +339,10 @@ export default function SettingsPage() {
             <span className="text-sm">Light</span>
           </button>
           <button 
-            onClick={() => updateSetting('theme', 'dark')}
+            onClick={() => {
+              updateSetting('theme', 'dark');
+              setTheme('dark');
+            }}
             className={`p-4 border-2 rounded-lg bg-gray-900 ${
               settings.theme === 'dark' ? 'border-blue-500' : 'border-gray-300'
             }`}
@@ -304,7 +351,10 @@ export default function SettingsPage() {
             <span className="text-sm text-white">Dark</span>
           </button>
           <button 
-            onClick={() => updateSetting('theme', 'auto')}
+            onClick={() => {
+              updateSetting('theme', 'auto');
+              setTheme('auto');
+            }}
             className={`p-4 border-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 ${
               settings.theme === 'auto' ? 'border-blue-500' : 'border-gray-300'
             }`}
@@ -355,7 +405,7 @@ export default function SettingsPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
         <EnhancedNavbar />
         
         <div className="max-w-4xl mx-auto px-4 pt-20 pb-6">

@@ -8,8 +8,10 @@ import { useAuth } from '../../hooks/useSupabase';
 import { useRouter } from 'next/router';
 import { uploadToCloudinary } from '../../lib/cloudinary';
 import { useInView } from 'react-intersection-observer';
-import useSWR from 'swr';
 import { marketplaceItemSchema, validateData } from '../../lib/validation';
+import Image from 'next/image';
+import { useMarketplace } from '../../hooks/useCachedData';
+import { memoryCache, CACHE_KEYS } from '../../lib/cache';
 
 interface MarketplaceItem {
   id: string;
@@ -33,13 +35,12 @@ interface MarketplaceItem {
 }
 
 export default function MarketplacePage() {
-  const [items, setItems] = useState<MarketplaceItem[]>([]);
-  const { data: cachedItems, mutate } = useSWR('marketplace');
+  const { data: items = [], mutate, isLoading } = useMarketplace();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [sortBy, setSortBy] = useState('newest');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState<{[key: string]: number}>({});
   const intervalRefs = useRef<{[key: string]: NodeJS.Timeout}>({});
@@ -54,13 +55,10 @@ export default function MarketplacePage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (cachedItems) {
-      setItems(cachedItems);
-      setLoading(false);
-    } else {
-      loadMarketplaceItems(0, false);
+    if (!isLoading && items.length === 0) {
+      mutate();
     }
-  }, [cachedItems]);
+  }, [isLoading, items, mutate]);
   
   useEffect(() => {
     if (inView && hasMore && !loading) {
@@ -115,10 +113,8 @@ export default function MarketplacePage() {
       }) || [];
       
       const newItems = append ? [...items, ...formattedItems] : formattedItems;
-      setItems(newItems);
-      if (!append) {
-        mutate(itemsData, false);
-      }
+      mutate(newItems, false);
+      memoryCache.set(CACHE_KEYS.MARKETPLACE, newItems, 600);
     } catch (error) {
       console.error('Failed to load marketplace items:', error);
     } finally {
@@ -235,9 +231,10 @@ export default function MarketplacePage() {
           .eq('user_id', user.id)
           .eq('item_id', itemId);
         
-        setItems(prev => prev.map(i => 
+        const updatedItems = items.map(i => 
           i.id === itemId ? { ...i, is_saved: false } : i
-        ));
+        );
+        mutate(updatedItems, false);
       } else {
         // Add to saved
         await supabase
@@ -247,9 +244,10 @@ export default function MarketplacePage() {
             item_id: itemId
           });
         
-        setItems(prev => prev.map(i => 
+        const updatedItems = items.map(i => 
           i.id === itemId ? { ...i, is_saved: true } : i
-        ));
+        );
+        mutate(updatedItems, false);
         
         addPoints(1);
       }
@@ -320,7 +318,8 @@ export default function MarketplacePage() {
       setShowCreateModal(false);
       setPage(0);
       setHasMore(true);
-      loadMarketplaceItems(0, false);
+      mutate();
+      memoryCache.delete(CACHE_KEYS.MARKETPLACE);
     } catch (error) {
       console.error('Failed to create item:', error);
       alert('Failed to create listing. Please try again.');
@@ -350,7 +349,7 @@ export default function MarketplacePage() {
     }
   };
   
-  if (loading) {
+  if (isLoading || loading) {
     return (
       <ProtectedRoute>
         <div className="min-h-screen bg-gradient-to-br from-blue-100 via-cyan-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900">
@@ -491,13 +490,15 @@ export default function MarketplacePage() {
                 >
                   {item.images && Array.isArray(item.images) && item.images.length > 0 ? (
                     <div className="relative w-full h-full">
-                      <img 
+                      <Image 
                         src={item.images[currentImageIndex[item.id] || 0]}
                         onError={(e) => {
                           console.log('Image failed to load:', item.images[currentImageIndex[item.id] || 0]);
                           e.currentTarget.style.display = 'none';
                         }} 
                         alt={item.title}
+                        width={400}
+                        height={192}
                         className="w-full h-full object-cover transition-opacity duration-500"
                       />
                       {item.images.length > 1 && (
@@ -561,7 +562,7 @@ export default function MarketplacePage() {
                     <div className="flex items-center space-x-2">
                       <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
                         {item.seller?.avatar_url ? (
-                          <img src={item.seller.avatar_url} alt="Seller" className="w-full h-full object-cover" />
+                          <Image src={item.seller.avatar_url} alt="Seller" width={32} height={32} className="w-full h-full object-cover" />
                         ) : (
                           item.seller?.name.charAt(0) || 'S'
                         )}

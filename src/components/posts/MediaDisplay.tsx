@@ -1,4 +1,5 @@
 import { getAPIBaseURL } from '../../utils/ipDetection';
+import Image from 'next/image';
 
 interface MediaDisplayProps {
   mediaUrl: string;
@@ -33,11 +34,15 @@ export default function MediaDisplay({ mediaUrl, mediaType, className = "" }: Me
   switch (type) {
     case 'image':
       return (
-        <img 
+        <Image 
           src={fullUrl} 
           alt="Post media" 
+          width={800}
+          height={600}
           className={`rounded-lg max-w-full h-auto ${className}`}
-          loading="lazy"
+          priority={false}
+          placeholder="blur"
+          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
         />
       );
       

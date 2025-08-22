@@ -3,6 +3,8 @@ import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import { useGamificationStore } from '../../store/gamificationStore';
 import { usePremiumStore } from '../../store/premiumStore';
+import { useAuth } from '../../hooks/useSupabase';
+import { supabase } from '../../lib/supabase';
 
 interface StudyGroup {
   id: string;
@@ -24,84 +26,48 @@ export default function StudyGroupsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterSubject, setFilterSubject] = useState('all');
   const [filterDifficulty, setFilterDifficulty] = useState('all');
+  const [loading, setLoading] = useState(true);
   const { addPoints, unlockAchievement } = useGamificationStore();
   const { isPremium, setUpgradeModal } = usePremiumStore();
+  const { user } = useAuth();
 
   useEffect(() => {
     loadStudyGroups();
   }, []);
 
-  const loadStudyGroups = () => {
-    // Sample study groups data
-    const sampleGroups: StudyGroup[] = [
-      {
-        id: '1',
-        name: 'Advanced Calculus Study Circle',
-        subject: 'Mathematics',
-        description: 'Tackling derivatives, integrals, and real-world applications together.',
-        members: 8,
-        maxMembers: 12,
-        isPrivate: false,
-        difficulty: 'Advanced',
-        nextSession: '2025-01-22T14:00:00',
-        creator: 'Sarah Kim',
-        tags: ['calculus', 'derivatives', 'integrals']
-      },
-      {
-        id: '2',
-        name: 'Computer Science Algorithms',
-        subject: 'Computer Science',
-        description: 'Breaking down complex algorithms and data structures step by step.',
-        members: 15,
-        maxMembers: 20,
-        isPrivate: false,
-        difficulty: 'Intermediate',
-        nextSession: '2025-01-21T16:30:00',
-        creator: 'Alex Chen',
-        tags: ['algorithms', 'data-structures', 'programming']
-      },
-      {
-        id: '3',
-        name: 'Organic Chemistry Masters',
-        subject: 'Chemistry',
-        description: 'Mastering reactions, mechanisms, and synthesis patterns.',
-        members: 6,
-        maxMembers: 10,
-        isPrivate: true,
-        difficulty: 'Advanced',
-        nextSession: '2025-01-23T10:00:00',
-        creator: 'Maria Rodriguez',
-        tags: ['organic', 'reactions', 'synthesis']
-      },
-      {
-        id: '4',
-        name: 'Physics Problem Solving',
-        subject: 'Physics',
-        description: 'Collaborative approach to tackling challenging physics problems.',
-        members: 12,
-        maxMembers: 15,
-        isPrivate: false,
-        difficulty: 'Intermediate',
-        nextSession: '2025-01-22T19:00:00',
-        creator: 'David Liu',
-        tags: ['mechanics', 'thermodynamics', 'electromagnetism']
-      },
-      {
-        id: '5',
-        name: 'Business Strategy Case Studies',
-        subject: 'Business',
-        description: 'Analyzing real-world business cases and strategic decisions.',
-        members: 10,
-        maxMembers: 12,
-        isPrivate: false,
-        difficulty: 'Beginner',
-        nextSession: '2025-01-21T13:00:00',
-        creator: 'Jessica Park',
-        tags: ['strategy', 'case-studies', 'management']
-      }
-    ];
-    
-    setStudyGroups(sampleGroups);
+  const loadStudyGroups = async () => {
+    try {
+      setLoading(true);
+      const { data: groups, error } = await supabase
+        .from('study_groups')
+        .select(`
+          *,
+          creator:profiles!creator_id(full_name, username),
+          members:study_group_members(count)
+        `);
+      
+      if (error) throw error;
+      
+      const formattedGroups = groups?.map(group => ({
+        id: group.id,
+        name: group.name,
+        subject: group.subject,
+        description: group.description,
+        members: group.members?.[0]?.count || 0,
+        maxMembers: group.max_members,
+        isPrivate: group.is_private,
+        difficulty: group.difficulty,
+        nextSession: group.next_session,
+        creator: group.creator?.full_name || group.creator?.username || 'Student',
+        tags: group.tags || []
+      })) || [];
+      
+      setStudyGroups(formattedGroups);
+    } catch (error) {
+      console.error('Failed to load study groups:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const subjects = ['all', 'Mathematics', 'Computer Science', 'Chemistry', 'Physics', 'Business', 'Biology', 'Literature'];
@@ -117,10 +83,27 @@ export default function StudyGroupsPage() {
     return matchesSearch && matchesSubject && matchesDifficulty;
   });
 
-  const handleJoinGroup = (groupId: string) => {
-    addPoints(15);
-    unlockAchievement('study_master');
-    alert('🎉 Successfully joined the study group! +15 XP');
+  const handleJoinGroup = async (groupId: string) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('study_group_members')
+        .insert({
+          group_id: groupId,
+          user_id: user.id
+        });
+      
+      if (!error) {
+        addPoints(15);
+        unlockAchievement('study_master');
+        alert('🎉 Successfully joined the study group! +15 XP');
+        loadStudyGroups(); // Refresh to update member count
+      }
+    } catch (error) {
+      console.error('Failed to join group:', error);
+      alert('Failed to join group. You may already be a member.');
+    }
   };
 
   const handleCreateGroup = () => {
@@ -129,6 +112,45 @@ export default function StudyGroupsPage() {
       return;
     }
     setShowCreateModal(true);
+  };
+  
+  const createGroup = async () => {
+    const name = (document.getElementById('group-name') as HTMLInputElement)?.value;
+    const subject = (document.getElementById('group-subject') as HTMLSelectElement)?.value;
+    const description = (document.getElementById('group-description') as HTMLTextAreaElement)?.value;
+    const difficulty = (document.getElementById('group-difficulty') as HTMLSelectElement)?.value;
+    const maxMembers = parseInt((document.getElementById('group-max-members') as HTMLInputElement)?.value || '15');
+    const isPrivate = (document.getElementById('group-private') as HTMLInputElement)?.checked;
+    
+    if (!name || !subject || !description) {
+      alert('Please fill in all required fields');
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('study_groups')
+        .insert({
+          name,
+          subject,
+          description,
+          creator_id: user?.id,
+          max_members: maxMembers,
+          difficulty,
+          is_private: isPrivate,
+          next_session: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        });
+      
+      if (!error) {
+        addPoints(25);
+        alert('📚 Study group created successfully! +25 XP');
+        setShowCreateModal(false);
+        loadStudyGroups();
+      }
+    } catch (error) {
+      console.error('Failed to create group:', error);
+      alert('Failed to create study group');
+    }
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -337,8 +359,23 @@ export default function StudyGroupsPage() {
             ))}
           </div>
 
+          {/* Loading State */}
+          {loading && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1,2,3].map(i => (
+                <div key={i} className="bg-white/90 dark:bg-gray-800/90 rounded-xl shadow-lg p-6">
+                  <div className="animate-pulse">
+                    <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                    <div className="h-3 bg-gray-300 rounded mb-4"></div>
+                    <div className="h-20 bg-gray-300 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
           {/* Empty State */}
-          {filteredGroups.length === 0 && (
+          {!loading && filteredGroups.length === 0 && (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">📚</div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
@@ -353,6 +390,49 @@ export default function StudyGroupsPage() {
               >
                 Create Your First Group
               </button>
+            </div>
+          )}
+          
+          {/* Create Group Modal */}
+          {showCreateModal && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">📚 Create Study Group</h3>
+                    <button onClick={() => setShowCreateModal(false)} className="text-gray-500 hover:text-gray-700">
+                      ✕
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <input id="group-name" placeholder="Group name" className="w-full px-3 py-2 border rounded-lg" />
+                    <select id="group-subject" className="w-full px-3 py-2 border rounded-lg">
+                      <option value="Mathematics">Mathematics</option>
+                      <option value="Computer Science">Computer Science</option>
+                      <option value="Physics">Physics</option>
+                      <option value="Chemistry">Chemistry</option>
+                      <option value="Business">Business</option>
+                    </select>
+                    <textarea id="group-description" placeholder="Description" rows={3} className="w-full px-3 py-2 border rounded-lg" />
+                    <select id="group-difficulty" className="w-full px-3 py-2 border rounded-lg">
+                      <option value="Beginner">Beginner</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Advanced">Advanced</option>
+                    </select>
+                    <input id="group-max-members" type="number" placeholder="Max members" defaultValue="15" className="w-full px-3 py-2 border rounded-lg" />
+                    <label className="flex items-center">
+                      <input id="group-private" type="checkbox" className="mr-2" />
+                      Private group
+                    </label>
+                    
+                    <div className="flex space-x-3 pt-4">
+                      <button onClick={() => setShowCreateModal(false)} className="flex-1 px-4 py-2 border rounded-lg">Cancel</button>
+                      <button onClick={createGroup} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg">Create (+25 XP)</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useRouter } from 'next/router';
 import { Plus, Play } from 'lucide-react';
+import Image from 'next/image';
 
 interface Story {
   id: string;
@@ -129,9 +130,11 @@ export default function FeedStories() {
                           <Play className="w-4 h-4 text-white" />
                         </div>
                       ) : (
-                        <img 
+                        <Image 
                           src={story.media_url} 
                           alt="Story" 
+                          width={64}
+                          height={64}
                           className="w-full h-full object-cover rounded-full"
                         />
                       )}

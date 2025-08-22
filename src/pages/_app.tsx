@@ -15,6 +15,8 @@ import { initializeNotifications } from '../lib/notifications'
 import { SWRConfig } from 'swr'
 import { fetcher, swrConfig } from '../lib/swr'
 import Head from 'next/head'
+import Script from 'next/script'
+import ImagePerformanceMonitor from '../components/performance/ImagePerformanceMonitor'
 
 export default function App({ Component, pageProps }: AppProps) {
   useAutoLogout();
@@ -49,10 +51,10 @@ export default function App({ Component, pageProps }: AppProps) {
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#2563eb" />
         <link rel="apple-touch-icon" href="/ui/karu_logo.png" />
-        <script defer data-domain="karuteens.com" src="https://plausible.io/js/script.js"></script>
       </Head>
       <SWRConfig value={{ fetcher, ...swrConfig }}>
         <ThemeProvider>
+        <ImagePerformanceMonitor />
         <Component {...pageProps} />
         <FloatingFeedbackButton />
         <QuickActionsWidget />
@@ -72,6 +74,11 @@ export default function App({ Component, pageProps }: AppProps) {
       </div>
       </ThemeProvider>
       </SWRConfig>
+      <Script
+        src="https://plausible.io/js/script.js"
+        data-domain="karuteens.com"
+        strategy="afterInteractive"
+      />
     </>
   )
 }

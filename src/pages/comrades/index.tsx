@@ -4,6 +4,7 @@ import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useSupabase';
 import { checkRateLimit, rateLimitErrors } from '../../lib/rateLimiting';
+import Image from 'next/image';
 
 interface User {
   id: string;
@@ -148,7 +149,7 @@ export default function ComradesPage() {
           <div className="flex items-center space-x-3">
             <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold overflow-hidden">
               {user.avatar_url ? (
-                <img src={user.avatar_url} alt={user.username} className="w-full h-full object-cover" />
+                <Image src={user.avatar_url} alt={user.username} width={48} height={48} className="w-full h-full object-cover" />
               ) : (
                 user.username?.[0]?.toUpperCase() || '👤'
               )}

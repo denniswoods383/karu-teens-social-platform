@@ -1,193 +1,266 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
-import PostCard from '../../components/posts/PostCard';
+import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 
-export default function ContentControl() {
+export default function ContentModerationPage() {
   const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [reports, setReports] = useState([]);
   const [posts, setPosts] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkAdmin();
-    loadPosts();
+    checkAdminAccess();
   }, []);
 
-  const checkAdmin = async () => {
+  const checkAdminAccess = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user || user.email !== 'denniswood383@gmail.com') {
       router.push('/');
+      return;
     }
+    setUser(user);
+    loadReports();
+    loadFlaggedPosts();
   };
 
-  const loadPosts = async () => {
-    const { data: postsData, error: postsError } = await supabase
-      .from('posts')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    setPosts(postsData || []);
-  };
-
-  const togglePremium = async (postId: string, isPremium: boolean, authorId: string) => {
-    const { error } = await supabase
-      .from('posts')
-      .update({ is_premium: !isPremium })
-      .eq('id', postId);
-    
-    if (!error) {
-      // Send notification to post author
-      await supabase
-        .from('notifications')
-        .insert({
-          user_id: authorId,
-          title: !isPremium ? '🔒 Post Made Premium' : '🎆 Post Made Free',
-          message: !isPremium 
-            ? 'One of your posts has been marked as premium content by an administrator.'
-            : 'One of your premium posts has been made free by an administrator.',
-          type: 'info'
-        });
+  const loadReports = async () => {
+    try {
+      const { data } = await supabase
+        .from('content_reports')
+        .select(`
+          *,
+          reporter:profiles!reporter_id(full_name, username),
+          reported_post:posts(id, content, user_id),
+          reported_user:profiles!reported_user_id(full_name, username, email)
+        `)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
       
-      loadPosts();
-      alert(`Post ${!isPremium ? 'marked as premium' : 'made free'}`);
+      setReports(data || []);
+    } catch (error) {
+      console.error('Failed to load reports:', error);
     }
   };
 
-  const messageUser = async (userId: string, userEmail?: string) => {
-    // Get user info if email not provided
-    if (!userEmail) {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('id', userId)
-        .single();
+  const loadFlaggedPosts = async () => {
+    try {
+      const { data } = await supabase
+        .from('posts')
+        .select(`
+          *,
+          author:profiles!user_id(full_name, username),
+          reports:content_reports(count)
+        `)
+        .gt('content_reports.count', 0)
+        .order('created_at', { ascending: false });
       
-      console.log('Profile lookup:', { profile, error, userId });
-      userEmail = profile?.username || 'User';
-    }
-    
-    const message = prompt(`Send message to ${userEmail}:`);
-    if (!message) return;
-    
-    // Send as notification instead of message
-    const { error } = await supabase
-      .from('notifications')
-      .insert({
-        user_id: userId,
-        title: '📢 Admin Message',
-        message: `ADMIN: ${message}`,
-        type: 'warning'
-      });
-    
-    if (!error) {
-      alert('Message sent successfully!');
-    } else {
-      console.error('Error sending message:', error);
-      alert('Failed to send message');
+      setPosts(data || []);
+    } catch (error) {
+      console.error('Failed to load flagged posts:', error);
+    } finally {
+      setLoading(false);
     }
   };
-  
-  const deletePost = async (postId: string, authorId: string) => {
-    if (confirm('Are you sure you want to delete this post?')) {
+
+  const handleReport = async (reportId: string, action: 'resolved' | 'dismissed') => {
+    try {
+      const { error } = await supabase
+        .from('content_reports')
+        .update({
+          status: action,
+          reviewed_by: user?.id,
+          reviewed_at: new Date().toISOString()
+        })
+        .eq('id', reportId);
+
+      if (!error) {
+        // Log admin action
+        await supabase
+          .from('admin_actions')
+          .insert({
+            admin_id: user?.id,
+            action_type: 'report_reviewed',
+            target_id: reportId,
+            details: { action }
+          });
+
+        alert(`Report ${action} successfully`);
+        loadReports();
+      }
+    } catch (error) {
+      console.error('Failed to handle report:', error);
+      alert('Failed to process report');
+    }
+  };
+
+  const deletePost = async (postId: string) => {
+    if (!confirm('Are you sure you want to delete this post?')) return;
+
+    try {
       const { error } = await supabase
         .from('posts')
         .delete()
         .eq('id', postId);
-      
+
       if (!error) {
-        // Send notification to post author
+        // Log admin action
         await supabase
-          .from('notifications')
+          .from('admin_actions')
           .insert({
-            user_id: authorId,
-            title: '🗑️ Post Deleted',
-            message: 'One of your posts has been deleted by an administrator for violating community guidelines.',
-            type: 'warning'
+            admin_id: user?.id,
+            action_type: 'post_deleted',
+            target_id: postId,
+            details: { reason: 'admin_moderation' }
           });
-        
-        loadPosts();
+
         alert('Post deleted successfully');
+        loadFlaggedPosts();
       }
+    } catch (error) {
+      console.error('Failed to delete post:', error);
+      alert('Failed to delete post');
     }
   };
 
-  const filteredPosts = posts.filter((post: any) =>
-    post.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    post.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  if (!user) return <div>Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-cyan-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900 p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl shadow-lg p-8">
-          <h1 className="text-3xl font-bold mb-6">🔒 Content Control</h1>
-          
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-center">
-              <div className="text-2xl font-bold text-blue-600">{posts.length}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">Total Posts</div>
+    <div className="min-h-screen bg-gray-100">
+      <EnhancedNavbar />
+      <div className="max-w-6xl mx-auto px-4 pt-20 pb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Reports Section */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="p-6 border-b">
+              <h2 className="text-xl font-bold text-gray-900">Pending Reports</h2>
+              <p className="text-gray-600">Review user reports and take action</p>
             </div>
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg text-center">
-              <div className="text-2xl font-bold text-yellow-600">
-                {posts.filter(p => p.is_premium).length}
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">Premium Posts</div>
+
+            <div className="p-6">
+              {loading ? (
+                <div className="space-y-4">
+                  {[1,2,3].map(i => (
+                    <div key={i} className="border rounded-lg p-4 animate-pulse">
+                      <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                      <div className="h-3 bg-gray-300 rounded"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {reports.map((report) => (
+                    <div key={report.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <p className="font-semibold text-gray-900">
+                            Report by {report.reporter?.full_name}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            Reason: {report.reason}
+                          </p>
+                          {report.details && (
+                            <p className="text-sm text-gray-700 mt-1">
+                              Details: {report.details}
+                            </p>
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-500">
+                          {new Date(report.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      
+                      {report.reported_post && (
+                        <div className="bg-gray-50 p-3 rounded mb-3">
+                          <p className="text-sm text-gray-700">
+                            Reported Post: {report.reported_post.content.substring(0, 100)}...
+                          </p>
+                        </div>
+                      )}
+                      
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleReport(report.id, 'resolved')}
+                          className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                        >
+                          Resolve
+                        </button>
+                        <button
+                          onClick={() => handleReport(report.id, 'dismissed')}
+                          className="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700"
+                        >
+                          Dismiss
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {reports.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      No pending reports
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg text-center">
-              <div className="text-2xl font-bold text-green-600">
-                {posts.filter(p => !p.is_premium).length}
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">Free Posts</div>
-            </div>
-          </div>
-          
-          <div className="mb-6">
-            <input
-              type="text"
-              placeholder="Search posts..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
           </div>
 
-          <div className="space-y-6">
-            {filteredPosts.map((post: any) => (
-              <div key={post.id} className="relative">
-                <PostCard post={post} />
-                
-                {/* Admin Actions Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-red-500/90 to-orange-500/90 backdrop-blur-sm p-4 rounded-b-2xl">
-                  <div className="flex items-center justify-center gap-2">
-                    <button
-                      onClick={() => togglePremium(post.id, post.is_premium, post.user_id)}
-                      className={`flex items-center px-4 py-2 rounded-full font-semibold text-sm transition-all duration-300 ${
-                        post.is_premium
-                          ? 'bg-white/20 text-white hover:bg-white/30'
-                          : 'bg-yellow-500 text-white hover:bg-yellow-600'
-                      }`}
-                    >
-                      <span className="mr-2">{post.is_premium ? '🔓' : '✨'}</span>
-                      {post.is_premium ? 'Make Free' : 'Make Premium'}
-                    </button>
-                    <button
-                      onClick={() => deletePost(post.id, post.user_id)}
-                      className="flex items-center px-4 py-2 bg-red-600 text-white rounded-full font-semibold text-sm hover:bg-red-700 transition-all duration-300"
-                    >
-                      <span className="mr-2">🗑️</span>
-                      Delete
-                    </button>
-                    <button
-                      onClick={() => messageUser(post.user_id)}
-                      className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-full font-semibold text-sm hover:bg-blue-700 transition-all duration-300"
-                    >
-                      <span className="mr-2">📧</span>
-                      Message
-                    </button>
+          {/* Flagged Posts Section */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="p-6 border-b">
+              <h2 className="text-xl font-bold text-gray-900">Flagged Content</h2>
+              <p className="text-gray-600">Posts with multiple reports</p>
+            </div>
+
+            <div className="p-6">
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {posts.map((post) => (
+                  <div key={post.id} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <p className="font-semibold text-gray-900">
+                          By {post.author?.full_name}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {post.reports?.[0]?.count || 0} reports
+                        </p>
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        {new Date(post.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-3 rounded mb-3">
+                      <p className="text-sm text-gray-700">
+                        {post.content}
+                      </p>
+                    </div>
+                    
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => deletePost(post.id)}
+                        className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                      >
+                        Delete Post
+                      </button>
+                      <button
+                        onClick={() => window.open(`/feed#post-${post.id}`, '_blank')}
+                        className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                      >
+                        View Post
+                      </button>
+                    </div>
                   </div>
-                </div>
+                ))}
+                
+                {posts.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    No flagged content
+                  </div>
+                )}
               </div>
-            ))}
+            </div>
           </div>
         </div>
       </div>

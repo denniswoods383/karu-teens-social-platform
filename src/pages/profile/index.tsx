@@ -5,11 +5,14 @@ import { uploadToCloudinary } from '../../lib/cloudinary';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import EditProfileModal from '../../components/profile/EditProfileModal';
+import Image from 'next/image';
+import { useProfile, usePosts } from '../../hooks/useCachedData';
+import { memoryCache, CACHE_KEYS } from '../../lib/cache';
 
 export default function ProfilePage() {
   const { user } = useAuth();
-  const [profile, setProfile] = useState<any>(null);
-  const [posts, setPosts] = useState([]);
+  const { data: profile, mutate: mutateProfile } = useProfile(user?.id);
+  const { data: posts = [], mutate: mutatePosts } = usePosts(user?.id);
   const [stats, setStats] = useState({ followers: 0, following: 0, likes: 0, posts: 0 });
   const [achievements, setAchievements] = useState([]);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -17,58 +20,12 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (user) {
-      loadProfile();
-      loadPosts();
       loadStats();
       loadAchievements();
     }
-  }, [user]);
+  }, [user, profile, posts]);
 
-  const loadProfile = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user?.id)
-        .single();
-      
-      if (error && error.code === 'PGRST116') {
-        // Profile doesn't exist, create it
-        const newProfile = {
-          id: user?.id,
-          username: user?.email?.split('@')[0] || 'student',
-          full_name: 'Student',
-          created_at: new Date().toISOString()
-        };
-        
-        const { data: createdProfile } = await supabase
-          .from('profiles')
-          .insert(newProfile)
-          .select()
-          .single();
-        
-        setProfile(createdProfile || newProfile);
-      } else {
-        setProfile(data || { id: user?.id, username: user?.email?.split('@')[0] });
-      }
-    } catch (error) {
-      console.error('Failed to load profile:', error);
-    }
-  };
 
-  const loadPosts = async () => {
-    try {
-      const { data } = await supabase
-        .from('posts')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false });
-      
-      setPosts(data || []);
-    } catch (error) {
-      console.error('Failed to load posts:', error);
-    }
-  };
 
   const loadStats = async () => {
     try {
@@ -171,7 +128,8 @@ export default function ProfilePage() {
         .single();
 
       if (!error && data) {
-        setProfile(data);
+        mutateProfile(data, false);
+        memoryCache.delete(CACHE_KEYS.PROFILE(user?.id!));
         console.log('Photo uploaded successfully:', data);
       } else {
         console.error('Photo upload error:', error);
@@ -193,9 +151,10 @@ export default function ProfilePage() {
         .eq('id', postId);
 
       if (!error) {
-        setPosts(prev => prev.filter(p => p.id !== postId));
-        loadStats(); // Refresh stats
-        loadAchievements(); // Refresh achievements
+        mutatePosts(posts.filter(p => p.id !== postId), false);
+        memoryCache.delete(CACHE_KEYS.POSTS(user?.id));
+        loadStats();
+        loadAchievements();
       }
     } catch (error) {
       console.error('Failed to delete post:', error);
@@ -215,7 +174,7 @@ export default function ProfilePage() {
               <div className="relative">
                 <div className="w-32 h-32 rounded-full overflow-hidden bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center text-white text-4xl font-bold shadow-2xl">
                   {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                    <Image src={profile.avatar_url} alt="Profile" width={128} height={128} className="w-full h-full object-cover" />
                   ) : (
                     '🎓'
                   )}
@@ -313,7 +272,7 @@ export default function ProfilePage() {
                         {post.image_url.includes('.mp4') || post.image_url.includes('.webm') ? (
                           <video src={post.image_url} className="w-full h-40 object-cover rounded-lg" />
                         ) : (
-                          <img src={post.image_url} alt="Post" className="w-full h-40 object-cover rounded-lg" />
+                          <Image src={post.image_url} alt="Post" width={400} height={160} className="w-full h-40 object-cover rounded-lg" />
                         )}
                       </div>
                     )}

@@ -1,11 +1,11 @@
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
-import AutoHideNavbar from '../../components/layout/AutoHideNavbar';
+import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 
 export default function PrivacyPage() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-100">
-        <AutoHideNavbar />
+        <EnhancedNavbar />
         
         <div className="max-w-4xl mx-auto px-4 pt-20 pb-6">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -18,12 +18,14 @@ export default function PrivacyPage() {
               <section className="mb-8">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Information We Collect</h2>
                 <div className="space-y-4 text-gray-700">
-                  <p>We collect information you provide directly to us, such as:</p>
+                  <p>Karu Teens Social Platform collects information you provide directly to us, such as:</p>
                   <ul className="list-disc pl-6 space-y-2">
-                    <li>Account information (username, email, profile details)</li>
-                    <li>Posts, comments, and messages you create</li>
-                    <li>Photos and media you upload</li>
-                    <li>Information about your interactions with other users</li>
+                    <li>Account information (username, email, full name, profile details)</li>
+                    <li>Posts, stories, comments, and direct messages you create</li>
+                    <li>Photos, videos, and media you upload to our platform</li>
+                    <li>Marketplace listings and transaction information</li>
+                    <li>Information about your interactions with other students</li>
+                    <li>Study group participation and academic interests</li>
                   </ul>
                 </div>
               </section>
@@ -33,11 +35,14 @@ export default function PrivacyPage() {
                 <div className="space-y-4 text-gray-700">
                   <p>We use the information we collect to:</p>
                   <ul className="list-disc pl-6 space-y-2">
-                    <li>Provide and maintain our social media platform</li>
-                    <li>Enable you to connect and communicate with other users</li>
-                    <li>Send you notifications about platform activity</li>
-                    <li>Improve our services and develop new features</li>
-                    <li>Ensure platform security and prevent abuse</li>
+                    <li>Provide and maintain the Karu Teens social platform for university students</li>
+                    <li>Enable you to connect and communicate with fellow students (comrades)</li>
+                    <li>Facilitate study groups, academic discussions, and campus activities</li>
+                    <li>Send you notifications about messages, follows, and platform activity</li>
+                    <li>Enable marketplace transactions between students</li>
+                    <li>Provide AI-powered study tools and academic assistance</li>
+                    <li>Improve our services and develop new educational features</li>
+                    <li>Ensure platform security and prevent academic misconduct or abuse</li>
                   </ul>
                 </div>
               </section>
@@ -87,8 +92,10 @@ export default function PrivacyPage() {
                 <div className="space-y-4 text-gray-700">
                   <p>If you have questions about this Privacy Policy, please contact us at:</p>
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <p><strong>Email:</strong> privacy@socialplatform.com</p>
-                    <p><strong>Address:</strong> 123 Social Street, Tech City, TC 12345</p>
+                    <p><strong>Email:</strong> privacy@karuteens.com</p>
+                    <p><strong>Support:</strong> support@karuteens.com</p>
+                    <p><strong>Platform:</strong> Karu Teens Social Platform</p>
+                    <p><strong>Developer:</strong> Karu Teens Productions</p>
                   </div>
                 </div>
               </section>
