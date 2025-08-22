@@ -5,6 +5,7 @@ import { uploadToCloudinary, CLOUDINARY_CONFIG } from '../../lib/cloudinary';
 import { Trash2, Play, Pause, Scissors } from 'lucide-react';
 import Image from 'next/image';
 import { postSchema, validateData } from '../../lib/validation';
+import { checkRateLimit, rateLimitErrors } from '../../lib/rateLimiting';
 
 interface CreatePostProps {
   onPostCreated?: () => void;
@@ -37,6 +38,13 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
 
     if (!content.trim() && files.length === 0) {
       alert('Please add some content or media to your post');
+      return;
+    }
+
+    // Check rate limit
+    const canPost = await checkRateLimit('posts');
+    if (!canPost) {
+      alert(rateLimitErrors.posts);
       return;
     }
 

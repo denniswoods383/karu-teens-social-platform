@@ -7,6 +7,7 @@ import { useAuth } from '../../hooks/useSupabase';
 import { initializeNotifications, showNotification } from '../../lib/notifications';
 import Image from 'next/image';
 import { messageSchema, validateData } from '../../lib/validation';
+import { checkRateLimit, rateLimitErrors } from '../../lib/rateLimiting';
 
 interface Message {
   id: string;
@@ -227,6 +228,13 @@ export default function MessagesPage() {
 
     if (!newMessage.trim() && selectedFiles.length === 0) {
       alert('Please enter a message or select a file');
+      return;
+    }
+
+    // Check rate limit
+    const canMessage = await checkRateLimit('messages');
+    if (!canMessage) {
+      alert(rateLimitErrors.messages);
       return;
     }
 

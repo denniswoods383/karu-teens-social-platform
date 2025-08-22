@@ -3,6 +3,7 @@ import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useSupabase';
+import { checkRateLimit, rateLimitErrors } from '../../lib/rateLimiting';
 
 interface User {
   id: string;
@@ -56,6 +57,13 @@ export default function ComradesPage() {
 
   const handleFollow = async (userId: string) => {
     if (!user) return;
+    
+    // Check rate limit
+    const canFollow = await checkRateLimit('follows');
+    if (!canFollow) {
+      alert(rateLimitErrors.follows);
+      return;
+    }
     
     try {
       const { error } = await supabase
