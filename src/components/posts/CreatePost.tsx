@@ -96,6 +96,11 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
         setPreviews({});
         setVideoTrimming({});
         onPostCreated?.();
+        
+        // Track analytics
+        import('../../lib/analytics').then(({ trackEvent, events }) => {
+          trackEvent(events.POST_CREATED, { hasMedia: files.length > 0 });
+        });
       }
     } catch (error) {
       console.error('Failed to create post:', error);

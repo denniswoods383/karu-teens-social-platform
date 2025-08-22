@@ -35,6 +35,11 @@ export default function App({ Component, pageProps }: AppProps) {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js');
     }
+    
+    // Setup error tracking
+    import('../lib/errorLogger').then(({ setupErrorTracking }) => {
+      setupErrorTracking();
+    });
   }, []);
   
   return (
@@ -44,6 +49,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#2563eb" />
         <link rel="apple-touch-icon" href="/ui/karu_logo.png" />
+        <script defer data-domain="karuteens.com" src="https://plausible.io/js/script.js"></script>
       </Head>
       <SWRConfig value={{ fetcher, ...swrConfig }}>
         <ThemeProvider>

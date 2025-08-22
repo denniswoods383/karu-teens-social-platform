@@ -252,6 +252,11 @@ export default function StoriesPage() {
       setPage(0);
       setHasMore(true);
       loadStories(0, false); // Reload stories
+      
+      // Track analytics
+      import('../../lib/analytics').then(({ trackEvent, events }) => {
+        trackEvent(events.STORY_CREATED, { category, hasMedia: !!mediaUrl });
+      });
     } catch (error) {
       console.error('Failed to create story:', error);
       alert('Failed to create story');
