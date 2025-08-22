@@ -201,9 +201,10 @@ export default function StoriesPage() {
         formData.append('file', selectedFile);
         formData.append('upload_preset', 'karu_uploads');
         
+        const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dybwvr0tn';
         const uploadUrl = selectedFile.type.startsWith('video/') 
-          ? 'https://api.cloudinary.com/v1_1/dybwvr0tn/video/upload'
-          : 'https://api.cloudinary.com/v1_1/dybwvr0tn/image/upload';
+          ? `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`
+          : `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
         
         const response = await fetch(uploadUrl, {
           method: 'POST',

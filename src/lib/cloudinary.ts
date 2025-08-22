@@ -1,8 +1,8 @@
 // Cloudinary configuration
 export const CLOUDINARY_CONFIG = {
-  cloudName: 'dybwvr0tn',
-  uploadPreset: 'karu_uploads',
-  apiKey: '526439948612699'
+  cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dybwvr0tn',
+  uploadPreset: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'karu_uploads',
+  apiKey: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY || '526439948612699'
 };
 
 export const uploadToCloudinary = async (file: File, onProgress?: (progress: number) => void): Promise<any> => {
