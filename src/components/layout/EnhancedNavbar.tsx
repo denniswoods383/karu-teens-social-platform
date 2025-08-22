@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useGamificationStore } from '../../store/gamificationStore';
 import { usePremiumStore } from '../../store/premiumStore';
+import GlobalSearch from '../search/GlobalSearch';
 
 export default function EnhancedNavbar() {
   const { user } = useAuth();
@@ -75,14 +76,7 @@ export default function EnhancedNavbar() {
               </div>
               
               <div className="hidden md:block w-80">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search students, groups, posts..."
-                    className="w-full px-4 py-2 pl-10 bg-gray-100 dark:bg-gray-800 rounded-full text-sm focus:outline-none focus:bg-white dark:focus:bg-gray-700 focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-                  />
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">🔍</span>
-                </div>
+                <GlobalSearch />
               </div>
             </div>
 
