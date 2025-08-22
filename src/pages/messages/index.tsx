@@ -10,6 +10,9 @@ interface Message {
   sender_id: string;
   receiver_id: string;
   content: string;
+  file_url?: string;
+  file_type?: string;
+  file_name?: string;
   is_delivered?: boolean;
   is_read?: boolean;
   created_at: string;
@@ -157,19 +160,55 @@ export default function MessagesPage() {
     }
   };
 
+  const uploadToCloudinary = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'karu_uploads');
+    
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/auto/upload`,
+      { method: 'POST', body: formData }
+    );
+    
+    return response.json();
+  };
+
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedChat) return;
+    if (!newMessage.trim() && selectedFiles.length === 0) return;
+    if (!selectedChat) return;
 
     const messageContent = newMessage;
     setNewMessage('');
+    
+    // Upload files first if any
+    let fileUrl = null;
+    let fileType = null;
+    let fileName = null;
+    
+    if (selectedFiles.length > 0) {
+      try {
+        const file = selectedFiles[0];
+        const uploadResult = await uploadToCloudinary(file);
+        fileUrl = uploadResult.secure_url;
+        fileType = file.type;
+        fileName = file.name;
+        setSelectedFiles([]);
+      } catch (error) {
+        console.error('File upload failed:', error);
+        return;
+      }
+    }
     
     // Add message optimistically
     const tempMessage = {
       id: `temp-${Date.now()}`,
       sender_id: user?.id || '',
       receiver_id: selectedChat,
-      content: messageContent,
+      content: messageContent || (fileUrl ? `Shared ${fileType?.startsWith('image/') ? 'photo' : 'file'}` : ''),
+      file_url: fileUrl,
+      file_type: fileType,
+      file_name: fileName,
       created_at: new Date().toISOString()
     };
     setMessages(prev => [...prev, tempMessage]);
@@ -180,7 +219,10 @@ export default function MessagesPage() {
         .insert({
           sender_id: user?.id,
           receiver_id: selectedChat,
-          content: messageContent
+          content: messageContent || (fileUrl ? `Shared ${fileType?.startsWith('image/') ? 'photo' : 'file'}` : ''),
+          file_url: fileUrl,
+          file_type: fileType,
+          file_name: fileName
         })
         .select();
       
@@ -465,7 +507,38 @@ export default function MessagesPage() {
                                 <span className="text-xs font-bold">🚫 ADMIN MESSAGE - NO REPLY</span>
                               </div>
                             )}
-                            <p className="text-sm leading-relaxed">{message.content}</p>
+                            {message.file_url ? (
+                              <div className="space-y-2">
+                                {message.file_type?.startsWith('image/') ? (
+                                  <img 
+                                    src={message.file_url} 
+                                    alt={message.file_name}
+                                    className="max-w-xs rounded-lg cursor-pointer"
+                                    onClick={() => window.open(message.file_url, '_blank')}
+                                  />
+                                ) : (
+                                  <div className="bg-white/20 rounded-lg p-3 flex items-center space-x-2">
+                                    <span className="text-lg">📄</span>
+                                    <div>
+                                      <p className="text-sm font-medium">{message.file_name}</p>
+                                      <a 
+                                        href={message.file_url} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="text-xs underline"
+                                      >
+                                        Download
+                                      </a>
+                                    </div>
+                                  </div>
+                                )}
+                                {message.content && message.content !== `Shared ${message.file_type?.startsWith('image/') ? 'photo' : 'file'}` && (
+                                  <p className="text-sm leading-relaxed">{message.content}</p>
+                                )}
+                              </div>
+                            ) : (
+                              <p className="text-sm leading-relaxed">{message.content}</p>
+                            )}
                             <div className={`flex items-center justify-between mt-2 ${
                               message.is_admin_message ? 'text-red-100' :
                               message.sender_id === user?.id ? 'text-blue-100' : 'text-gray-500'
