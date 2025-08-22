@@ -61,36 +61,28 @@ export default function MessagesPage() {
   }, [router.query]);
 
   useEffect(() => {
-    if (selectedChat) {
+    if (selectedChat && user?.id) {
       loadMessages(selectedChat);
       
-      // Subscribe to real-time messages for this conversation
+      // Subscribe to real-time messages
       const channel = supabase
-        .channel(`messages:${user?.id}:${selectedChat}`)
+        .channel(`messages-${selectedChat}`)
         .on(
           'postgres_changes',
           {
             event: 'INSERT',
             schema: 'public',
-            table: 'messages',
-            filter: `or(and(sender_id.eq.${user?.id},receiver_id.eq.${selectedChat}),and(sender_id.eq.${selectedChat},receiver_id.eq.${user?.id}))`
+            table: 'messages'
           },
           (payload) => {
             const newMessage = payload.new as Message;
             
-            // Add message to UI immediately
-            setMessages(prev => {
-              // Avoid duplicates
-              if (prev.find(msg => msg.id === newMessage.id)) return prev;
-              return [...prev, newMessage];
-            });
-            
-            // Show browser notification if message is from other user
-            if (newMessage.sender_id === selectedChat && 'Notification' in window && Notification.permission === 'granted') {
-              const senderName = conversations.find(c => c.id === selectedChat)?.full_name || 'Someone';
-              new Notification(`New message from ${senderName}`, {
-                body: newMessage.content,
-                icon: '/favicon.ico'
+            // Only add if it's for this conversation
+            if ((newMessage.sender_id === user?.id && newMessage.receiver_id === selectedChat) ||
+                (newMessage.sender_id === selectedChat && newMessage.receiver_id === user?.id)) {
+              setMessages(prev => {
+                if (prev.find(msg => msg.id === newMessage.id)) return prev;
+                return [...prev, newMessage];
               });
             }
           }
@@ -101,7 +93,7 @@ export default function MessagesPage() {
         supabase.removeChannel(channel);
       };
     }
-  }, [selectedChat, user?.id, conversations]);
+  }, [selectedChat, user?.id]);
 
   useEffect(() => {
     // Scroll to bottom when messages change
@@ -158,9 +150,10 @@ export default function MessagesPage() {
         .select('*')
         .or(`and(sender_id.eq.${user?.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${user?.id})`)
         .order('created_at', { ascending: true });
+      
       setMessages(data || []);
     } catch (error) {
-      console.error('Failed to load messages');
+      console.error('Failed to load messages:', error);
     }
   };
 
@@ -171,21 +164,39 @@ export default function MessagesPage() {
     const messageContent = newMessage;
     setNewMessage('');
     
+    // Add message optimistically
+    const tempMessage = {
+      id: `temp-${Date.now()}`,
+      sender_id: user?.id || '',
+      receiver_id: selectedChat,
+      content: messageContent,
+      created_at: new Date().toISOString()
+    };
+    setMessages(prev => [...prev, tempMessage]);
+    
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('messages')
         .insert({
           sender_id: user?.id,
           receiver_id: selectedChat,
           content: messageContent
-        });
+        })
+        .select();
       
       if (error) {
         console.error('Failed to send message:', error);
+        setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
         setNewMessage(messageContent);
+      } else if (data && data[0]) {
+        setMessages(prev => {
+          const filtered = prev.filter(msg => msg.id !== tempMessage.id);
+          return [...filtered, data[0]];
+        });
       }
     } catch (error) {
       console.error('Network error:', error);
+      setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
       setNewMessage(messageContent);
     }
   };
