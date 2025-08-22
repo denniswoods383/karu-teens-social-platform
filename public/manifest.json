@@ -1,0 +1,24 @@
+{
+  "name": "Karu Teens Social Platform",
+  "short_name": "KaruTeens",
+  "description": "A modern social media platform for university students",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/ui/karu_logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/ui/karu_logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["social", "education"],
+  "lang": "en"
+}

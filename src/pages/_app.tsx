@@ -14,6 +14,7 @@ import QuickActionsWidget from '../components/gamification/QuickActionsWidget'
 import { initializeNotifications } from '../lib/notifications'
 import { SWRConfig } from 'swr'
 import { fetcher, swrConfig } from '../lib/swr'
+import Head from 'next/head'
 
 export default function App({ Component, pageProps }: AppProps) {
   useAutoLogout();
@@ -29,11 +30,23 @@ export default function App({ Component, pageProps }: AppProps) {
     
     // Initialize push notifications
     initializeNotifications();
+    
+    // Register service worker for PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
   }, []);
   
   return (
-    <SWRConfig value={{ fetcher, ...swrConfig }}>
-      <ThemeProvider>
+    <>
+      <Head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#2563eb" />
+        <link rel="apple-touch-icon" href="/ui/karu_logo.png" />
+      </Head>
+      <SWRConfig value={{ fetcher, ...swrConfig }}>
+        <ThemeProvider>
         <Component {...pageProps} />
         <FloatingFeedbackButton />
         <QuickActionsWidget />
@@ -51,7 +64,8 @@ export default function App({ Component, pageProps }: AppProps) {
           </div>
         ))}
       </div>
-    </ThemeProvider>
-    </SWRConfig>
+      </ThemeProvider>
+      </SWRConfig>
+    </>
   )
 }
