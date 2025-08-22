@@ -604,7 +604,7 @@ export default function MessagesPage() {
                           <p className="text-sm">Send a message to get started</p>
                         </div>
                       </div>
-                    )}
+                    ) : null}
                   </div>
                   
                   {/* Message Input - Disabled for admin conversations */}
