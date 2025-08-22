@@ -11,6 +11,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [posts, setPosts] = useState([]);
   const [stats, setStats] = useState({ followers: 0, following: 0, likes: 0, posts: 0 });
+  const [achievements, setAchievements] = useState([]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -19,6 +20,7 @@ export default function ProfilePage() {
       loadProfile();
       loadPosts();
       loadStats();
+      loadAchievements();
     }
   }, [user]);
 
@@ -76,11 +78,21 @@ export default function ProfilePage() {
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user?.id);
 
-      // Count likes received
-      const { count: likesCount } = await supabase
-        .from('likes')
-        .select('*', { count: 'exact', head: true })
-        .in('post_id', posts.map(p => p.id));
+      // Get all user posts to count likes
+      const { data: userPosts } = await supabase
+        .from('posts')
+        .select('id')
+        .eq('user_id', user?.id);
+
+      // Count likes received on user's posts
+      let likesCount = 0;
+      if (userPosts && userPosts.length > 0) {
+        const { count } = await supabase
+          .from('likes')
+          .select('*', { count: 'exact', head: true })
+          .in('post_id', userPosts.map(p => p.id));
+        likesCount = count || 0;
+      }
 
       // Count followers
       const { count: followersCount } = await supabase
@@ -96,12 +108,46 @@ export default function ProfilePage() {
 
       setStats({
         posts: postsCount || 0,
-        likes: likesCount || 0,
+        likes: likesCount,
         followers: followersCount || 0,
         following: followingCount || 0
       });
     } catch (error) {
       console.error('Failed to load stats:', error);
+    }
+  };
+
+  const loadAchievements = async () => {
+    try {
+      const achievements = [];
+      
+      // Get user stats for achievements
+      const { count: postsCount } = await supabase
+        .from('posts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user?.id);
+
+      const { count: followersCount } = await supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('following_id', user?.id);
+
+      // Check achievements
+      if (postsCount >= 1) achievements.push({ id: 1, title: 'First Post', icon: '📝', description: 'Created your first post' });
+      if (postsCount >= 10) achievements.push({ id: 2, title: 'Active Poster', icon: '🔥', description: 'Created 10 posts' });
+      if (postsCount >= 50) achievements.push({ id: 3, title: 'Content Creator', icon: '⭐', description: 'Created 50 posts' });
+      
+      if (followersCount >= 1) achievements.push({ id: 4, title: 'First Follower', icon: '👥', description: 'Got your first follower' });
+      if (followersCount >= 10) achievements.push({ id: 5, title: 'Popular', icon: '🌟', description: 'Reached 10 followers' });
+      if (followersCount >= 100) achievements.push({ id: 6, title: 'Influencer', icon: '👑', description: 'Reached 100 followers' });
+      
+      // Profile completion
+      if (profile?.avatar_url) achievements.push({ id: 7, title: 'Profile Picture', icon: '📷', description: 'Added a profile picture' });
+      if (profile?.bio) achievements.push({ id: 8, title: 'Bio Writer', icon: '✍️', description: 'Added a bio to your profile' });
+      
+      setAchievements(achievements);
+    } catch (error) {
+      console.error('Failed to load achievements:', error);
     }
   };
 
@@ -149,6 +195,7 @@ export default function ProfilePage() {
       if (!error) {
         setPosts(prev => prev.filter(p => p.id !== postId));
         loadStats(); // Refresh stats
+        loadAchievements(); // Refresh achievements
       }
     } catch (error) {
       console.error('Failed to delete post:', error);
@@ -229,6 +276,22 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
+
+          {/* Achievements */}
+          {achievements.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">🏆 Achievements</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {achievements.map((achievement) => (
+                  <div key={achievement.id} className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4 text-center">
+                    <div className="text-3xl mb-2">{achievement.icon}</div>
+                    <h3 className="font-bold text-gray-900 text-sm mb-1">{achievement.title}</h3>
+                    <p className="text-xs text-gray-600">{achievement.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Posts Grid */}
           <div className="bg-white rounded-2xl shadow-xl p-6">

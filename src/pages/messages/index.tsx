@@ -64,47 +64,44 @@ export default function MessagesPage() {
     if (selectedChat) {
       loadMessages(selectedChat);
       
-      // Subscribe to real-time messages
-      const channel = supabase.channel(`messages-${selectedChat}`);
-      
-      channel
-        .on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages'
-        }, (payload) => {
-          const newMessage = payload.new as Message;
-          console.log('Real-time message received:', newMessage);
-          
-          // Only add if it's for this conversation
-          if ((newMessage.sender_id === user?.id && newMessage.receiver_id === selectedChat) ||
-              (newMessage.sender_id === selectedChat && newMessage.receiver_id === user?.id)) {
+      // Subscribe to real-time messages for this conversation
+      const channel = supabase
+        .channel(`messages:${user?.id}:${selectedChat}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `or(and(sender_id.eq.${user?.id},receiver_id.eq.${selectedChat}),and(sender_id.eq.${selectedChat},receiver_id.eq.${user?.id}))`
+          },
+          (payload) => {
+            const newMessage = payload.new as Message;
+            
+            // Add message to UI immediately
             setMessages(prev => {
               // Avoid duplicates
               if (prev.find(msg => msg.id === newMessage.id)) return prev;
-              console.log('Adding message to UI:', newMessage);
               return [...prev, newMessage];
             });
+            
+            // Show browser notification if message is from other user
+            if (newMessage.sender_id === selectedChat && 'Notification' in window && Notification.permission === 'granted') {
+              const senderName = conversations.find(c => c.id === selectedChat)?.full_name || 'Someone';
+              new Notification(`New message from ${senderName}`, {
+                body: newMessage.content,
+                icon: '/favicon.ico'
+              });
+            }
           }
-        })
-        .subscribe((status) => {
-          console.log('Subscription status:', status);
-        });
-      
-      console.log('Subscribed to messages for chat:', selectedChat);
-      
-      // Fallback: Poll for new messages every 3 seconds
-      const pollInterval = setInterval(() => {
-        loadMessages(selectedChat);
-      }, 3000);
+        )
+        .subscribe();
       
       return () => {
-        console.log('Unsubscribing from messages');
-        channel.unsubscribe();
-        clearInterval(pollInterval);
+        supabase.removeChannel(channel);
       };
     }
-  }, [selectedChat, user?.id]);
+  }, [selectedChat, user?.id, conversations]);
 
   useEffect(() => {
     // Scroll to bottom when messages change
@@ -116,7 +113,31 @@ export default function MessagesPage() {
     }
   }, [messages]);
 
-  // Simplified without WebSocket for now
+  // Real-time typing indicator
+  const handleTyping = (value: string) => {
+    setNewMessage(value);
+    
+    if (typingTimeout.current) {
+      clearTimeout(typingTimeout.current);
+    }
+    
+    // Broadcast typing status
+    if (value.trim()) {
+      supabase.channel(`typing:${selectedChat}`).send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: { user_id: user?.id, typing: true }
+      });
+      
+      typingTimeout.current = setTimeout(() => {
+        supabase.channel(`typing:${selectedChat}`).send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: { user_id: user?.id, typing: false }
+        });
+      }, 1000);
+    }
+  };
 
   const loadConversations = async () => {
     try {
@@ -148,57 +169,20 @@ export default function MessagesPage() {
     if (!newMessage.trim() || !selectedChat) return;
 
     const messageContent = newMessage;
-    
-    // Clear input immediately
     setNewMessage('');
     
-    // Clear typing timeout
-    if (typingTimeout.current) {
-      clearTimeout(typingTimeout.current);
-    }
-    
-    // Add message immediately as fallback
-    const tempMessage = {
-      id: `temp-${Date.now()}`,
-      sender_id: user?.id || '',
-      receiver_id: selectedChat,
-      content: messageContent,
-      created_at: new Date().toISOString()
-    };
-    setMessages(prev => [...prev, tempMessage]);
-    
     try {
-      console.log('Sending message:', {
-        sender_id: user?.id,
-        receiver_id: selectedChat,
-        content: messageContent
-      });
-      
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('messages')
         .insert({
           sender_id: user?.id,
           receiver_id: selectedChat,
           content: messageContent
-        })
-        .select();
+        });
       
       if (error) {
         console.error('Failed to send message:', error);
         setNewMessage(messageContent);
-      } else {
-        console.log('Message sent successfully:', data);
-        // Remove temp message and add real one if different
-        if (data && data[0]) {
-          setMessages(prev => {
-            const filtered = prev.filter(msg => !msg.id.toString().startsWith('temp-'));
-            const realMessage = data[0];
-            if (!filtered.find(msg => msg.id === realMessage.id)) {
-              return [...filtered, realMessage];
-            }
-            return filtered;
-          });
-        }
       }
     } catch (error) {
       console.error('Network error:', error);
@@ -551,10 +535,7 @@ export default function MessagesPage() {
                         <input
                           type="text"
                           value={newMessage}
-                          onChange={(e) => {
-                            setNewMessage(e.target.value);
-                            setIsTyping(e.target.value.length > 0);
-                          }}
+                          onChange={(e) => handleTyping(e.target.value)}
                           onKeyPress={(e) => {
                             if (e.key === 'Enter') {
                               e.preventDefault();

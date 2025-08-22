@@ -1,20 +1,29 @@
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
-import { useAuthStore } from '../../store/authStore';
+import { useAuth } from '../../hooks/useSupabase';
+import { supabase } from '../../lib/supabase';
+import { useRouter } from 'next/router';
 
 export default function MenuPage() {
-  const { user, logout } = useAuthStore();
+  const { user } = useAuth();
+  const router = useRouter();
+  
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/auth/login');
+  };
 
   const menuItems = [
-    { icon: '👤', label: 'Profile', action: () => window.location.href = `/profile/${user?.id}` },
-    { icon: '💬', label: 'Messages', action: () => window.location.href = '/messages' },
-    { icon: '👥', label: 'Comrades', action: () => window.location.href = '/comrades' },
-    { icon: '🔔', label: 'Notifications', action: () => window.location.href = '/notifications' },
-    { icon: '⚙️', label: 'Settings', action: () => window.location.href = '/settings' },
-    { icon: '📊', label: 'Analytics', action: () => window.location.href = '/analytics' },
-    { icon: '❓', label: 'Help & Support', action: () => window.location.href = '/help' },
-    { icon: '🔒', label: 'Privacy Policy', action: () => window.location.href = '/privacy' },
-    { icon: '🚪', label: 'Logout', action: logout, danger: true }
+    { icon: '👤', label: 'Profile', action: () => router.push('/profile') },
+    { icon: '💬', label: 'Messages', action: () => router.push('/messages') },
+    { icon: '👥', label: 'Comrades', action: () => router.push('/comrades') },
+    { icon: '🔔', label: 'Notifications', action: () => router.push('/notifications') },
+    { icon: '🛍️', label: 'Marketplace', action: () => router.push('/marketplace') },
+    { icon: '📱', label: 'Stories', action: () => router.push('/stories') },
+    { icon: '⚙️', label: 'Settings', action: () => router.push('/settings') },
+    { icon: '❓', label: 'Help & Support', action: () => router.push('/help') },
+    { icon: '📝', label: 'Feedback', action: () => router.push('/feedback') },
+    { icon: '🚪', label: 'Logout', action: handleLogout, danger: true }
   ];
 
   return (
@@ -30,8 +39,8 @@ export default function MenuPage() {
                   {user?.username[0].toUpperCase()}
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">{user?.full_name || user?.username}</h1>
-                  <p className="text-gray-600">@{user?.username}</p>
+                  <h1 className="text-xl font-bold text-gray-900">{user?.email?.split('@')[0] || 'Student'}</h1>
+                  <p className="text-gray-600">{user?.email}</p>
                 </div>
               </div>
             </div>

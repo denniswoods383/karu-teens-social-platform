@@ -43,11 +43,7 @@ export default function StoriesPage() {
     try {
       const { data: storiesData, error } = await supabase
         .from('stories')
-        .select(`
-          *,
-          profiles(username, full_name, avatar_url),
-          story_views!left(viewer_id)
-        `)
+        .select('*')
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
       
@@ -56,25 +52,45 @@ export default function StoriesPage() {
         return;
       }
       
-      const formattedStories = storiesData?.map(story => ({
-        id: story.id,
-        author: {
-          name: story.profiles?.full_name || story.profiles?.username || 'Student',
-          avatar: story.profiles?.avatar_url || '',
-          isVerified: false
-        },
-        content: {
-          type: story.media_type || 'text',
-          text: story.content,
-          media: story.media_url,
-          backgroundColor: story.background_color
-        },
-        timestamp: story.created_at,
-        views: story.views_count || 0,
-        isViewed: story.story_views?.some((view: any) => view.viewer_id === user?.id) || false,
-        category: story.category,
-        tags: []
-      })) || [];
+      // Get unique user IDs
+      const userIds = [...new Set(storiesData?.map(story => story.user_id) || [])];
+      
+      // Get profiles
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, username, full_name, avatar_url')
+        .in('id', userIds);
+      
+      // Get story views for current user
+      const { data: userViews } = await supabase
+        .from('story_views')
+        .select('story_id')
+        .eq('viewer_id', user?.id || '');
+      
+      const viewedStoryIds = new Set(userViews?.map(v => v.story_id) || []);
+      
+      const formattedStories = storiesData?.map(story => {
+        const profile = profiles?.find(p => p.id === story.user_id);
+        return {
+          id: story.id,
+          author: {
+            name: profile?.full_name || profile?.username || 'Student',
+            avatar: profile?.avatar_url || '',
+            isVerified: false
+          },
+          content: {
+            type: story.media_type || 'text',
+            text: story.content,
+            media: story.media_url,
+            backgroundColor: story.background_color
+          },
+          timestamp: story.created_at,
+          views: story.views_count || 0,
+          isViewed: viewedStoryIds.has(story.id),
+          category: story.category,
+          tags: []
+        };
+      }) || [];
       
       setStories(formattedStories);
     } catch (error) {
@@ -144,7 +160,7 @@ export default function StoriesPage() {
       if (selectedFile) {
         const formData = new FormData();
         formData.append('file', selectedFile);
-        formData.append('upload_preset', 'karu_teens');
+        formData.append('upload_preset', 'karu_uploads');
         
         const uploadUrl = selectedFile.type.startsWith('video/') 
           ? 'https://api.cloudinary.com/v1_1/dybwvr0tn/video/upload'
@@ -155,12 +171,20 @@ export default function StoriesPage() {
           body: formData
         });
         
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Cloudinary upload failed:', errorText);
+          throw new Error('Upload failed');
+        }
+        
         if (response.ok) {
           const data = await response.json();
           mediaUrl = data.secure_url;
           mediaType = selectedFile.type.startsWith('video/') ? 'video' : 'image';
         } else {
-          alert('Failed to upload media');
+          const errorText = await response.text();
+          console.error('Cloudinary error:', errorText);
+          alert('Failed to upload media. Please try again.');
           return;
         }
       }

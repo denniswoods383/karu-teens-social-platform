@@ -3,6 +3,8 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useSupabase';
 import { getRelativeTime } from '../../utils/timeUtils';
 import { Post } from '../../types/post';
+import { useRouter } from 'next/router';
+import { MessageCircle } from 'lucide-react';
 
 interface PostCardProps {
   post: Post;
@@ -10,6 +12,7 @@ interface PostCardProps {
 
 export default function PostCard({ post }: PostCardProps) {
   const { user } = useAuth();
+  const router = useRouter();
   const [comments, setComments] = useState([]);
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
@@ -20,6 +23,8 @@ export default function PostCard({ post }: PostCardProps) {
   const [isHidden, setIsHidden] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [authorProfile, setAuthorProfile] = useState<any>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -150,37 +155,98 @@ export default function PostCard({ post }: PostCardProps) {
   const handleLike = async () => {
     if (!user) return;
 
+    // Optimistic update
+    const wasLiked = isLiked;
+    setIsLiked(!wasLiked);
+    setLikesCount(prev => wasLiked ? prev - 1 : prev + 1);
+
     try {
-      if (isLiked) {
+      if (wasLiked) {
         // Unlike
-        await supabase
+        const { error } = await supabase
           .from('likes')
           .delete()
           .eq('post_id', post.id)
           .eq('user_id', user.id);
         
-        setIsLiked(false);
-        setLikesCount(prev => prev - 1);
+        if (error) throw error;
       } else {
         // Like
-        await supabase
+        const { error } = await supabase
           .from('likes')
           .insert({
             post_id: post.id,
             user_id: user.id
           });
         
-        setIsLiked(true);
-        setLikesCount(prev => prev + 1);
+        if (error) throw error;
       }
     } catch (error) {
+      // Revert optimistic update on error
+      setIsLiked(wasLiked);
+      setLikesCount(prev => wasLiked ? prev + 1 : prev - 1);
       console.error('Failed to toggle like:', error);
     }
   };
 
   const handleReport = async () => {
-    alert('Post reported successfully');
+    setShowReportModal(true);
     setShowDropdown(false);
+  };
+
+  const submitReport = async (reason: string, details: string) => {
+    try {
+      const { error } = await supabase
+        .from('reports')
+        .insert({
+          reporter_id: user?.id,
+          reported_post_id: post.id,
+          reported_user_id: post.user_id,
+          reason,
+          details,
+          status: 'pending'
+        });
+      
+      if (!error) {
+        alert('Report submitted successfully. Thank you for helping keep our community safe.');
+        setShowReportModal(false);
+      }
+    } catch (error) {
+      console.error('Failed to submit report:', error);
+      alert('Failed to submit report. Please try again.');
+    }
+  };
+
+  const handleShare = () => {
+    setShowShareModal(true);
+  };
+
+  const sharePost = async (method: string) => {
+    const postUrl = `${window.location.origin}/feed?post=${post.id}`;
+    const shareText = `Check out this post: ${post.content.substring(0, 100)}${post.content.length > 100 ? '...' : ''}`;
+    
+    switch (method) {
+      case 'copy':
+        navigator.clipboard.writeText(postUrl);
+        alert('Link copied to clipboard!');
+        break;
+      case 'native':
+        if (navigator.share) {
+          navigator.share({
+            title: 'Karu Teens Post',
+            text: shareText,
+            url: postUrl
+          });
+        }
+        break;
+      case 'twitter':
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(postUrl)}`);
+        break;
+      case 'facebook':
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(postUrl)}`);
+        break;
+    }
+    setShowShareModal(false);
   };
 
   const handleHide = () => {
@@ -191,6 +257,39 @@ export default function PostCard({ post }: PostCardProps) {
   const handleFollow = async () => {
     setIsFollowing(true);
     setShowDropdown(false);
+  };
+
+  const handleMessage = async () => {
+    if (!user || user.id === post.user_id) return;
+    
+    try {
+      // Check if conversation already exists
+      const { data: existingConversation } = await supabase
+        .from('conversations')
+        .select('id')
+        .or(`and(user1_id.eq.${user.id},user2_id.eq.${post.user_id}),and(user1_id.eq.${post.user_id},user2_id.eq.${user.id})`)
+        .single();
+      
+      if (existingConversation) {
+        router.push(`/messages?conversation=${existingConversation.id}`);
+      } else {
+        // Create new conversation
+        const { data: newConversation, error } = await supabase
+          .from('conversations')
+          .insert({
+            user1_id: user.id,
+            user2_id: post.user_id
+          })
+          .select('id')
+          .single();
+        
+        if (!error && newConversation) {
+          router.push(`/messages?conversation=${newConversation.id}`);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to start conversation:', error);
+    }
   };
 
   if (isHidden) {
@@ -342,13 +441,26 @@ export default function PostCard({ post }: PostCardProps) {
           
           <button 
             onClick={loadComments}
-            className="group flex items-center justify-center px-4 py-3 rounded-full flex-1 text-gray-600 bg-white border-2 border-gray-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all duration-300 transform hover:scale-105 font-semibold shadow-md mx-1"
+            className="group flex items-center justify-center px-3 py-3 rounded-full flex-1 text-gray-600 bg-white border-2 border-gray-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all duration-300 transform hover:scale-105 font-semibold shadow-md mx-1"
           >
             <span className="text-xl mr-2 transition-transform duration-300 group-hover:scale-125">💬</span>
             <span className="text-sm">Comment</span>
           </button>
           
-          <button className="group flex items-center justify-center px-4 py-3 rounded-full flex-1 text-gray-600 bg-white border-2 border-gray-200 hover:bg-green-50 hover:text-green-600 hover:border-green-200 transition-all duration-300 transform hover:scale-105 font-semibold shadow-md">
+          {user && user.id !== post.user_id && (
+            <button 
+              onClick={handleMessage}
+              className="group flex items-center justify-center px-3 py-3 rounded-full flex-1 text-gray-600 bg-white border-2 border-gray-200 hover:bg-purple-50 hover:text-purple-600 hover:border-purple-200 transition-all duration-300 transform hover:scale-105 font-semibold shadow-md mx-1"
+            >
+              <MessageCircle className="w-5 h-5 mr-2 transition-transform duration-300 group-hover:scale-125" />
+              <span className="text-sm">Message</span>
+            </button>
+          )}
+          
+          <button 
+            onClick={handleShare}
+            className="group flex items-center justify-center px-3 py-3 rounded-full flex-1 text-gray-600 bg-white border-2 border-gray-200 hover:bg-green-50 hover:text-green-600 hover:border-green-200 transition-all duration-300 transform hover:scale-105 font-semibold shadow-md"
+          >
             <span className="text-xl mr-2 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12">📤</span>
             <span className="text-sm">Share</span>
           </button>
@@ -396,6 +508,128 @@ export default function PostCard({ post }: PostCardProps) {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-900">Share Post</h3>
+                <button
+                  onClick={() => setShowShareModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg"
+                >
+                  <span className="text-xl">✕</span>
+                </button>
+              </div>
+              
+              <div className="space-y-3">
+                <button
+                  onClick={() => sharePost('copy')}
+                  className="w-full flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  <span className="text-2xl">🔗</span>
+                  <span className="font-medium">Copy Link</span>
+                </button>
+                
+                {navigator.share && (
+                  <button
+                    onClick={() => sharePost('native')}
+                    className="w-full flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
+                  >
+                    <span className="text-2xl">📤</span>
+                    <span className="font-medium">Share via...</span>
+                  </button>
+                )}
+                
+                <button
+                  onClick={() => sharePost('twitter')}
+                  className="w-full flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  <span className="text-2xl">🐦</span>
+                  <span className="font-medium">Share on Twitter</span>
+                </button>
+                
+                <button
+                  onClick={() => sharePost('facebook')}
+                  className="w-full flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  <span className="text-2xl">🔵</span>
+                  <span className="font-medium">Share on Facebook</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-900">Report Post</h3>
+                <button
+                  onClick={() => setShowReportModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg"
+                >
+                  <span className="text-xl">✕</span>
+                </button>
+              </div>
+              
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target as HTMLFormElement);
+                const reason = formData.get('reason') as string;
+                const details = formData.get('details') as string;
+                submitReport(reason, details);
+              }}>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Reason for reporting</label>
+                    <select name="reason" required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                      <option value="">Select a reason</option>
+                      <option value="spam">Spam</option>
+                      <option value="harassment">Harassment</option>
+                      <option value="inappropriate">Inappropriate content</option>
+                      <option value="misinformation">Misinformation</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Additional details (optional)</label>
+                    <textarea
+                      name="details"
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                      placeholder="Please provide more details about why you're reporting this post..."
+                    />
+                  </div>
+                  
+                  <div className="flex space-x-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowReportModal(false)}
+                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      Submit Report
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}

@@ -16,6 +16,7 @@
     "autoprefixer": "^10.0.1",
     "axios": "^1.6.0",
     "cloudinary": "^2.7.0",
+    "lucide-react": "^0.540.0",
     "next": "14.0.3",
     "postcss": "^8",
     "react": "^18",

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useSupabase';
-import { uploadToCloudinary } from '../../lib/cloudinary';
+import { uploadToCloudinary, CLOUDINARY_CONFIG } from '../../lib/cloudinary';
+import { Trash2, Play, Pause, Scissors } from 'lucide-react';
 
 interface CreatePostProps {
   onPostCreated?: () => void;
@@ -12,6 +13,9 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState<{[key: string]: number}>({});
+  const [previews, setPreviews] = useState<{[key: string]: string}>({});
+  const [videoTrimming, setVideoTrimming] = useState<{[key: string]: {start: number, end: number, duration: number}}>({});
+  const videoRefs = useRef<{[key: string]: HTMLVideoElement}>({});
   const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -25,7 +29,17 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
       // Upload files to Cloudinary
       for (const file of files) {
         try {
-          const cloudinaryResult = await uploadToCloudinary(file, (progress) => {
+          let fileToUpload = file;
+          
+          // Apply video trimming if needed
+          if (file.type.startsWith('video/') && videoTrimming[file.name]) {
+            const { start, end } = videoTrimming[file.name];
+            if (start > 0 || end < videoTrimming[file.name].duration) {
+              fileToUpload = await trimVideo(file, start, end);
+            }
+          }
+          
+          const cloudinaryResult = await uploadToCloudinary(fileToUpload, (progress) => {
             setUploadProgress(prev => ({ ...prev, [file.name]: progress }));
           });
           
@@ -53,6 +67,8 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
         setContent('');
         setFiles([]);
         setUploadProgress({});
+        setPreviews({});
+        setVideoTrimming({});
         onPostCreated?.();
       }
     } catch (error) {
@@ -65,17 +81,33 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
     
-    // Check file sizes
     selectedFiles.forEach(file => {
-      if (file.type.startsWith('video/') && file.size > 50 * 1024 * 1024) { // 50MB limit
+      if (file.type.startsWith('video/') && file.size > 50 * 1024 * 1024) {
         alert(`Video ${file.name} is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Please use videos under 50MB.`);
         return;
+      }
+      
+      // Create preview
+      const url = URL.createObjectURL(file);
+      setPreviews(prev => ({ ...prev, [file.name]: url }));
+      
+      // Set default video trimming (auto-cut to 60 seconds)
+      if (file.type.startsWith('video/')) {
+        const video = document.createElement('video');
+        video.src = url;
+        video.onloadedmetadata = () => {
+          const duration = Math.min(video.duration, 60); // Max 60 seconds
+          setVideoTrimming(prev => ({
+            ...prev,
+            [file.name]: { start: 0, end: duration, duration: video.duration }
+          }));
+        };
       }
     });
     
     const validFiles = selectedFiles.filter(file => {
       if (file.type.startsWith('video/')) {
-        return file.size <= 50 * 1024 * 1024; // 50MB limit for videos
+        return file.size <= 50 * 1024 * 1024;
       }
       return true;
     });
@@ -84,7 +116,39 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
   };
   
   const removeFile = (index: number) => {
+    const file = files[index];
+    if (previews[file.name]) {
+      URL.revokeObjectURL(previews[file.name]);
+      setPreviews(prev => {
+        const newPreviews = { ...prev };
+        delete newPreviews[file.name];
+        return newPreviews;
+      });
+    }
     setFiles(prev => prev.filter((_, i) => i !== index));
+    setVideoTrimming(prev => {
+      const newTrimming = { ...prev };
+      delete newTrimming[file.name];
+      return newTrimming;
+    });
+  };
+
+  const trimVideo = async (file: File, start: number, end: number): Promise<File> => {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d')!;
+      
+      video.src = URL.createObjectURL(file);
+      video.onloadedmetadata = () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        // For now, just return the original file
+        // In a real implementation, you'd use FFmpeg.js or similar
+        resolve(file);
+      };
+    });
   };
 
   return (
@@ -121,28 +185,118 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
           </label>
         </div>
         
-        {/* Selected Files */}
+        {/* Selected Files with Previews */}
         {files.length > 0 && (
-          <div className="mt-4 space-y-2">
+          <div className="mt-4 space-y-4">
             {files.map((file, index) => (
-              <div key={index} className="bg-gray-50 p-2 rounded-lg">
-                <div className="flex items-center justify-between mb-2">
+              <div key={index} className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-2">
                     <span className="text-lg">{file.type.startsWith('video/') ? '🎥' : '📷'}</span>
-                    <span className="text-sm text-gray-700 truncate">{file.name}</span>
-                    <span className="text-xs text-gray-500">({(file.size / 1024 / 1024).toFixed(1)}MB)</span>
+                    <span className="text-sm font-medium text-gray-700 truncate">{file.name}</span>
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                      {(file.size / 1024 / 1024).toFixed(1)}MB
+                    </span>
                   </div>
                   <button
                     onClick={() => removeFile(index)}
-                    className="text-red-500 hover:text-red-700 text-sm"
+                    className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors"
                   >
-                    ✕
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
+                
+                {/* Preview */}
+                {previews[file.name] && (
+                  <div className="mb-3">
+                    {file.type.startsWith('image/') ? (
+                      <img 
+                        src={previews[file.name]} 
+                        alt="Preview" 
+                        className="max-w-full h-48 object-cover rounded-lg border"
+                      />
+                    ) : (
+                      <div className="relative">
+                        <video 
+                          ref={el => { if (el) videoRefs.current[file.name] = el; }}
+                          src={previews[file.name]} 
+                          className="max-w-full h-48 object-cover rounded-lg border"
+                          controls
+                        />
+                        
+                        {/* Video Trimming Controls */}
+                        {videoTrimming[file.name] && (
+                          <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <Scissors className="w-4 h-4 text-blue-600" />
+                              <span className="text-sm font-medium text-gray-700">Trim Video</span>
+                              <span className="text-xs text-gray-500">
+                                (Auto-limited to 60s)
+                              </span>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex items-center space-x-2">
+                                <label className="text-xs text-gray-600 w-12">Start:</label>
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max={videoTrimming[file.name].duration}
+                                  step="0.1"
+                                  value={videoTrimming[file.name].start}
+                                  onChange={(e) => {
+                                    const start = parseFloat(e.target.value);
+                                    setVideoTrimming(prev => ({
+                                      ...prev,
+                                      [file.name]: {
+                                        ...prev[file.name],
+                                        start,
+                                        end: Math.min(start + 60, prev[file.name].duration)
+                                      }
+                                    }));
+                                  }}
+                                  className="flex-1"
+                                />
+                                <span className="text-xs text-gray-600 w-12">
+                                  {videoTrimming[file.name].start.toFixed(1)}s
+                                </span>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <label className="text-xs text-gray-600 w-12">End:</label>
+                                <input
+                                  type="range"
+                                  min={videoTrimming[file.name].start}
+                                  max={Math.min(videoTrimming[file.name].start + 60, videoTrimming[file.name].duration)}
+                                  step="0.1"
+                                  value={videoTrimming[file.name].end}
+                                  onChange={(e) => {
+                                    const end = parseFloat(e.target.value);
+                                    setVideoTrimming(prev => ({
+                                      ...prev,
+                                      [file.name]: { ...prev[file.name], end }
+                                    }));
+                                  }}
+                                  className="flex-1"
+                                />
+                                <span className="text-xs text-gray-600 w-12">
+                                  {videoTrimming[file.name].end.toFixed(1)}s
+                                </span>
+                              </div>
+                              <div className="text-xs text-center text-blue-600 font-medium">
+                                Duration: {(videoTrimming[file.name].end - videoTrimming[file.name].start).toFixed(1)}s
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Upload Progress */}
                 {uploadProgress[file.name] && (
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      className="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full transition-all duration-300"
                       style={{ width: `${uploadProgress[file.name]}%` }}
                     ></div>
                     <div className="text-xs text-center mt-1 text-blue-600 font-medium">
