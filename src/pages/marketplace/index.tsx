@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useSupabase';
 import { useRouter } from 'next/router';
 import { uploadToCloudinary } from '../../lib/cloudinary';
+import { useInView } from 'react-intersection-observer';
 
 interface MarketplaceItem {
   id: string;
@@ -39,24 +40,43 @@ export default function MarketplacePage() {
   const [uploading, setUploading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState<{[key: string]: number}>({});
   const intervalRefs = useRef<{[key: string]: NodeJS.Timeout}>({});
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
+  const { ref, inView } = useInView({ threshold: 0 });
+  
+  const ITEMS_PER_PAGE = 12;
   const { addPoints } = useGamificationStore();
   const { isPremium, setUpgradeModal } = usePremiumStore();
   const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    loadMarketplaceItems();
+    loadMarketplaceItems(0, false);
   }, []);
+  
+  useEffect(() => {
+    if (inView && hasMore && !loading) {
+      setLoading(true);
+      const nextPage = page + 1;
+      setPage(nextPage);
+      loadMarketplaceItems(nextPage, true);
+    }
+  }, [inView, hasMore, loading, page]);
 
-  const loadMarketplaceItems = async () => {
+  const loadMarketplaceItems = async (pageNum = 0, append = false) => {
     try {
       const { data: itemsData, error } = await supabase
         .from('marketplace_items')
         .select('*')
         .eq('is_available', true)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(pageNum * ITEMS_PER_PAGE, (pageNum + 1) * ITEMS_PER_PAGE - 1);
       
       if (error) throw error;
+      
+      if (itemsData && itemsData.length < ITEMS_PER_PAGE) {
+        setHasMore(false);
+      }
       
       // Get seller profiles
       const sellerIds = [...new Set(itemsData?.map(item => item.seller_id) || [])];
@@ -86,7 +106,7 @@ export default function MarketplacePage() {
         };
       }) || [];
       
-      setItems(formattedItems);
+      setItems(prev => append ? [...prev, ...formattedItems] : formattedItems);
     } catch (error) {
       console.error('Failed to load marketplace items:', error);
     } finally {
@@ -265,7 +285,9 @@ export default function MarketplacePage() {
       addPoints(10);
       alert('🛍️ Item listed successfully! +10 XP');
       setShowCreateModal(false);
-      loadMarketplaceItems();
+      setPage(0);
+      setHasMore(true);
+      loadMarketplaceItems(0, false);
     } catch (error) {
       console.error('Failed to create item:', error);
       alert('Failed to create listing. Please try again.');
@@ -561,6 +583,19 @@ export default function MarketplacePage() {
                 </div>
               </div>
             ))}
+            
+            {/* Infinite scroll trigger */}
+            {hasMore && items.length > 0 && (
+              <div ref={ref} className="col-span-full flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+              </div>
+            )}
+            
+            {!hasMore && items.length > 0 && (
+              <div className="col-span-full text-center py-8 text-gray-500">
+                <p>🎉 You've seen all items!</p>
+              </div>
+            )}
           </div>
 
           {/* Empty State */}

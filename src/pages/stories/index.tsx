@@ -5,6 +5,7 @@ import { useGamificationStore } from '../../store/gamificationStore';
 import { usePremiumStore } from '../../store/premiumStore';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useSupabase';
+import { useInView } from 'react-intersection-observer';
 
 interface Story {
   id: string;
@@ -31,25 +32,43 @@ export default function StoriesPage() {
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [filterCategory, setFilterCategory] = useState('all');
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
+  const { ref, inView } = useInView({ threshold: 0 });
+  
+  const STORIES_PER_PAGE = 20;
   const { addPoints } = useGamificationStore();
   const { isPremium } = usePremiumStore();
   const { user } = useAuth();
 
   useEffect(() => {
-    loadStories();
+    loadStories(0, false);
   }, []);
+  
+  useEffect(() => {
+    if (inView && hasMore) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      loadStories(nextPage, true);
+    }
+  }, [inView, hasMore, page]);
 
-  const loadStories = async () => {
+  const loadStories = async (pageNum = 0, append = false) => {
     try {
       const { data: storiesData, error } = await supabase
         .from('stories')
         .select('*')
         .gt('expires_at', new Date().toISOString())
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(pageNum * STORIES_PER_PAGE, (pageNum + 1) * STORIES_PER_PAGE - 1);
       
       if (error) {
         console.error('Error loading stories:', error);
         return;
+      }
+      
+      if (storiesData && storiesData.length < STORIES_PER_PAGE) {
+        setHasMore(false);
       }
       
       // Get unique user IDs
@@ -92,7 +111,7 @@ export default function StoriesPage() {
         };
       }) || [];
       
-      setStories(formattedStories);
+      setStories(prev => append ? [...prev, ...formattedStories] : formattedStories);
     } catch (error) {
       console.error('Failed to load stories:', error);
     }
@@ -209,7 +228,9 @@ export default function StoriesPage() {
       addPoints(8);
       alert('📱 Story created! +8 XP for sharing your campus life!');
       setShowCreateModal(false);
-      loadStories(); // Reload stories
+      setPage(0);
+      setHasMore(true);
+      loadStories(0, false); // Reload stories
     } catch (error) {
       console.error('Failed to create story:', error);
       alert('Failed to create story');
@@ -423,6 +444,19 @@ export default function StoriesPage() {
                 </div>
               </div>
             ))}
+            
+            {/* Infinite scroll trigger */}
+            {hasMore && stories.length > 0 && (
+              <div ref={ref} className="col-span-full flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+              </div>
+            )}
+            
+            {!hasMore && stories.length > 0 && (
+              <div className="col-span-full text-center py-8 text-gray-500">
+                <p>🎉 You've seen all stories!</p>
+              </div>
+            )}
           </div>
 
           {/* Empty State */}
