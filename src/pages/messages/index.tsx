@@ -39,6 +39,7 @@ export default function MessagesPage() {
   const [uploadProgress, setUploadProgress] = useState<{[key: string]: number}>({});
   const [isTyping, setIsTyping] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [otherUserTyping, setOtherUserTyping] = useState(false);
   const { user } = useAuth();
   const router = useRouter();
   const typingTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -93,8 +94,19 @@ export default function MessagesPage() {
         )
         .subscribe();
       
+      // Subscribe to typing indicators
+      const typingChannel = supabase
+        .channel(`typing-${selectedChat}`)
+        .on('broadcast', { event: 'typing' }, (payload) => {
+          if (payload.payload.user_id !== user?.id) {
+            setOtherUserTyping(payload.payload.typing);
+          }
+        })
+        .subscribe();
+      
       return () => {
         supabase.removeChannel(channel);
+        supabase.removeChannel(typingChannel);
       };
     }
   }, [selectedChat, user?.id]);
@@ -109,29 +121,38 @@ export default function MessagesPage() {
     }
   }, [messages]);
 
-  // Real-time typing indicator
   const handleTyping = (value: string) => {
     setNewMessage(value);
+    
+    if (!selectedChat) return;
     
     if (typingTimeout.current) {
       clearTimeout(typingTimeout.current);
     }
     
     // Broadcast typing status
+    const channel = supabase.channel(`typing-${selectedChat}`);
+    
     if (value.trim()) {
-      supabase.channel(`typing:${selectedChat}`).send({
+      channel.send({
         type: 'broadcast',
         event: 'typing',
         payload: { user_id: user?.id, typing: true }
       });
       
       typingTimeout.current = setTimeout(() => {
-        supabase.channel(`typing:${selectedChat}`).send({
+        channel.send({
           type: 'broadcast',
           event: 'typing',
           payload: { user_id: user?.id, typing: false }
         });
-      }, 1000);
+      }, 1500);
+    } else {
+      channel.send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: { user_id: user?.id, typing: false }
+      });
     }
   };
 
@@ -560,7 +581,22 @@ export default function MessagesPage() {
                           </div>
                         </div>
                       ))
-                    ) : (
+                    ) : null}
+                    
+                    {/* Typing Indicator */}
+                    {otherUserTyping && (
+                      <div className="flex justify-start animate-fadeIn">
+                        <div className="bg-gray-200 px-4 py-2 rounded-2xl">
+                          <div className="flex space-x-1">
+                            <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
+                            <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                            <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {messages.length === 0 && !otherUserTyping ? (
                       <div className="flex-1 flex items-center justify-center text-gray-500">
                         <div className="text-center">
                           <span className="text-4xl mb-4 block">💬</span>
