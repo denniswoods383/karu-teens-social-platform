@@ -11,6 +11,7 @@ import { usePremiumStore } from '../store/premiumStore'
 import { useEffect } from 'react'
 import UpgradeModal from '../components/premium/UpgradeModal'
 import QuickActionsWidget from '../components/gamification/QuickActionsWidget'
+import { initializeNotifications } from '../lib/notifications'
 
 export default function App({ Component, pageProps }: AppProps) {
   useAutoLogout();
@@ -23,6 +24,9 @@ export default function App({ Component, pageProps }: AppProps) {
     // Initialize gamification and premium features
     updateStreak();
     checkPremiumStatus();
+    
+    // Initialize push notifications
+    initializeNotifications();
   }, []);
   
   return (

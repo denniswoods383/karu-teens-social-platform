@@ -4,6 +4,7 @@ import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useSupabase';
+import { initializeNotifications, showNotification } from '../../lib/notifications';
 
 interface Message {
   id: string;
@@ -47,10 +48,8 @@ export default function MessagesPage() {
   useEffect(() => {
     loadConversations();
     
-    // Request notification permission
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
+    // Initialize push notifications
+    initializeNotifications();
   }, []);
   
   useEffect(() => {
@@ -89,6 +88,16 @@ export default function MessagesPage() {
                 if (prev.find(msg => msg.id === newMessage.id)) return prev;
                 return [...prev, newMessage];
               });
+              
+              // Show push notification for received messages
+              if (newMessage.sender_id === selectedChat) {
+                const senderName = conversations.find(c => c.id === selectedChat)?.full_name || 'Someone';
+                showNotification(`New message from ${senderName}`, {
+                  body: newMessage.content || 'Sent a file',
+                  tag: `message-${newMessage.id}`,
+                  data: { url: `/messages?user=${selectedChat}` }
+                });
+              }
             }
           }
         )
