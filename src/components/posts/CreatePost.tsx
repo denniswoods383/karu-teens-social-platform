@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useSupabase';
 import { uploadToCloudinary, CLOUDINARY_CONFIG } from '../../lib/cloudinary';
 import { Trash2, Play, Pause, Scissors } from 'lucide-react';
+import Image from 'next/image';
 
 interface CreatePostProps {
   onPostCreated?: () => void;
@@ -210,9 +211,11 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
                 {previews[file.name] && (
                   <div className="mb-3">
                     {file.type.startsWith('image/') ? (
-                      <img 
+                      <Image 
                         src={previews[file.name]} 
                         alt="Preview" 
+                        width={400}
+                        height={192}
                         className="max-w-full h-48 object-cover rounded-lg border"
                       />
                     ) : (

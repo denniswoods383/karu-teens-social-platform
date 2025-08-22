@@ -5,6 +5,7 @@ import { getRelativeTime } from '../../utils/timeUtils';
 import { Post } from '../../types/post';
 import { useRouter } from 'next/router';
 import { MessageCircle } from 'lucide-react';
+import Image from 'next/image';
 
 interface PostCardProps {
   post: Post;
@@ -315,7 +316,7 @@ export default function PostCard({ post }: PostCardProps) {
             className="w-12 h-12 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg ring-4 ring-blue-100 overflow-hidden hover:ring-6 hover:ring-blue-200 transition-all duration-300 cursor-pointer"
           >
             {authorProfile?.avatar_url ? (
-              <img src={authorProfile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+              <Image src={authorProfile.avatar_url} alt="Profile" width={48} height={48} className="w-full h-full object-cover" />
             ) : (
               '🎓'
             )}
@@ -395,9 +396,11 @@ export default function PostCard({ post }: PostCardProps) {
                       preload="metadata"
                     />
                   ) : (
-                    <img 
+                    <Image 
                       src={url}
                       alt={`Media ${index + 1}`}
+                      width={300}
+                      height={192}
                       className="w-full h-48 object-cover rounded-xl shadow-lg border border-blue-100 cursor-pointer"
                       onClick={() => window.open(url, '_blank')}
                     />
@@ -420,9 +423,11 @@ export default function PostCard({ post }: PostCardProps) {
                   preload="metadata"
                 />
               ) : (
-                <img 
+                <Image 
                   src={post.image_url}
                   alt="Post media"
+                  width={600}
+                  height={384}
                   className="w-full max-h-96 object-cover rounded-2xl shadow-lg border-2 border-blue-100"
                 />
               )}

@@ -5,6 +5,7 @@ import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useSupabase';
 import { initializeNotifications, showNotification } from '../../lib/notifications';
+import Image from 'next/image';
 
 interface Message {
   id: string;
@@ -543,9 +544,11 @@ export default function MessagesPage() {
                             {message.file_url ? (
                               <div className="space-y-2">
                                 {message.file_type?.startsWith('image/') ? (
-                                  <img 
+                                  <Image 
                                     src={message.file_url} 
                                     alt={message.file_name}
+                                    width={300}
+                                    height={200}
                                     className="max-w-xs rounded-lg cursor-pointer"
                                     onClick={() => window.open(message.file_url, '_blank')}
                                   />
