@@ -96,13 +96,19 @@ export default function MessagesPage() {
       
       // Subscribe to typing indicators
       const typingChannel = supabase
-        .channel(`typing-${selectedChat}`)
+        .channel(`typing-${selectedChat}`, {
+          config: {
+            broadcast: { self: false }
+          }
+        })
         .on('broadcast', { event: 'typing' }, (payload) => {
           if (payload.payload.user_id !== user?.id) {
             setOtherUserTyping(payload.payload.typing);
           }
         })
         .subscribe();
+      
+      typingChannelRef.current = typingChannel;
       
       return () => {
         supabase.removeChannel(channel);
@@ -121,34 +127,35 @@ export default function MessagesPage() {
     }
   }, [messages]);
 
+  const typingChannelRef = useRef<any>(null);
+
   const handleTyping = (value: string) => {
     setNewMessage(value);
     
-    if (!selectedChat) return;
+    if (!selectedChat || !typingChannelRef.current) return;
     
     if (typingTimeout.current) {
       clearTimeout(typingTimeout.current);
     }
     
-    // Broadcast typing status
-    const channel = supabase.channel(`typing-${selectedChat}`);
-    
     if (value.trim()) {
-      channel.send({
+      typingChannelRef.current.send({
         type: 'broadcast',
         event: 'typing',
         payload: { user_id: user?.id, typing: true }
       });
       
       typingTimeout.current = setTimeout(() => {
-        channel.send({
-          type: 'broadcast',
-          event: 'typing',
-          payload: { user_id: user?.id, typing: false }
-        });
+        if (typingChannelRef.current) {
+          typingChannelRef.current.send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: { user_id: user?.id, typing: false }
+          });
+        }
       }, 1500);
     } else {
-      channel.send({
+      typingChannelRef.current.send({
         type: 'broadcast',
         event: 'typing',
         payload: { user_id: user?.id, typing: false }
