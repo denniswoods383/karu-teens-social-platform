@@ -59,7 +59,7 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
         .insert({
           user_id: user.id,
           content: content.trim(),
-          attachments: attachments.length > 0 ? attachments : null,
+          media_urls: attachments.length > 0 ? attachments.map(a => a.url) : null,
           image_url: attachments.length > 0 ? attachments[0].url : null
         });
 

@@ -381,21 +381,52 @@ export default function PostCard({ post }: PostCardProps) {
       </div>
       
       {/* Media */}
-      {post.image_url && (
+      {(post.media_urls || post.image_url) && (
         <div className="px-6 pb-4">
-          {post.image_url.includes('.mp4') || post.image_url.includes('.webm') || post.image_url.includes('video') ? (
-            <video 
-              src={post.image_url}
-              controls 
-              className="w-full max-h-96 rounded-2xl shadow-lg border-2 border-blue-100"
-              preload="metadata"
-            />
+          {post.media_urls && post.media_urls.length > 1 ? (
+            <div className="grid grid-cols-2 gap-2">
+              {post.media_urls.slice(0, 4).map((url, index) => (
+                <div key={index} className="relative">
+                  {url.includes('.mp4') || url.includes('.webm') || url.includes('video') ? (
+                    <video 
+                      src={url}
+                      controls 
+                      className="w-full h-48 object-cover rounded-xl shadow-lg border border-blue-100"
+                      preload="metadata"
+                    />
+                  ) : (
+                    <img 
+                      src={url}
+                      alt={`Media ${index + 1}`}
+                      className="w-full h-48 object-cover rounded-xl shadow-lg border border-blue-100 cursor-pointer"
+                      onClick={() => window.open(url, '_blank')}
+                    />
+                  )}
+                  {post.media_urls.length > 4 && index === 3 && (
+                    <div className="absolute inset-0 bg-black/50 rounded-xl flex items-center justify-center">
+                      <span className="text-white font-bold text-lg">+{post.media_urls.length - 4}</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           ) : (
-            <img 
-              src={post.image_url}
-              alt="Post media"
-              className="w-full max-h-96 object-cover rounded-2xl shadow-lg border-2 border-blue-100"
-            />
+            <div>
+              {(post.image_url?.includes('.mp4') || post.image_url?.includes('.webm') || post.image_url?.includes('video')) ? (
+                <video 
+                  src={post.image_url}
+                  controls 
+                  className="w-full max-h-96 rounded-2xl shadow-lg border-2 border-blue-100"
+                  preload="metadata"
+                />
+              ) : (
+                <img 
+                  src={post.image_url}
+                  alt="Post media"
+                  className="w-full max-h-96 object-cover rounded-2xl shadow-lg border-2 border-blue-100"
+                />
+              )}
+            </div>
           )}
         </div>
       )}
