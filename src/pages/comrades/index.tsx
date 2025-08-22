@@ -77,6 +77,20 @@ export default function ComradesPage() {
         // Remove user from suggestions
         setSuggestions(prev => prev.filter(u => u.id !== userId));
         alert('User followed successfully!');
+        
+        // Send email notification
+        const followedUser = suggestions.find(u => u.id === userId);
+        if (followedUser?.email) {
+          fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: followedUser.email,
+              subject: `${user?.email?.split('@')[0]} started following you`,
+              html: `<p><strong>${user?.email?.split('@')[0]}</strong> is now following you on Karu Teens.</p>`
+            })
+          });
+        }
       } else {
         console.error('Follow error:', error);
       }

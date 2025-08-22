@@ -100,6 +100,17 @@ export default function MessagesPage() {
                   tag: `message-${newMessage.id}`,
                   data: { url: `/messages?user=${selectedChat}` }
                 });
+                
+                // Send email notification
+                fetch('/api/send-email', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    to: user?.email,
+                    subject: `New message from ${senderName}`,
+                    html: `<p><strong>${senderName}</strong> sent you a message: "${newMessage.content || 'Sent a file'}"</p>`
+                  })
+                });
               }
             }
           }

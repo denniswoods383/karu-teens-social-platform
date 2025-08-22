@@ -199,6 +199,17 @@ export default function MarketplacePage() {
         if (newConversation) {
           console.log('Created new conversation:', newConversation.id);
           router.push(`/messages?conversation=${newConversation.id}`);
+          
+          // Send email notification to seller
+          fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: item.seller?.email,
+              subject: `Someone is interested in your ${item.title}`,
+              html: `<p>A buyer is interested in your marketplace item: <strong>${item.title}</strong></p>`
+            })
+          });
         }
       }
       
