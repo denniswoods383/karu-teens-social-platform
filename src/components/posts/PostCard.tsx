@@ -6,6 +6,7 @@ import { Post } from '../../types/post';
 import { useRouter } from 'next/router';
 import { MessageCircle } from 'lucide-react';
 import Image from 'next/image';
+import { commentSchema, reportSchema, validateData } from '../../lib/validation';
 
 interface PostCardProps {
   post: Post;
@@ -128,7 +129,17 @@ export default function PostCard({ post }: PostCardProps) {
 
   const addComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim() || !user) return;
+    if (!user) return;
+
+    const validation = validateData(commentSchema, {
+      content: newComment.trim(),
+      post_id: post.id
+    });
+
+    if (!validation.success) {
+      alert(validation.errors.join(', '));
+      return;
+    }
 
     setLoading(true);
     try {
@@ -205,6 +216,18 @@ export default function PostCard({ post }: PostCardProps) {
   };
 
   const submitReport = async (reason: string, details: string) => {
+    const validation = validateData(reportSchema, {
+      reason,
+      details,
+      reported_post_id: post.id,
+      reported_user_id: post.user_id
+    });
+
+    if (!validation.success) {
+      alert(validation.errors.join(', '));
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('reports')

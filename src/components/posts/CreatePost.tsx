@@ -4,6 +4,7 @@ import { useAuth } from '../../hooks/useSupabase';
 import { uploadToCloudinary, CLOUDINARY_CONFIG } from '../../lib/cloudinary';
 import { Trash2, Play, Pause, Scissors } from 'lucide-react';
 import Image from 'next/image';
+import { postSchema, validateData } from '../../lib/validation';
 
 interface CreatePostProps {
   onPostCreated?: () => void;
@@ -21,7 +22,23 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if ((!content.trim() && files.length === 0) || !user) return;
+    if (!user) return;
+
+    // Validate input
+    const validation = validateData(postSchema, {
+      content: content.trim(),
+      media_urls: files.length > 0 ? ['placeholder'] : undefined
+    });
+
+    if (!validation.success) {
+      alert(validation.errors.join(', '));
+      return;
+    }
+
+    if (!content.trim() && files.length === 0) {
+      alert('Please add some content or media to your post');
+      return;
+    }
 
     setLoading(true);
     try {

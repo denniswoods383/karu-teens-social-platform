@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useSupabase';
 import { initializeNotifications, showNotification } from '../../lib/notifications';
 import Image from 'next/image';
+import { messageSchema, validateData } from '../../lib/validation';
 
 interface Message {
   id: string;
@@ -211,8 +212,23 @@ export default function MessagesPage() {
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() && selectedFiles.length === 0) return;
     if (!selectedChat || isSending) return;
+
+    // Validate message
+    const validation = validateData(messageSchema, {
+      content: newMessage.trim(),
+      receiver_id: selectedChat
+    });
+
+    if (!validation.success) {
+      alert(validation.errors.join(', '));
+      return;
+    }
+
+    if (!newMessage.trim() && selectedFiles.length === 0) {
+      alert('Please enter a message or select a file');
+      return;
+    }
 
     setIsSending(true);
     const messageContent = newMessage;

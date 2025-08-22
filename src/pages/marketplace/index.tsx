@@ -9,6 +9,7 @@ import { useRouter } from 'next/router';
 import { uploadToCloudinary } from '../../lib/cloudinary';
 import { useInView } from 'react-intersection-observer';
 import useSWR from 'swr';
+import { marketplaceItemSchema, validateData } from '../../lib/validation';
 
 interface MarketplaceItem {
   id: string;
@@ -255,8 +256,18 @@ export default function MarketplacePage() {
     const location = (document.getElementById('item-location') as HTMLInputElement)?.value;
     const fileInput = document.getElementById('item-images') as HTMLInputElement;
     
-    if (!title?.trim() || !description?.trim() || price <= 0) {
-      alert('Please fill in all required fields');
+    // Validate input
+    const validation = validateData(marketplaceItemSchema, {
+      title: title?.trim(),
+      description: description?.trim(),
+      price,
+      category,
+      condition,
+      location: location?.trim()
+    });
+
+    if (!validation.success) {
+      alert(validation.errors.join('\n'));
       return;
     }
     
