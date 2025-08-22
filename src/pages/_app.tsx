@@ -12,6 +12,8 @@ import { useEffect } from 'react'
 import UpgradeModal from '../components/premium/UpgradeModal'
 import QuickActionsWidget from '../components/gamification/QuickActionsWidget'
 import { initializeNotifications } from '../lib/notifications'
+import { SWRConfig } from 'swr'
+import { fetcher, swrConfig } from '../lib/swr'
 
 export default function App({ Component, pageProps }: AppProps) {
   useAutoLogout();
@@ -30,11 +32,12 @@ export default function App({ Component, pageProps }: AppProps) {
   }, []);
   
   return (
-    <ThemeProvider>
-      <Component {...pageProps} />
-      <FloatingFeedbackButton />
-      <QuickActionsWidget />
-      <UpgradeModal />
+    <SWRConfig value={{ fetcher, ...swrConfig }}>
+      <ThemeProvider>
+        <Component {...pageProps} />
+        <FloatingFeedbackButton />
+        <QuickActionsWidget />
+        <UpgradeModal />
       
       {/* Global Toast Notifications */}
       <div className="fixed top-4 right-4 z-[9999] space-y-2 pointer-events-none">
@@ -49,5 +52,6 @@ export default function App({ Component, pageProps }: AppProps) {
         ))}
       </div>
     </ThemeProvider>
+    </SWRConfig>
   )
 }

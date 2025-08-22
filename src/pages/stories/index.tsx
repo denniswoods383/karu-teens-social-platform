@@ -6,6 +6,7 @@ import { usePremiumStore } from '../../store/premiumStore';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useSupabase';
 import { useInView } from 'react-intersection-observer';
+import useSWR from 'swr';
 
 interface Story {
   id: string;
@@ -29,6 +30,7 @@ interface Story {
 
 export default function StoriesPage() {
   const [stories, setStories] = useState<Story[]>([]);
+  const { data: cachedStories, mutate } = useSWR('stories');
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [filterCategory, setFilterCategory] = useState('all');
@@ -42,8 +44,22 @@ export default function StoriesPage() {
   const { user } = useAuth();
 
   useEffect(() => {
-    loadStories(0, false);
-  }, []);
+    if (cachedStories) {
+      const formattedStories = cachedStories.map((story: any) => ({
+        id: story.id,
+        author: { name: 'Student', avatar: '', isVerified: false },
+        content: { type: story.media_type || 'text', text: story.content, media: story.media_url },
+        timestamp: story.created_at,
+        views: story.views_count || 0,
+        isViewed: false,
+        category: story.category,
+        tags: []
+      }));
+      setStories(formattedStories);
+    } else {
+      loadStories(0, false);
+    }
+  }, [cachedStories]);
   
   useEffect(() => {
     if (inView && hasMore) {
@@ -111,7 +127,11 @@ export default function StoriesPage() {
         };
       }) || [];
       
-      setStories(prev => append ? [...prev, ...formattedStories] : formattedStories);
+      const newStories = append ? [...stories, ...formattedStories] : formattedStories;
+      setStories(newStories);
+      if (!append) {
+        mutate(storiesData, false);
+      }
     } catch (error) {
       console.error('Failed to load stories:', error);
     }

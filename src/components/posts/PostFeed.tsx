@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import PostCard from './PostCard';
 import { useInView } from 'react-intersection-observer';
+import useSWR from 'swr';
 
 export default function PostFeed() {
   const [posts, setPosts] = useState([]);
+  const { data: cachedPosts, mutate } = useSWR('posts');
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
@@ -13,8 +15,13 @@ export default function PostFeed() {
   const POSTS_PER_PAGE = 10;
 
   useEffect(() => {
-    loadPosts(0, false);
-  }, []);
+    if (cachedPosts) {
+      setPosts(cachedPosts);
+      setLoading(false);
+    } else {
+      loadPosts(0, false);
+    }
+  }, [cachedPosts]);
   
   useEffect(() => {
     if (inView && hasMore && !loading) {
@@ -37,7 +44,11 @@ export default function PostFeed() {
         if (data && data.length < POSTS_PER_PAGE) {
           setHasMore(false);
         }
-        setPosts(prev => append ? [...prev, ...(data || [])] : (data || []));
+        const newPosts = append ? [...posts, ...(data || [])] : (data || []);
+        setPosts(newPosts);
+        if (!append) {
+          mutate(newPosts, false);
+        }
       }
     } catch (error) {
       console.error('Failed to load posts:', error);

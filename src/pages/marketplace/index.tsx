@@ -8,6 +8,7 @@ import { useAuth } from '../../hooks/useSupabase';
 import { useRouter } from 'next/router';
 import { uploadToCloudinary } from '../../lib/cloudinary';
 import { useInView } from 'react-intersection-observer';
+import useSWR from 'swr';
 
 interface MarketplaceItem {
   id: string;
@@ -32,6 +33,7 @@ interface MarketplaceItem {
 
 export default function MarketplacePage() {
   const [items, setItems] = useState<MarketplaceItem[]>([]);
+  const { data: cachedItems, mutate } = useSWR('marketplace');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -51,8 +53,13 @@ export default function MarketplacePage() {
   const router = useRouter();
 
   useEffect(() => {
-    loadMarketplaceItems(0, false);
-  }, []);
+    if (cachedItems) {
+      setItems(cachedItems);
+      setLoading(false);
+    } else {
+      loadMarketplaceItems(0, false);
+    }
+  }, [cachedItems]);
   
   useEffect(() => {
     if (inView && hasMore && !loading) {
@@ -106,7 +113,11 @@ export default function MarketplacePage() {
         };
       }) || [];
       
-      setItems(prev => append ? [...prev, ...formattedItems] : formattedItems);
+      const newItems = append ? [...items, ...formattedItems] : formattedItems;
+      setItems(newItems);
+      if (!append) {
+        mutate(itemsData, false);
+      }
     } catch (error) {
       console.error('Failed to load marketplace items:', error);
     } finally {
