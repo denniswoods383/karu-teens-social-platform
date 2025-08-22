@@ -96,14 +96,11 @@ export default function MessagesPage() {
       
       // Subscribe to typing indicators
       const typingChannel = supabase
-        .channel(`typing-${selectedChat}`, {
-          config: {
-            broadcast: { self: false }
-          }
-        })
-        .on('broadcast', { event: 'typing' }, (payload) => {
-          if (payload.payload.user_id !== user?.id) {
-            setOtherUserTyping(payload.payload.typing);
+        .channel('typing')
+        .on('broadcast', { event: 'user_typing' }, (payload) => {
+          const { user_id, chat_id, typing } = payload.payload;
+          if (user_id !== user?.id && chat_id === selectedChat) {
+            setOtherUserTyping(typing);
           }
         })
         .subscribe();
@@ -141,24 +138,24 @@ export default function MessagesPage() {
     if (value.trim()) {
       typingChannelRef.current.send({
         type: 'broadcast',
-        event: 'typing',
-        payload: { user_id: user?.id, typing: true }
+        event: 'user_typing',
+        payload: { user_id: user?.id, chat_id: selectedChat, typing: true }
       });
       
       typingTimeout.current = setTimeout(() => {
         if (typingChannelRef.current) {
           typingChannelRef.current.send({
             type: 'broadcast',
-            event: 'typing',
-            payload: { user_id: user?.id, typing: false }
+            event: 'user_typing',
+            payload: { user_id: user?.id, chat_id: selectedChat, typing: false }
           });
         }
       }, 1500);
     } else {
       typingChannelRef.current.send({
         type: 'broadcast',
-        event: 'typing',
-        payload: { user_id: user?.id, typing: false }
+        event: 'user_typing',
+        payload: { user_id: user?.id, chat_id: selectedChat, typing: false }
       });
     }
   };
