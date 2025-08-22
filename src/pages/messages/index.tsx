@@ -38,6 +38,7 @@ export default function MessagesPage() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState<{[key: string]: number}>({});
   const [isTyping, setIsTyping] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const { user } = useAuth();
   const router = useRouter();
   const typingTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -176,44 +177,40 @@ export default function MessagesPage() {
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() && selectedFiles.length === 0) return;
-    if (!selectedChat) return;
+    if (!selectedChat || isSending) return;
 
+    setIsSending(true);
     const messageContent = newMessage;
+    const filesToUpload = [...selectedFiles];
+    
+    // Clear inputs immediately
     setNewMessage('');
+    setSelectedFiles([]);
     
-    // Upload files first if any
-    let fileUrl = null;
-    let fileType = null;
-    let fileName = null;
-    
-    if (selectedFiles.length > 0) {
-      try {
-        const file = selectedFiles[0];
-        const uploadResult = await uploadToCloudinary(file);
-        fileUrl = uploadResult.secure_url;
-        fileType = file.type;
-        fileName = file.name;
-        setSelectedFiles([]);
-      } catch (error) {
-        console.error('File upload failed:', error);
-        return;
-      }
-    }
-    
-    // Add message optimistically
+    // Add optimistic message
     const tempMessage = {
       id: `temp-${Date.now()}`,
       sender_id: user?.id || '',
       receiver_id: selectedChat,
-      content: messageContent || (fileUrl ? `Shared ${fileType?.startsWith('image/') ? 'photo' : 'file'}` : ''),
-      file_url: fileUrl,
-      file_type: fileType,
-      file_name: fileName,
+      content: messageContent || (filesToUpload.length > 0 ? 'Uploading...' : ''),
       created_at: new Date().toISOString()
     };
     setMessages(prev => [...prev, tempMessage]);
     
     try {
+      let fileUrl = null;
+      let fileType = null;
+      let fileName = null;
+      
+      // Upload file if exists
+      if (filesToUpload.length > 0) {
+        const file = filesToUpload[0];
+        const uploadResult = await uploadToCloudinary(file);
+        fileUrl = uploadResult.secure_url;
+        fileType = file.type;
+        fileName = file.name;
+      }
+      
       const { data, error } = await supabase
         .from('messages')
         .insert({
@@ -227,9 +224,9 @@ export default function MessagesPage() {
         .select();
       
       if (error) {
-        console.error('Failed to send message:', error);
         setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
         setNewMessage(messageContent);
+        setSelectedFiles(filesToUpload);
       } else if (data && data[0]) {
         setMessages(prev => {
           const filtered = prev.filter(msg => msg.id !== tempMessage.id);
@@ -237,9 +234,11 @@ export default function MessagesPage() {
         });
       }
     } catch (error) {
-      console.error('Network error:', error);
       setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
       setNewMessage(messageContent);
+      setSelectedFiles(filesToUpload);
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -639,10 +638,10 @@ export default function MessagesPage() {
                       {/* Send Button */}
                       <button
                         type="submit"
-                        disabled={!newMessage.trim() && selectedFiles.length === 0}
+                        disabled={(!newMessage.trim() && selectedFiles.length === 0) || isSending}
                         className="p-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-full hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-lg"
                       >
-                        <span className="text-xl">🚀</span>
+                        <span className="text-xl">{isSending ? '⏳' : '🚀'}</span>
                       </button>
                     </div>
                   </form>
