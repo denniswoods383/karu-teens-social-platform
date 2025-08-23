@@ -23,15 +23,15 @@ export default function ImagePerformanceMonitor() {
       // Monitor image loading performance
       const resourceObserver = new PerformanceObserver((list) => {
         list.getEntries().forEach((entry) => {
-          if (entry.initiatorType === 'img') {
-            const loadTime = entry.responseEnd - entry.startTime;
+          if ((entry as any).initiatorType === 'img') {
+            const loadTime = (entry as any).responseEnd - (entry as any).startTime;
             
             // Log slow loading images (>500ms)
             if (loadTime > 500) {
               console.warn('Slow image load:', {
-                url: entry.name,
+                url: (entry as any).name,
                 loadTime: Math.round(loadTime),
-                size: entry.transferSize
+                size: (entry as any).transferSize
               });
             }
           }
