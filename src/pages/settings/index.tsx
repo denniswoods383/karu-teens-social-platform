@@ -7,7 +7,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 
 export default function SettingsPage() {
   const { user } = useAuth();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme } = useTheme() as any;
   const [activeTab, setActiveTab] = useState('account');
   const [settings, setSettings] = useState({
     profile_visibility: 'public',
