@@ -208,22 +208,22 @@ export default function StudyGroupsPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-100 via-cyan-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900 transition-colors duration-300">
         <EnhancedNavbar />
         
-        <div className="max-w-7xl mx-auto px-4 pt-20 pb-24">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 pt-16 sm:pt-20 pb-20 sm:pb-24">
           {/* Header */}
-          <div className="mb-8">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+          <div className="mb-4 sm:mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2">
                   📚 Study Groups
                 </h1>
-                <p className="text-gray-600 dark:text-gray-300 text-lg">
+                <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-lg">
                   Collaborate, learn, and achieve academic excellence together
                 </p>
               </div>
               
               <button
                 onClick={handleCreateGroup}
-                className="mt-4 md:mt-0 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center space-x-2"
+                className="mt-4 sm:mt-0 px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center space-x-2 text-sm sm:text-base"
               >
                 <span>➕</span>
                 <span>Create Group</span>
@@ -285,7 +285,7 @@ export default function StudyGroupsPage() {
           </div>
 
           {/* Study Groups Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
             {filteredGroups.map((group) => (
               <div key={group.id} className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
                 {/* Header */}

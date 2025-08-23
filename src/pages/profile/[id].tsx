@@ -157,12 +157,12 @@ export default function UserProfilePage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-100 via-cyan-50 to-indigo-100">
         <EnhancedNavbar />
         
-        <div className="pt-20 pb-8 max-w-4xl mx-auto px-4">
+        <div className="pt-16 sm:pt-20 pb-20 sm:pb-8 max-w-4xl mx-auto px-2 sm:px-4">
           {/* Profile Header */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 mb-6">
-            <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
+          <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-8 mb-4 sm:mb-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-8">
               {/* Profile Photo */}
-              <div className="w-32 h-32 rounded-full overflow-hidden bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center text-white text-4xl font-bold shadow-2xl">
+              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center text-white text-2xl sm:text-4xl font-bold shadow-2xl">
                 {profile.avatar_url ? (
                   <Image src={profile.avatar_url} alt="Profile" width={128} height={128} className="w-full h-full object-cover" />
                 ) : (
@@ -172,10 +172,10 @@ export default function UserProfilePage() {
 
               {/* Profile Info */}
               <div className="flex-1 text-center md:text-left">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                <h1 className="text-xl sm:text-3xl font-bold text-gray-900 mb-2">
                   {profile.full_name || 'Student'}
                 </h1>
-                <p className="text-xl text-blue-600 mb-4">@{profile.username}</p>
+                <p className="text-lg sm:text-xl text-blue-600 mb-4">@{profile.username}</p>
                 
                 {profile.bio && (
                   <p className="text-gray-600 mb-4">{profile.bio}</p>
@@ -219,11 +219,11 @@ export default function UserProfilePage() {
           </div>
 
           {/* Posts Grid */}
-          <div className="bg-white rounded-2xl shadow-xl p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Posts</h2>
+          <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Posts</h2>
             
             {posts.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                 {posts.map((post: any) => (
                   <div key={post.id} className="bg-gray-50 rounded-2xl p-4">
                     {post.image_url && (

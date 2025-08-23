@@ -7,14 +7,14 @@ export default function PrivacyPage() {
       <div className="min-h-screen bg-gray-100">
         <EnhancedNavbar />
         
-        <div className="max-w-4xl mx-auto px-4 pt-20 pb-6">
+        <div className="max-w-4xl mx-auto px-2 sm:px-4 pt-16 sm:pt-20 pb-20 sm:pb-6">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="p-6 border-b">
-              <h1 className="text-3xl font-bold text-gray-900">Privacy Policy</h1>
+            <div className="p-4 sm:p-6 border-b">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Privacy Policy</h1>
               <p className="text-gray-600 mt-2">Last updated: {new Date().toLocaleDateString()}</p>
             </div>
 
-            <div className="p-6 prose max-w-none">
+            <div className="p-4 sm:p-6 prose max-w-none text-sm sm:text-base">
               <section className="mb-8">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Information We Collect</h2>
                 <div className="space-y-4 text-gray-700">

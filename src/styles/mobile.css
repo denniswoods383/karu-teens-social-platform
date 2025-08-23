@@ -1,0 +1,49 @@
+/* Mobile-specific optimizations */
+
+/* Touch targets */
+@media (max-width: 768px) {
+  button, .btn, a[role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Improved tap targets */
+  .tap-target {
+    padding: 12px;
+    margin: 4px;
+  }
+  
+  /* Better scrolling */
+  .mobile-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  /* Hide desktop elements */
+  .desktop-only {
+    display: none !important;
+  }
+  
+  /* Mobile navigation */
+  .mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+    padding: 8px 0;
+  }
+  
+  /* Responsive text */
+  .mobile-text-sm { font-size: 14px; }
+  .mobile-text-base { font-size: 16px; }
+  .mobile-text-lg { font-size: 18px; }
+  
+  /* Mobile spacing */
+  .mobile-p-2 { padding: 8px; }
+  .mobile-p-4 { padding: 16px; }
+  .mobile-m-2 { margin: 8px; }
+  .mobile-m-4 { margin: 16px; }
+}

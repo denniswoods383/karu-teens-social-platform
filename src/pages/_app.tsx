@@ -1,10 +1,12 @@
 import '../styles/globals.css'
+import '../styles/mobile.css'
 import type { AppProps } from 'next/app'
 import { useAutoLogout } from '../hooks/useAutoLogout'
 import { useRealtimeNotifications } from '../hooks/useRealtimeNotifications'
 import FloatingFeedbackButton from '../components/feedback/FloatingFeedbackButton'
 import ToastNotification from '../components/notifications/ToastNotification'
 import { useNotifications } from '../hooks/useNotifications'
+import MobileNavbar from '../components/layout/MobileNavbar'
 import { ThemeProvider } from '../contexts/ThemeContext'
 import { useGamificationStore } from '../store/gamificationStore'
 import { usePremiumStore } from '../store/premiumStore'
@@ -47,7 +49,7 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <>
       <Head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#2563eb" />
         <link rel="apple-touch-icon" href="/ui/karu_logo.png" />
@@ -59,6 +61,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <FloatingFeedbackButton />
         <QuickActionsWidget />
         <UpgradeModal />
+        <MobileNavbar />
       
       {/* Global Toast Notifications */}
       <div className="fixed top-4 right-4 z-[9999] space-y-2 pointer-events-none">

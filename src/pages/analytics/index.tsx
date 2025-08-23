@@ -193,13 +193,13 @@ export default function AnalyticsPage() {
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
         <EnhancedNavbar />
         
-        <div className="max-w-6xl mx-auto px-4 pt-20 pb-24">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white">📊 Analytics Hub</h1>
-            <p className="text-gray-600 dark:text-gray-300 mt-2 text-lg">Track your academic and social journey</p>
+        <div className="max-w-6xl mx-auto px-2 sm:px-4 pt-16 sm:pt-20 pb-20 sm:pb-24">
+          <div className="mb-4 sm:mb-8">
+            <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white">📊 Analytics Hub</h1>
+            <p className="text-gray-600 dark:text-gray-300 mt-2 text-sm sm:text-lg">Track your academic and social journey</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
             {/* Left Column - Stats */}
             <div className="space-y-8">
               {/* Weekly Activity Chart */}
