@@ -12,8 +12,8 @@ export default function ImagePerformanceMonitor() {
           console.log('LCP Image:', {
             url: (lastEntry as any).url,
             loadTime: (lastEntry as any).loadTime,
-            renderTime: lastEntry.renderTime,
-            size: lastEntry.size
+            renderTime: (lastEntry as any).renderTime,
+            size: (lastEntry as any).size
           });
         }
       });
