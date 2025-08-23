@@ -7,6 +7,7 @@ import { useRouter } from 'next/router';
 import { MessageCircle } from 'lucide-react';
 import Image from 'next/image';
 import { commentSchema, reportSchema, validateData } from '../../lib/validation';
+import CommentLikeButton from '../comments/CommentLikeButton';
 
 interface PostCardProps {
   post: Post;
@@ -568,7 +569,7 @@ export default function PostCard({ post }: PostCardProps) {
                       <p className="text-gray-900">{comment.content}</p>
                     </div>
                     <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
-                      <button className="hover:underline">Like</button>
+                      <CommentLikeButton commentId={comment.id} />
                       <button className="hover:underline">Reply</button>
                       <span>{new Date(comment.created_at).toLocaleDateString()}</span>
                     </div>
