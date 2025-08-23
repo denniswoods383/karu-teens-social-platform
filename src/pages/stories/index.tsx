@@ -88,7 +88,7 @@ export default function StoriesPage() {
       }
       
       // Get unique user IDs
-      const userIds = [...new Set(storiesData?.map(story => story.user_id) || [])];
+      const userIds = Array.from(new Set(storiesData?.map(story => story.user_id) || []));
       
       // Get profiles
       const { data: profiles } = await supabase
