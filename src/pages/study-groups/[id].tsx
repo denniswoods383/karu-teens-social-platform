@@ -55,7 +55,11 @@ export default function StudyGroupDetail() {
       
       // Subscribe to real-time messages
       const channel = supabase
-        .channel(`group-messages-${id}`)
+        .channel(`group_messages_${id}`, {
+          config: {
+            broadcast: { self: true }
+          }
+        })
         .on(
           'postgres_changes',
           {
@@ -65,39 +69,43 @@ export default function StudyGroupDetail() {
             filter: `group_id=eq.${id}`
           },
           async (payload) => {
+            console.log('Real-time message received:', payload);
             const newMessage = payload.new;
-            
-            // Get sender info
-            const { data: sender } = await supabase
-              .from('profiles')
-              .select('full_name, username')
-              .eq('id', newMessage.sender_id)
-              .single();
-            
-            // Get reply info if exists
-            let replyData = null;
-            if (newMessage.reply_to_id) {
-              const { data: reply } = await supabase
-                .from('group_messages')
-                .select('content, sender:profiles(full_name)')
-                .eq('id', newMessage.reply_to_id)
-                .single();
-              replyData = reply;
-            }
-            
-            const formattedMessage = {
-              ...newMessage,
-              sender: sender || { full_name: 'Unknown', username: 'unknown' },
-              reply_to: replyData
-            };
             
             // Only add if not from current user (to avoid duplicates with optimistic updates)
             if (newMessage.sender_id !== user?.id) {
+              // Get sender info
+              const { data: sender } = await supabase
+                .from('profiles')
+                .select('full_name, username')
+                .eq('id', newMessage.sender_id)
+                .single();
+              
+              // Get reply info if exists
+              let replyData = null;
+              if (newMessage.reply_to_id) {
+                const { data: reply } = await supabase
+                  .from('group_messages')
+                  .select('content, sender:profiles(full_name)')
+                  .eq('id', newMessage.reply_to_id)
+                  .single();
+                replyData = reply;
+              }
+              
+              const formattedMessage = {
+                ...newMessage,
+                sender: sender || { full_name: 'Unknown', username: 'unknown' },
+                reply_to: replyData
+              };
+              
+              console.log('Adding message to UI:', formattedMessage);
               setMessages(prev => [...prev, formattedMessage]);
             }
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          console.log('Subscription status:', status);
+        });
       
       return () => {
         supabase.removeChannel(channel);
