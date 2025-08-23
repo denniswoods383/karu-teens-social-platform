@@ -29,13 +29,18 @@ export default function AnalyticsPage() {
   useEffect(() => {
     if (user) {
       loadStats();
+    }
+  }, [user]);
+  
+  useEffect(() => {
+    if (user && stats.posts !== undefined) {
       loadAchievements();
       loadStreak();
       loadWeeklyData();
       loadEngagementData();
       trackActivity();
     }
-  }, [user]);
+  }, [user, stats]);
 
   const loadStats = async () => {
     try {
@@ -103,13 +108,22 @@ export default function AnalyticsPage() {
   
   const trackActivity = async () => {
     if (!user) return;
-    await supabase.rpc('track_user_activity', { user_uuid: user.id });
+    try {
+      await supabase.rpc('track_user_activity', { user_uuid: user.id });
+    } catch (error) {
+      console.log('Activity tracking not available yet');
+    }
   };
 
   const loadStreak = async () => {
     if (!user) return;
-    const { data } = await supabase.rpc('get_user_streak', { user_uuid: user.id });
-    setStreak(data || 0);
+    try {
+      const { data } = await supabase.rpc('get_user_streak', { user_uuid: user.id });
+      setStreak(data || 0);
+    } catch (error) {
+      console.log('Streak tracking not available yet');
+      setStreak(0);
+    }
   };
 
   const loadWeeklyData = async () => {
