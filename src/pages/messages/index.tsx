@@ -611,7 +611,7 @@ export default function MessagesPage() {
                               <p className="text-sm leading-relaxed">{message.content}</p>
                             )}
                             <div className={`flex items-center justify-between mt-2 ${
-                              message.is_admin_message ? 'text-red-100' :
+                              (message as any).is_admin_message ? 'text-red-100' :
                               message.sender_id === user?.id ? 'text-blue-100' : 'text-gray-500'
                             }`}>
                               <p className="text-xs font-medium">
