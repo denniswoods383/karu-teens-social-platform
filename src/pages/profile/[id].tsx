@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../../hooks/useSupabase';
 import { supabase } from '../../lib/supabase';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
-import AutoHideNavbar from '../../components/layout/AutoHideNavbar';
+import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import Image from 'next/image';
 
 export default function UserProfilePage() {
@@ -155,7 +155,7 @@ export default function UserProfilePage() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gradient-to-br from-blue-100 via-cyan-50 to-indigo-100">
-        <AutoHideNavbar />
+        <EnhancedNavbar />
         
         <div className="pt-20 pb-8 max-w-4xl mx-auto px-4">
           {/* Profile Header */}
