@@ -21,7 +21,7 @@ interface Message {
   created_at: string;
   sender: { full_name: string; username: string };
   reply_to_id?: string;
-  reply_to?: { content: string; sender: { full_name: string } };
+  reply_to?: { content: string; sender?: { full_name: string } } | null;
 }
 
 interface Session {
@@ -106,15 +106,26 @@ export default function StudyGroupDetail() {
   const loadMessages = async () => {
     const { data } = await supabase
       .from('group_messages')
-      .select(`
-        *,
-        sender:profiles(full_name, username),
-        reply_to:group_messages(content, sender:profiles(full_name))
-      `)
+      .select('*, sender:profiles(full_name, username)')
       .eq('group_id', id)
       .order('created_at', { ascending: true });
     
-    setMessages(data || []);
+    // Load reply data separately to avoid complex joins
+    const messagesWithReplies = [];
+    for (const message of data || []) {
+      let replyData = null;
+      if (message.reply_to_id) {
+        const { data: reply } = await supabase
+          .from('group_messages')
+          .select('content, sender:profiles(full_name)')
+          .eq('id', message.reply_to_id)
+          .single();
+        replyData = reply;
+      }
+      messagesWithReplies.push({ ...message, reply_to: replyData });
+    }
+    
+    setMessages(messagesWithReplies);
   };
 
   const loadSessions = async () => {
@@ -246,7 +257,7 @@ export default function StudyGroupDetail() {
                             {message.reply_to && (
                               <div className="bg-gray-200 border-l-4 border-blue-500 p-2 mt-1 mb-2 rounded">
                                 <p className="text-xs text-gray-600">
-                                  Replying to {message.reply_to.sender.full_name}
+                                  Replying to {message.reply_to.sender?.full_name || 'Someone'}
                                 </p>
                                 <p className="text-sm text-gray-800 truncate">
                                   {message.reply_to.content}
