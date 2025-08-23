@@ -91,7 +91,13 @@ export default function StudyGroupDetail() {
               reply_to: replyData
             };
             
-            setMessages(prev => [...prev, formattedMessage]);
+            // Only add if not already in messages (avoid duplicates from optimistic updates)
+            setMessages(prev => {
+              if (prev.find(msg => msg.id === formattedMessage.id)) {
+                return prev;
+              }
+              return [...prev, formattedMessage];
+            });
           }
         )
         .subscribe();
@@ -168,15 +174,28 @@ export default function StudyGroupDetail() {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
+    // Add message optimistically
+    const tempMessage = {
+      id: `temp-${Date.now()}`,
+      content: newMessage.trim(),
+      sender_id: user?.id || '',
+      created_at: new Date().toISOString(),
+      sender: { full_name: user?.user_metadata?.full_name || 'You', username: user?.email || 'you' },
+      reply_to_id: replyingTo?.id || null,
+      reply_to: replyingTo ? { content: replyingTo.content, sender: replyingTo.sender } : null
+    };
+    
+    setMessages(prev => [...prev, tempMessage]);
+    setNewMessage('');
+    setReplyingTo(null);
+
+    // Send to database
     await supabase.from('group_messages').insert({
       group_id: id,
       sender_id: user?.id,
-      content: newMessage.trim(),
-      reply_to_id: replyingTo?.id || null
+      content: tempMessage.content,
+      reply_to_id: tempMessage.reply_to_id
     });
-
-    setNewMessage('');
-    setReplyingTo(null);
   };
 
   const scheduleSession = async () => {
