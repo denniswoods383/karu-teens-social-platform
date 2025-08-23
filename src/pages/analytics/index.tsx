@@ -4,6 +4,7 @@ import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import { useAuth } from '../../hooks/useSupabase';
 import { useGamificationStore } from '../../store/gamificationStore';
 import { supabase } from '../../lib/supabase';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
 
 export default function AnalyticsPage() {
@@ -18,6 +19,10 @@ export default function AnalyticsPage() {
   });
   const [achievements, setAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [streak, setStreak] = useState(0);
+  const [weeklyData, setWeeklyData] = useState([]);
+  const [engagementData, setEngagementData] = useState([]);
+  const [timeFilter, setTimeFilter] = useState('week');
   const { user } = useAuth();
   const { points, level } = useGamificationStore();
 
@@ -25,6 +30,10 @@ export default function AnalyticsPage() {
     if (user) {
       loadStats();
       loadAchievements();
+      loadStreak();
+      loadWeeklyData();
+      loadEngagementData();
+      trackActivity();
     }
   }, [user]);
 
@@ -92,13 +101,65 @@ export default function AnalyticsPage() {
     }
   };
   
+  const trackActivity = async () => {
+    if (!user) return;
+    await supabase.rpc('track_user_activity', { user_uuid: user.id });
+  };
+
+  const loadStreak = async () => {
+    if (!user) return;
+    const { data } = await supabase.rpc('get_user_streak', { user_uuid: user.id });
+    setStreak(data || 0);
+  };
+
+  const loadWeeklyData = async () => {
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      
+      const { count: postsCount } = await supabase
+        .from('posts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user?.id)
+        .gte('created_at', date.toISOString().split('T')[0])
+        .lt('created_at', new Date(date.getTime() + 24*60*60*1000).toISOString().split('T')[0]);
+      
+      const { count: messagesCount } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('sender_id', user?.id)
+        .gte('created_at', date.toISOString().split('T')[0])
+        .lt('created_at', new Date(date.getTime() + 24*60*60*1000).toISOString().split('T')[0]);
+      
+      days.push({
+        date: date.toLocaleDateString('en-US', { weekday: 'short' }),
+        posts: postsCount || 0,
+        messages: messagesCount || 0,
+        activity: (postsCount || 0) + (messagesCount || 0)
+      });
+    }
+    setWeeklyData(days);
+  };
+
+  const loadEngagementData = async () => {
+    const engagement = [
+      { name: 'Posts', value: stats.posts, color: '#3B82F6' },
+      { name: 'Likes', value: stats.likes, color: '#EF4444' },
+      { name: 'Comments', value: stats.comments, color: '#10B981' },
+      { name: 'Messages', value: stats.messages, color: '#8B5CF6' }
+    ];
+    setEngagementData(engagement);
+  };
+
   const loadAchievements = async () => {
     const userAchievements = [
       { id: 1, name: 'First Post', description: 'Created your first post', earned: stats.posts > 0, icon: '📝' },
       { id: 2, name: 'Social Butterfly', description: 'Made 10 friends', earned: stats.followers >= 10, icon: '🦋' },
       { id: 3, name: 'Conversation Starter', description: 'Sent 50 messages', earned: stats.messages >= 50, icon: '💬' },
       { id: 4, name: 'Story Teller', description: 'Created 5 stories', earned: stats.stories >= 5, icon: '📱' },
-      { id: 5, name: 'Popular Creator', description: 'Received 100 likes', earned: stats.likes >= 100, icon: '❤️' }
+      { id: 5, name: 'Popular Creator', description: 'Received 100 likes', earned: stats.likes >= 100, icon: '❤️' },
+      { id: 6, name: 'Streak Master', description: 'Maintained 7-day streak', earned: streak >= 7, icon: '🔥' }
     ];
     setAchievements(userAchievements);
   };
@@ -127,6 +188,21 @@ export default function AnalyticsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left Column - Stats */}
             <div className="space-y-8">
+              {/* Weekly Activity Chart */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">📅 Weekly Activity</h2>
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={weeklyData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="posts" fill="#3B82F6" name="Posts" />
+                    <Bar dataKey="messages" fill="#10B981" name="Messages" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
               {/* Traditional Stats */}
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">📈 Social Statistics</h2>
@@ -171,7 +247,7 @@ export default function AnalyticsPage() {
                   <div className="flex justify-between items-center p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg">
                     <span className="text-gray-700 dark:text-gray-300 font-medium">Current Streak</span>
                     <span className="font-bold text-blue-600 dark:text-blue-400 text-lg">
-                      🔥 0 days
+                      🔥 {streak} days
                     </span>
                   </div>
                   <div className="flex justify-between items-center p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg">
@@ -184,10 +260,58 @@ export default function AnalyticsPage() {
               </div>
             </div>
 
-            {/* Right Column - Achievements */}
-            <div>
+            {/* Right Column - Charts and Achievements */}
+            <div className="space-y-8">
+              {/* Time Filter */}
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">🏆 Achievements</h2>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">📈 Activity Trends</h2>
+                  <select
+                    value={timeFilter}
+                    onChange={(e) => setTimeFilter(e.target.value)}
+                    className="px-3 py-1 border rounded-lg text-sm"
+                  >
+                    <option value="week">Last 7 Days</option>
+                    <option value="month">Last 30 Days</option>
+                  </select>
+                </div>
+                
+                <ResponsiveContainer width="100%" height={200}>
+                  <LineChart data={weeklyData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="activity" stroke="#3B82F6" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Engagement Chart */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">🎯 Engagement Breakdown</h2>
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={engagementData}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      dataKey="value"
+                      label={({ name, value }) => `${name}: ${value}`}
+                    >
+                      {engagementData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Achievements */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">🏆 Achievements</h2>
                 <div className="space-y-3">
                   {achievements.map((achievement) => (
                     <div key={achievement.id} className={`p-4 rounded-lg border-2 ${
