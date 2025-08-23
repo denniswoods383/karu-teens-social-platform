@@ -233,7 +233,7 @@ export default function MessagesPage() {
     });
 
     if (!validation.success) {
-      alert(validation.errors.join(', '));
+      alert('errors' in validation ? validation.errors.join(', ') : 'Validation failed');
       return;
     }
 
