@@ -1,0 +1,302 @@
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import ProtectedRoute from '../../components/auth/ProtectedRoute';
+import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
+import { useAuth } from '../../hooks/useSupabase';
+import { supabase } from '../../lib/supabase';
+
+interface StudyGroup {
+  id: string;
+  name: string;
+  subject: string;
+  description: string;
+  creator: { full_name: string; username: string };
+  members: Array<{ user: { id: string; full_name: string; username: string } }>;
+}
+
+interface Message {
+  id: string;
+  content: string;
+  sender_id: string;
+  created_at: string;
+  sender: { full_name: string; username: string };
+}
+
+interface Session {
+  id: string;
+  title: string;
+  description: string;
+  scheduled_at: string;
+  duration_minutes: number;
+  location: string;
+  is_online: boolean;
+  created_by: string;
+}
+
+export default function StudyGroupDetail() {
+  const [group, setGroup] = useState<StudyGroup | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [activeTab, setActiveTab] = useState('chat');
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const { user } = useAuth();
+  const router = useRouter();
+  const { id } = router.query;
+
+  useEffect(() => {
+    if (id) {
+      loadGroup();
+      loadMessages();
+      loadSessions();
+    }
+  }, [id]);
+
+  const loadGroup = async () => {
+    const { data } = await supabase
+      .from('study_groups')
+      .select(`
+        *,
+        creator:profiles!creator_id(full_name, username),
+        members:study_group_members(user:profiles(id, full_name, username))
+      `)
+      .eq('id', id)
+      .single();
+    
+    setGroup(data);
+  };
+
+  const loadMessages = async () => {
+    const { data } = await supabase
+      .from('group_messages')
+      .select('*, sender:profiles(full_name, username)')
+      .eq('group_id', id)
+      .order('created_at', { ascending: true });
+    
+    setMessages(data || []);
+  };
+
+  const loadSessions = async () => {
+    const { data } = await supabase
+      .from('study_sessions')
+      .select('*')
+      .eq('group_id', id)
+      .order('scheduled_at', { ascending: true });
+    
+    setSessions(data || []);
+  };
+
+  const sendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim()) return;
+
+    await supabase.from('group_messages').insert({
+      group_id: id,
+      sender_id: user?.id,
+      content: newMessage.trim()
+    });
+
+    setNewMessage('');
+    loadMessages();
+  };
+
+  const scheduleSession = async () => {
+    const title = (document.getElementById('session-title') as HTMLInputElement)?.value;
+    const description = (document.getElementById('session-description') as HTMLTextAreaElement)?.value;
+    const scheduledAt = (document.getElementById('session-datetime') as HTMLInputElement)?.value;
+    const duration = parseInt((document.getElementById('session-duration') as HTMLInputElement)?.value || '60');
+    const location = (document.getElementById('session-location') as HTMLInputElement)?.value;
+    const isOnline = (document.getElementById('session-online') as HTMLInputElement)?.checked;
+
+    if (!title || !scheduledAt) {
+      alert('Please fill in required fields');
+      return;
+    }
+
+    await supabase.from('study_sessions').insert({
+      group_id: id,
+      title,
+      description,
+      scheduled_at: scheduledAt,
+      duration_minutes: duration,
+      location,
+      is_online: isOnline,
+      created_by: user?.id
+    });
+
+    setShowScheduleModal(false);
+    loadSessions();
+  };
+
+  if (!group) return <div>Loading...</div>;
+
+  return (
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gray-100">
+        <EnhancedNavbar />
+        
+        <div className="max-w-6xl mx-auto px-4 pt-20 pb-6">
+          <div className="bg-white rounded-lg shadow-sm border">
+            {/* Header */}
+            <div className="p-6 border-b">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">{group.name}</h1>
+                  <p className="text-gray-600">{group.subject}</p>
+                  <p className="text-sm text-gray-500 mt-1">{group.description}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-gray-500">Created by {group.creator.full_name}</p>
+                  <p className="text-sm text-gray-500">{group.members.length} members</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="border-b">
+              <nav className="flex space-x-8 px-6">
+                {[
+                  { id: 'chat', name: 'Group Chat', icon: '💬' },
+                  { id: 'sessions', name: 'Study Sessions', icon: '📅' },
+                  { id: 'members', name: 'Members', icon: '👥' }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                      activeTab === tab.id
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    {tab.icon} {tab.name}
+                  </button>
+                ))}
+              </nav>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {activeTab === 'chat' && (
+                <div className="space-y-4">
+                  <div className="h-96 overflow-y-auto border rounded-lg p-4 bg-gray-50">
+                    {messages.map((message) => (
+                      <div key={message.id} className="mb-4">
+                        <div className="flex items-start space-x-2">
+                          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                            {message.sender.full_name.charAt(0)}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2">
+                              <span className="font-medium text-sm">{message.sender.full_name}</span>
+                              <span className="text-xs text-gray-500">
+                                {new Date(message.created_at).toLocaleTimeString()}
+                              </span>
+                            </div>
+                            <p className="text-gray-900 mt-1">{message.content}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <form onSubmit={sendMessage} className="flex space-x-2">
+                    <input
+                      type="text"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder="Type a message..."
+                      className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      Send
+                    </button>
+                  </form>
+                </div>
+              )}
+
+              {activeTab === 'sessions' && (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold">Upcoming Sessions</h3>
+                    <button
+                      onClick={() => setShowScheduleModal(true)}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    >
+                      📅 Schedule Session
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {sessions.map((session) => (
+                      <div key={session.id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-medium">{session.title}</h4>
+                            <p className="text-sm text-gray-600">{session.description}</p>
+                            <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
+                              <span>📅 {new Date(session.scheduled_at).toLocaleString()}</span>
+                              <span>⏱️ {session.duration_minutes} mins</span>
+                              <span>{session.is_online ? '💻 Online' : `📍 ${session.location}`}</span>
+                            </div>
+                          </div>
+                          <button className="px-3 py-1 bg-blue-100 text-blue-600 rounded text-sm">
+                            Join
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'members' && (
+                <div className="space-y-3">
+                  {group.members.map((member) => (
+                    <div key={member.user.id} className="flex items-center space-x-3 p-3 border rounded-lg">
+                      <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                        {member.user.full_name.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="font-medium">{member.user.full_name}</p>
+                        <p className="text-sm text-gray-500">@{member.user.username}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Schedule Modal */}
+        {showScheduleModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-md w-full p-6">
+              <h3 className="text-lg font-bold mb-4">Schedule Study Session</h3>
+              <div className="space-y-4">
+                <input id="session-title" placeholder="Session title" className="w-full px-3 py-2 border rounded-lg" />
+                <textarea id="session-description" placeholder="Description" rows={3} className="w-full px-3 py-2 border rounded-lg" />
+                <input id="session-datetime" type="datetime-local" className="w-full px-3 py-2 border rounded-lg" />
+                <input id="session-duration" type="number" placeholder="Duration (minutes)" defaultValue="60" className="w-full px-3 py-2 border rounded-lg" />
+                <input id="session-location" placeholder="Location (if offline)" className="w-full px-3 py-2 border rounded-lg" />
+                <label className="flex items-center">
+                  <input id="session-online" type="checkbox" defaultChecked className="mr-2" />
+                  Online session
+                </label>
+                
+                <div className="flex space-x-3">
+                  <button onClick={() => setShowScheduleModal(false)} className="flex-1 px-4 py-2 border rounded-lg">Cancel</button>
+                  <button onClick={scheduleSession} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg">Schedule</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </ProtectedRoute>
+  );
+}

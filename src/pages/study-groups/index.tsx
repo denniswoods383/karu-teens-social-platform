@@ -5,6 +5,7 @@ import { useGamificationStore } from '../../store/gamificationStore';
 import { usePremiumStore } from '../../store/premiumStore';
 import { useAuth } from '../../hooks/useSupabase';
 import { supabase } from '../../lib/supabase';
+import { useRouter } from 'next/router';
 
 interface StudyGroup {
   id: string;
@@ -30,6 +31,7 @@ export default function StudyGroupsPage() {
   const { addPoints, unlockAchievement } = useGamificationStore();
   const { isPremium, setUpgradeModal } = usePremiumStore();
   const { user } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     loadStudyGroups();
@@ -350,7 +352,10 @@ export default function StudyGroupsPage() {
                       {group.members >= group.maxMembers ? '✋ Full' : '🚀 Join Group'}
                     </button>
                     
-                    <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
+                    <button
+                      onClick={() => router.push(`/study-groups/${group.id}`)}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+                    >
                       📖 View
                     </button>
                   </div>
