@@ -571,7 +571,7 @@ export default function MessagesPage() {
                                 : 'bg-white text-gray-900 border border-gray-200'
                             }`}
                           >
-                            {message.is_admin_message && (
+                            {(message as any).is_admin_message && (
                               <div className="flex items-center mb-2 text-yellow-200">
                                 <span className="text-xs font-bold">🚫 ADMIN MESSAGE - NO REPLY</span>
                               </div>
