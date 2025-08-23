@@ -564,7 +564,7 @@ export default function MessagesPage() {
                         >
                           <div
                             className={`max-w-sm px-4 py-3 rounded-2xl shadow-md transition-all duration-300 hover:shadow-lg ${
-                              message.is_admin_message
+                              (message as any).is_admin_message
                                 ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white border-2 border-red-300'
                                 : message.sender_id === user?.id
                                 ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white'
