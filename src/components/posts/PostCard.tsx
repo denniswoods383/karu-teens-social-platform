@@ -196,11 +196,11 @@ export default function PostCard({ post }: PostCardProps) {
         
         // Show push notification for like
         if (post.user_id !== user.id) {
-          showNotification('Post Liked!', {
-            body: `Someone liked your post: "${post.content.substring(0, 50)}..."`,
-            tag: `like-${post.id}`,
-            data: { url: `/feed?post=${post.id}` }
-          });
+          // showNotification('Post Liked!', {
+            // body: `Someone liked your post: "${post.content.substring(0, 50)}..."`,
+            // tag: `like-${post.id}`,
+            // data: { url: `/feed?post=${post.id}` }
+          // });
         }
       }
     } catch (error) {
