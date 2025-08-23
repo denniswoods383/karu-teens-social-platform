@@ -42,27 +42,38 @@ export default function StudyGroupsPage() {
       setLoading(true);
       const { data: groups, error } = await supabase
         .from('study_groups')
-        .select(`
-          *,
-          creator:profiles!creator_id(full_name, username),
-          members:study_group_members(count)
-        `);
+        .select('*');
       
       if (error) throw error;
       
-      const formattedGroups = groups?.map(group => ({
-        id: group.id,
-        name: group.name,
-        subject: group.subject,
-        description: group.description,
-        members: group.members?.[0]?.count || 0,
-        maxMembers: group.max_members,
-        isPrivate: group.is_private,
-        difficulty: group.difficulty,
-        nextSession: group.next_session,
-        creator: group.creator?.full_name || group.creator?.username || 'Student',
-        tags: group.tags || []
-      })) || [];
+      // Get member counts separately
+      const formattedGroups = [];
+      for (const group of groups || []) {
+        const { count: memberCount } = await supabase
+          .from('study_group_members')
+          .select('*', { count: 'exact', head: true })
+          .eq('group_id', group.id);
+        
+        const { data: creator } = await supabase
+          .from('profiles')
+          .select('full_name, username')
+          .eq('id', group.creator_id)
+          .single();
+        
+        formattedGroups.push({
+          id: group.id,
+          name: group.name,
+          subject: group.subject,
+          description: group.description,
+          members: memberCount || 0,
+          maxMembers: group.max_members,
+          isPrivate: group.is_private,
+          difficulty: group.difficulty,
+          nextSession: group.next_session,
+          creator: creator?.full_name || creator?.username || 'Student',
+          tags: group.tags || []
+        });
+      }
       
       setStudyGroups(formattedGroups);
     } catch (error) {
