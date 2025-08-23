@@ -81,12 +81,12 @@ export default function ComradesPage() {
         
         // Send email notification
         const followedUser = suggestions.find(u => u.id === userId);
-        if (followedUser?.email) {
+        if ((followedUser as any)?.email) {
           fetch('/api/send-email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              to: followedUser.email,
+              to: (followedUser as any).email,
               subject: `${user?.email?.split('@')[0]} started following you`,
               html: `<p><strong>${user?.email?.split('@')[0]}</strong> is now following you on Karu Teens.</p>`
             })
