@@ -48,7 +48,7 @@ export default function FeedStories() {
       if (error) throw error;
       
       // Get profiles separately
-      const userIds = [...new Set(data?.map(story => story.user_id) || [])];
+      const userIds = Array.from(new Set(data?.map(story => story.user_id) || []));
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, username, avatar_url')
