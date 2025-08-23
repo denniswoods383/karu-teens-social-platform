@@ -299,7 +299,7 @@ export default function ProfilePage() {
           onClose={() => setShowEditModal(false)}
           profile={profile}
           onSave={(updatedProfile) => {
-            setProfile(updatedProfile);
+            mutateProfile(updatedProfile, false);
             setShowEditModal(false);
           }}
         />
