@@ -52,13 +52,17 @@ export default function AnalyticsPage() {
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user?.id);
       
-      // Get likes received
+      // Get likes received - simplified approach
+      const { data: userPosts } = await supabase
+        .from('posts')
+        .select('id')
+        .eq('user_id', user?.id);
+      
+      const postIds = userPosts?.map(p => p.id) || [];
       const { count: likesCount } = await supabase
         .from('likes')
-        .select('post_id', { count: 'exact', head: true })
-        .in('post_id', 
-          supabase.from('posts').select('id').eq('user_id', user?.id)
-        );
+        .select('*', { count: 'exact', head: true })
+        .in('post_id', postIds);
       
       // Get comments made
       const { count: commentsCount } = await supabase
