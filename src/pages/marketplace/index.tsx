@@ -85,7 +85,7 @@ export default function MarketplacePage() {
       }
       
       // Get seller profiles
-      const sellerIds = [...new Set(itemsData?.map(item => item.seller_id) || [])];
+      const sellerIds = Array.from(new Set(itemsData?.map(item => item.seller_id) || []));
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, username, full_name, avatar_url')
