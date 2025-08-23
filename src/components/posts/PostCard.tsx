@@ -406,11 +406,11 @@ export default function PostCard({ post }: PostCardProps) {
       </div>
       
       {/* Media */}
-      {(post.media_urls || post.image_url) && (
+      {((post as any).media_urls || post.image_url) && (
         <div className="px-6 pb-4">
-          {post.media_urls && post.media_urls.length > 1 ? (
+          {(post as any).media_urls && (post as any).media_urls.length > 1 ? (
             <div className="grid grid-cols-2 gap-2">
-              {post.media_urls.slice(0, 4).map((url, index) => (
+              {(post as any).media_urls.slice(0, 4).map((url, index) => (
                 <div key={index} className="relative">
                   {url.includes('.mp4') || url.includes('.webm') || url.includes('video') ? (
                     <video 
@@ -429,9 +429,9 @@ export default function PostCard({ post }: PostCardProps) {
                       onClick={() => window.open(url, '_blank')}
                     />
                   )}
-                  {post.media_urls.length > 4 && index === 3 && (
+                  {(post as any).media_urls.length > 4 && index === 3 && (
                     <div className="absolute inset-0 bg-black/50 rounded-xl flex items-center justify-center">
-                      <span className="text-white font-bold text-lg">+{post.media_urls.length - 4}</span>
+                      <span className="text-white font-bold text-lg">+{(post as any).media_urls.length - 4}</span>
                     </div>
                   )}
                 </div>
