@@ -73,7 +73,7 @@ export const validateData = <T>(schema: z.ZodSchema<T>, data: unknown): { succes
     return { success: true, data: validData };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { success: false, errors: error.errors.map(e => e.message) };
+      return { success: false, errors: error.issues.map(e => e.message) };
     }
     return { success: false, errors: ['Validation failed'] };
   }
