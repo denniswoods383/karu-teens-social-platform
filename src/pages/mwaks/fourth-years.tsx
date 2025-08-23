@@ -1,6 +1,38 @@
 import Link from 'next/link';
+import { useEffect } from 'react';
+import { usePremiumStore } from '../../store/premiumStore';
+import ProtectedRoute from '../../components/auth/ProtectedRoute';
 
 const FourthYears = () => {
+  const { isPremium, isFreeTrial, setUpgradeModal } = usePremiumStore();
+  
+  useEffect(() => {
+    if (!isPremium && !isFreeTrial) {
+      setUpgradeModal(true);
+    }
+  }, [isPremium, isFreeTrial, setUpgradeModal]);
+  
+  if (!isPremium && !isFreeTrial) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-gradient-to-br from-red-50 to-indigo-100 p-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+              <div className="text-6xl mb-4">🔒</div>
+              <h1 className="text-3xl font-bold text-gray-800 mb-4">Premium Feature</h1>
+              <p className="text-gray-600 mb-6">Access to fourth year materials requires a premium subscription.</p>
+              <button
+                onClick={() => setUpgradeModal(true)}
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700"
+              >
+                🚀 Start Free Trial (7 Days)
+              </button>
+            </div>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
   const units = [
     'ABT 412', 'ACS 403', 'ACS 411', 'ACS 412', 'ACS 413', 'ACS 414', 'AEE 411', 'AEE 412',
     'AEE 413', 'AEE 414', 'AEE 417', 'AGR 411', 'AGR 413', 'AHP 411', 'AHP 412', 'AHP 413',
@@ -31,7 +63,8 @@ const FourthYears = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 p-6">
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 p-6">
       <div className="max-w-6xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="flex items-center justify-between mb-8">
@@ -52,6 +85,7 @@ const FourthYears = () => {
         </div>
       </div>
     </div>
+    </ProtectedRoute>
   );
 };
 

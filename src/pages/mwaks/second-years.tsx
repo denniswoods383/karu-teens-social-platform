@@ -1,6 +1,38 @@
 import Link from 'next/link';
+import { useEffect } from 'react';
+import { usePremiumStore } from '../../store/premiumStore';
+import ProtectedRoute from '../../components/auth/ProtectedRoute';
 
 const SecondYears = () => {
+  const { isPremium, isFreeTrial, setUpgradeModal } = usePremiumStore();
+  
+  useEffect(() => {
+    if (!isPremium && !isFreeTrial) {
+      setUpgradeModal(true);
+    }
+  }, [isPremium, isFreeTrial, setUpgradeModal]);
+  
+  if (!isPremium && !isFreeTrial) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+              <div className="text-6xl mb-4">🔒</div>
+              <h1 className="text-3xl font-bold text-gray-800 mb-4">Premium Feature</h1>
+              <p className="text-gray-600 mb-6">Access to second year materials requires a premium subscription.</p>
+              <button
+                onClick={() => setUpgradeModal(true)}
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700"
+              >
+                🚀 Start Free Trial (7 Days)
+              </button>
+            </div>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
   const units = [
     'ACS 211', 'ACS 212', 'AEE 210', 'AEE 212', 'AEE 215', 'AEE 290', 'AGE 237', 'AGR 281',
     'AGR 293', 'AHP 211', 'AHP 212', 'AHP 213', 'AHP 214', 'AHP 215', 'AHP 216', 'AHP 290',
@@ -23,7 +55,8 @@ const SecondYears = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-6">
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-6">
       <div className="max-w-6xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="flex items-center justify-between mb-8">
@@ -44,6 +77,7 @@ const SecondYears = () => {
         </div>
       </div>
     </div>
+    </ProtectedRoute>
   );
 };
 
