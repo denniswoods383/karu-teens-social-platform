@@ -276,7 +276,7 @@ export default function MarketplacePage() {
     });
 
     if (!validation.success) {
-      alert(validation.errors.join('\n'));
+      alert('errors' in validation ? validation.errors.join('\n') : 'Validation failed');
       return;
     }
     
