@@ -138,7 +138,7 @@ export default function PostCard({ post }: PostCardProps) {
     });
 
     if (!validation.success) {
-      alert(validation.errors.join(', '));
+      alert('errors' in validation ? validation.errors.join(', ') : 'Validation failed');
       return;
     }
 
@@ -225,7 +225,7 @@ export default function PostCard({ post }: PostCardProps) {
     });
 
     if (!validation.success) {
-      alert(validation.errors.join(', '));
+      alert('errors' in validation ? validation.errors.join(', ') : 'Validation failed');
       return;
     }
 
