@@ -8,10 +8,10 @@ export default function ImagePerformanceMonitor() {
         const entries = list.getEntries();
         const lastEntry = entries[entries.length - 1];
         
-        if (lastEntry && lastEntry.element?.tagName === 'IMG') {
+        if (lastEntry && (lastEntry as any).element?.tagName === 'IMG') {
           console.log('LCP Image:', {
-            url: lastEntry.url,
-            loadTime: lastEntry.loadTime,
+            url: (lastEntry as any).url,
+            loadTime: (lastEntry as any).loadTime,
             renderTime: lastEntry.renderTime,
             size: lastEntry.size
           });
