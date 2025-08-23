@@ -91,13 +91,10 @@ export default function StudyGroupDetail() {
               reply_to: replyData
             };
             
-            // Only add if not already in messages (avoid duplicates from optimistic updates)
-            setMessages(prev => {
-              if (prev.find(msg => msg.id === formattedMessage.id)) {
-                return prev;
-              }
-              return [...prev, formattedMessage];
-            });
+            // Only add if not from current user (to avoid duplicates with optimistic updates)
+            if (newMessage.sender_id !== user?.id) {
+              setMessages(prev => [...prev, formattedMessage]);
+            }
           }
         )
         .subscribe();
