@@ -201,7 +201,7 @@ export default function MarketplacePage() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              to: item.seller?.email,
+              to: (item.seller as any)?.email,
               subject: `Someone is interested in your ${item.title}`,
               html: `<p>A buyer is interested in your marketplace item: <strong>${item.title}</strong></p>`
             })
