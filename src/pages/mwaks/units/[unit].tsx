@@ -1,41 +1,79 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { getUnitFiles } from '../../../lib/supabase-mwaks';
+import { supabase } from '../../../lib/supabase';
+import { useAuth } from '../../../hooks/useSupabase';
 
 const UnitPage = () => {
   const router = useRouter();
   const { unit } = router.query;
-  const [files, setFiles] = useState<any[]>([]);
+  const [materials, setMaterials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [bookmarked, setBookmarked] = useState<string[]>([]);
+  const { user } = useAuth();
 
   const unitName = typeof unit === 'string' ? unit.replace('-', ' ') : '';
 
   useEffect(() => {
-    const fetchFiles = async () => {
-      if (unit && typeof unit === 'string') {
-        try {
-          const unitFiles = await getUnitFiles(unit.replace('-', ' '));
-          setFiles(unitFiles);
-        } catch (error) {
-          console.error('Error fetching files:', error);
-          setFiles([]);
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchFiles();
+    if (unit && typeof unit === 'string') {
+      loadMaterials();
+      loadBookmarks();
+    }
   }, [unit]);
+  
+  const loadMaterials = async () => {
+    const { data } = await supabase
+      .from('study_materials')
+      .select('*')
+      .eq('unit_code', unitName)
+      .order('created_at', { ascending: false });
+    
+    setMaterials(data || []);
+    setLoading(false);
+  };
+  
+  const loadBookmarks = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('material_bookmarks')
+      .select('material_id')
+      .eq('user_id', user.id);
+    
+    setBookmarked(data?.map(b => b.material_id) || []);
+  };
 
-  const downloadFile = async (fileUrl: string, fileName: string) => {
+  const downloadFile = async (material: any) => {
+    // Track download
+    await supabase.rpc('track_material_download', { material_uuid: material.id });
+    
+    // Download file
     const link = document.createElement('a');
-    link.href = fileUrl;
-    link.download = fileName;
+    link.href = material.file_url;
+    link.download = material.file_name;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    
+    // Refresh materials to update download count
+    loadMaterials();
+  };
+  
+  const toggleBookmark = async (materialId: string) => {
+    if (!user) return;
+    
+    if (bookmarked.includes(materialId)) {
+      await supabase
+        .from('material_bookmarks')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('material_id', materialId);
+      setBookmarked(prev => prev.filter(id => id !== materialId));
+    } else {
+      await supabase
+        .from('material_bookmarks')
+        .insert({ user_id: user.id, material_id: materialId });
+      setBookmarked(prev => [...prev, materialId]);
+    }
   };
 
   if (loading) {
@@ -59,38 +97,50 @@ const UnitPage = () => {
             </Link>
           </div>
 
-          {files.length === 0 ? (
+          {materials.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-gray-500 text-lg mb-4">
-                No files uploaded yet for this unit
+                No materials available for this unit yet
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {files.map((file, index) => (
-                <div key={index} className="bg-white rounded-lg border shadow-sm overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {materials.map((material) => (
+                <div key={material.id} className="bg-white rounded-lg border shadow-sm overflow-hidden hover:shadow-lg transition-shadow">
                   <div className="h-48 bg-gray-100 flex items-center justify-center">
-                    {file.file_type?.includes('image') ? (
+                    {material.file_type?.includes('image') ? (
                       <img 
-                        src={file.file_url} 
-                        alt={file.file_name} 
+                        src={material.file_url} 
+                        alt={material.title} 
                         className="max-w-full max-h-full object-contain"
                       />
                     ) : (
                       <div className="w-full h-full bg-gray-200 flex flex-col items-center justify-center">
                         <span className="text-4xl text-gray-500 mb-2">📄</span>
-                        <span className="text-sm text-gray-500">{file.file_type?.toUpperCase()}</span>
+                        <span className="text-sm text-gray-500">{material.file_type?.toUpperCase()}</span>
                       </div>
                     )}
                   </div>
                   <div className="p-4">
-                    <h3 className="font-semibold text-gray-800 truncate">{file.file_name}</h3>
-                    <p className="text-sm text-gray-500">{file.file_type}</p>
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-semibold text-gray-800 flex-1">{material.title}</h3>
+                      <button
+                        onClick={() => toggleBookmark(material.id)}
+                        className={`ml-2 p-1 rounded ${bookmarked.includes(material.id) ? 'text-yellow-500' : 'text-gray-400'}`}
+                      >
+                        ⭐
+                      </button>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">{material.description}</p>
+                    <div className="flex justify-between items-center text-xs text-gray-500 mb-3">
+                      <span>{material.category}</span>
+                      <span>📥 {material.download_count} downloads</span>
+                    </div>
                     <button
-                      onClick={() => downloadFile(file.file_url, file.file_name)}
-                      className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 mt-3"
+                      onClick={() => downloadFile(material)}
+                      className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition-colors"
                     >
-                      Download
+                      📥 Download
                     </button>
                   </div>
                 </div>

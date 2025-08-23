@@ -1,16 +1,64 @@
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { usePremiumStore } from '../../store/premiumStore';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useSupabase';
 
 const MWAKSHome = () => {
   const { isPremium, isFreeTrial, setUpgradeModal } = usePremiumStore();
+  const { user } = useAuth();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [bookmarks, setBookmarks] = useState([]);
+  const [stats, setStats] = useState({ totalMaterials: 0, totalDownloads: 0 });
   
   useEffect(() => {
     if (!isPremium && !isFreeTrial) {
       setUpgradeModal(true);
+    } else {
+      loadStats();
+      loadBookmarks();
     }
   }, [isPremium, isFreeTrial, setUpgradeModal]);
+  
+  const loadStats = async () => {
+    const { count: materialsCount } = await supabase
+      .from('study_materials')
+      .select('*', { count: 'exact', head: true });
+    
+    const { data: downloads } = await supabase
+      .from('study_materials')
+      .select('download_count');
+    
+    const totalDownloads = downloads?.reduce((sum, item) => sum + (item.download_count || 0), 0) || 0;
+    
+    setStats({ totalMaterials: materialsCount || 0, totalDownloads });
+  };
+  
+  const loadBookmarks = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('material_bookmarks')
+      .select('material_id, study_materials(title, unit_code)')
+      .eq('user_id', user.id);
+    setBookmarks(data || []);
+  };
+  
+  const searchMaterials = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    
+    const { data } = await supabase
+      .from('study_materials')
+      .select('*')
+      .or(`title.ilike.%${query}%,unit_code.ilike.%${query}%,description.ilike.%${query}%`)
+      .limit(10);
+    
+    setSearchResults(data || []);
+  };
   
   if (!isPremium && !isFreeTrial) {
     return (
@@ -41,8 +89,39 @@ const MWAKSHome = () => {
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-gray-800 mb-4">MWAKS</h1>
             <p className="text-lg text-gray-600">Karatina University Academic Knowledge System</p>
-            <p className="text-sm text-gray-500 mt-1">Access study materials by year level - Updated</p>
-            <p className="text-sm text-gray-500 mt-2">Access study materials by year level</p>
+            <div className="flex justify-center space-x-6 mt-4 text-sm text-gray-500">
+              <span>📚 {stats.totalMaterials} Materials</span>
+              <span>⬇️ {stats.totalDownloads} Downloads</span>
+              <span>⭐ {bookmarks.length} Bookmarked</span>
+            </div>
+          </div>
+          
+          {/* Search Bar */}
+          <div className="mb-8">
+            <div className="max-w-md mx-auto">
+              <input
+                type="text"
+                placeholder="Search materials, units, or topics..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  searchMaterials(e.target.value);
+                }}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            
+            {/* Search Results */}
+            {searchResults.length > 0 && (
+              <div className="max-w-md mx-auto mt-4 bg-white border rounded-lg shadow-lg">
+                {searchResults.map((material) => (
+                  <div key={material.id} className="p-3 border-b hover:bg-gray-50 cursor-pointer">
+                    <div className="font-medium text-gray-900">{material.title}</div>
+                    <div className="text-sm text-gray-500">{material.unit_code} • {material.category}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -75,6 +154,22 @@ const MWAKSHome = () => {
             </Link>
           </div>
 
+          {/* Quick Actions */}
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-blue-50 rounded-lg p-4 text-center">
+              <h3 className="font-semibold text-blue-800 mb-2">📖 Recent Materials</h3>
+              <p className="text-sm text-blue-600">Browse latest uploads</p>
+            </div>
+            <div className="bg-green-50 rounded-lg p-4 text-center">
+              <h3 className="font-semibold text-green-800 mb-2">⭐ My Bookmarks</h3>
+              <p className="text-sm text-green-600">{bookmarks.length} saved materials</p>
+            </div>
+            <div className="bg-purple-50 rounded-lg p-4 text-center">
+              <h3 className="font-semibold text-purple-800 mb-2">📊 My Downloads</h3>
+              <p className="text-sm text-purple-600">Track your progress</p>
+            </div>
+          </div>
+          
           <div className="mt-8 text-center">
             <Link href="/feed">
               <button className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
