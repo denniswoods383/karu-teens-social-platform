@@ -130,7 +130,7 @@ export default function StudyGroupsPage() {
     }
     
     try {
-      const { error } = await supabase
+      const { data: newGroup, error } = await supabase
         .from('study_groups')
         .insert({
           name,
@@ -141,9 +141,19 @@ export default function StudyGroupsPage() {
           difficulty,
           is_private: isPrivate,
           next_session: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-        });
+        })
+        .select()
+        .single();
       
-      if (!error) {
+      if (!error && newGroup) {
+        // Add creator as first member
+        await supabase
+          .from('study_group_members')
+          .insert({
+            group_id: newGroup.id,
+            user_id: user?.id
+          });
+        
         addPoints(25);
         alert('📚 Study group created successfully! +25 XP');
         setShowCreateModal(false);
