@@ -64,8 +64,34 @@ export default function StudyGroupDetail() {
             table: 'group_messages',
             filter: `group_id=eq.${id}`
           },
-          (payload) => {
-            loadMessages(); // Reload messages when new one is added
+          async (payload) => {
+            const newMessage = payload.new;
+            
+            // Get sender info
+            const { data: sender } = await supabase
+              .from('profiles')
+              .select('full_name, username')
+              .eq('id', newMessage.sender_id)
+              .single();
+            
+            // Get reply info if exists
+            let replyData = null;
+            if (newMessage.reply_to_id) {
+              const { data: reply } = await supabase
+                .from('group_messages')
+                .select('content, sender:profiles(full_name)')
+                .eq('id', newMessage.reply_to_id)
+                .single();
+              replyData = reply;
+            }
+            
+            const formattedMessage = {
+              ...newMessage,
+              sender: sender || { full_name: 'Unknown', username: 'unknown' },
+              reply_to: replyData
+            };
+            
+            setMessages(prev => [...prev, formattedMessage]);
           }
         )
         .subscribe();
