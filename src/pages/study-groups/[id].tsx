@@ -20,6 +20,8 @@ interface Message {
   sender_id: string;
   created_at: string;
   sender: { full_name: string; username: string };
+  reply_to_id?: string;
+  reply_to?: { content: string; sender: { full_name: string } };
 }
 
 interface Session {
@@ -40,6 +42,7 @@ export default function StudyGroupDetail() {
   const [newMessage, setNewMessage] = useState('');
   const [activeTab, setActiveTab] = useState('chat');
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const { user } = useAuth();
   const router = useRouter();
   const { id } = router.query;
@@ -49,6 +52,27 @@ export default function StudyGroupDetail() {
       loadGroup();
       loadMessages();
       loadSessions();
+      
+      // Subscribe to real-time messages
+      const channel = supabase
+        .channel(`group-messages-${id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'group_messages',
+            filter: `group_id=eq.${id}`
+          },
+          (payload) => {
+            loadMessages(); // Reload messages when new one is added
+          }
+        )
+        .subscribe();
+      
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [id]);
 
@@ -82,7 +106,11 @@ export default function StudyGroupDetail() {
   const loadMessages = async () => {
     const { data } = await supabase
       .from('group_messages')
-      .select('*, sender:profiles(full_name, username)')
+      .select(`
+        *,
+        sender:profiles(full_name, username),
+        reply_to:group_messages(content, sender:profiles(full_name))
+      `)
       .eq('group_id', id)
       .order('created_at', { ascending: true });
     
@@ -106,11 +134,12 @@ export default function StudyGroupDetail() {
     await supabase.from('group_messages').insert({
       group_id: id,
       sender_id: user?.id,
-      content: newMessage.trim()
+      content: newMessage.trim(),
+      reply_to_id: replyingTo?.id || null
     });
 
     setNewMessage('');
-    loadMessages();
+    setReplyingTo(null);
   };
 
   const scheduleSession = async () => {
@@ -194,7 +223,7 @@ export default function StudyGroupDetail() {
                 <div className="space-y-4">
                   <div className="h-96 overflow-y-auto border rounded-lg p-4 bg-gray-50">
                     {messages.map((message) => (
-                      <div key={message.id} className="mb-4">
+                      <div key={message.id} className="mb-4 group hover:bg-gray-100 p-2 rounded">
                         <div className="flex items-start space-x-2">
                           <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
                             {message.sender.full_name.charAt(0)}
@@ -205,7 +234,26 @@ export default function StudyGroupDetail() {
                               <span className="text-xs text-gray-500">
                                 {new Date(message.created_at).toLocaleTimeString()}
                               </span>
+                              <button
+                                onClick={() => setReplyingTo(message)}
+                                className="opacity-0 group-hover:opacity-100 text-xs text-blue-600 hover:text-blue-800 transition-opacity"
+                              >
+                                Reply
+                              </button>
                             </div>
+                            
+                            {/* Reply indicator */}
+                            {message.reply_to && (
+                              <div className="bg-gray-200 border-l-4 border-blue-500 p-2 mt-1 mb-2 rounded">
+                                <p className="text-xs text-gray-600">
+                                  Replying to {message.reply_to.sender.full_name}
+                                </p>
+                                <p className="text-sm text-gray-800 truncate">
+                                  {message.reply_to.content}
+                                </p>
+                              </div>
+                            )}
+                            
                             <p className="text-gray-900 mt-1">{message.content}</p>
                           </div>
                         </div>
@@ -213,21 +261,39 @@ export default function StudyGroupDetail() {
                     ))}
                   </div>
                   
-                  <form onSubmit={sendMessage} className="flex space-x-2">
-                    <input
-                      type="text"
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Type a message..."
-                      className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                    />
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    >
-                      Send
-                    </button>
-                  </form>
+                  <div className="space-y-2">
+                    {/* Reply indicator */}
+                    {replyingTo && (
+                      <div className="bg-blue-50 border-l-4 border-blue-500 p-2 rounded flex justify-between items-center">
+                        <div>
+                          <p className="text-xs text-blue-600">Replying to {replyingTo.sender.full_name}</p>
+                          <p className="text-sm text-gray-800 truncate">{replyingTo.content}</p>
+                        </div>
+                        <button
+                          onClick={() => setReplyingTo(null)}
+                          className="text-gray-500 hover:text-gray-700"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
+                    
+                    <form onSubmit={sendMessage} className="flex space-x-2">
+                      <input
+                        type="text"
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder={replyingTo ? `Reply to ${replyingTo.sender.full_name}...` : "Type a message..."}
+                        className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                      >
+                        Send
+                      </button>
+                    </form>
+                  </div>
                 </div>
               )}
 
