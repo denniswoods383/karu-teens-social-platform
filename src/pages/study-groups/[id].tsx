@@ -53,17 +53,30 @@ export default function StudyGroupDetail() {
   }, [id]);
 
   const loadGroup = async () => {
-    const { data } = await supabase
+    const { data: groupData } = await supabase
       .from('study_groups')
-      .select(`
-        *,
-        creator:profiles!creator_id(full_name, username),
-        members:study_group_members(user:profiles(id, full_name, username))
-      `)
+      .select('*')
       .eq('id', id)
       .single();
     
-    setGroup(data);
+    if (!groupData) return;
+    
+    const { data: creator } = await supabase
+      .from('profiles')
+      .select('full_name, username')
+      .eq('id', groupData.creator_id)
+      .single();
+    
+    const { data: members } = await supabase
+      .from('study_group_members')
+      .select('user:profiles(id, full_name, username)')
+      .eq('group_id', id);
+    
+    setGroup({
+      ...groupData,
+      creator: creator || { full_name: 'Student', username: 'student' },
+      members: members || []
+    });
   };
 
   const loadMessages = async () => {
