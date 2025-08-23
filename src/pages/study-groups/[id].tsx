@@ -128,10 +128,22 @@ export default function StudyGroupDetail() {
       .eq('id', groupData.creator_id)
       .single();
     
-    const { data: members } = await supabase
+    const { data: memberData } = await supabase
       .from('study_group_members')
-      .select('user:profiles(id, full_name, username)')
+      .select('user_id')
       .eq('group_id', id);
+    
+    const members = [];
+    for (const member of memberData || []) {
+      const { data: user } = await supabase
+        .from('profiles')
+        .select('id, full_name, username')
+        .eq('id', member.user_id)
+        .single();
+      if (user) {
+        members.push({ user });
+      }
+    }
     
     setGroup({
       ...groupData,
