@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import PostCard from './PostCard';
+import PostSkeleton from './PostSkeleton';
 import { useInView } from 'react-intersection-observer';
 import useSWR from 'swr';
 
@@ -57,10 +58,12 @@ export default function PostFeed() {
     }
   };
 
-  if (loading) {
+  if (loading && posts.length === 0) {
     return (
-      <div className="flex justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="space-y-6">
+        {[...Array(3)].map((_, i) => (
+          <PostSkeleton key={i} />
+        ))}
       </div>
     );
   }

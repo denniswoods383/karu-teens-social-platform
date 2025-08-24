@@ -10,7 +10,7 @@ interface SearchResult {
   title: string;
   subtitle?: string;
   avatar?: string;
-  created_at?: string;
+  rank?: number;
 }
 
 export default function GlobalSearch() {
@@ -20,8 +20,6 @@ export default function GlobalSearch() {
   const [showResults, setShowResults] = useState(false);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [popularSearches, setPopularSearches] = useState<string[]>([]);
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [filters, setFilters] = useState({ type: 'all', dateRange: 'all' });
   const router = useRouter();
   const { user } = useAuth();
 
@@ -33,7 +31,6 @@ export default function GlobalSearch() {
   useEffect(() => {
     if (query.length < 2) {
       setResults([]);
-      setShowResults(false);
       return;
     }
 
@@ -42,7 +39,7 @@ export default function GlobalSearch() {
     }, 300);
 
     return () => clearTimeout(searchTimeout);
-  }, [query, filters]);
+  }, [query]);
 
   const loadSearchHistory = async () => {
     if (!user) return;
@@ -69,101 +66,16 @@ export default function GlobalSearch() {
   const performSearch = async (searchQuery: string) => {
     setLoading(true);
     try {
-      const searchResults: SearchResult[] = [];
-      let totalResults = 0;
+      const { data, error } = await supabase.rpc('global_search', { p_search_term: searchQuery });
 
-      // Apply filters
-      const shouldSearchUsers = filters.type === 'all' || filters.type === 'users';
-      const shouldSearchPosts = filters.type === 'all' || filters.type === 'posts';
-      const shouldSearchMarketplace = filters.type === 'all' || filters.type === 'marketplace';
+      if (error) throw error;
 
-      // Date filter
-      let dateFilter = '';
-      if (filters.dateRange === 'week') {
-        dateFilter = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      } else if (filters.dateRange === 'month') {
-        dateFilter = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      }
-
-      // Search users with full-text search
-      if (shouldSearchUsers) {
-        const { data: users } = await supabase
-          .from('profiles')
-          .select('id, username, full_name, avatar_url')
-          .or(`username.ilike.%${searchQuery}%,full_name.ilike.%${searchQuery}%`)
-          .limit(5);
-
-        users?.forEach(user => {
-          searchResults.push({
-            id: user.id,
-            type: 'user',
-            title: user.full_name || user.username,
-            subtitle: `@${user.username}`,
-            avatar: user.avatar_url
-          });
-          totalResults++;
-        });
-      }
-
-      // Search posts with improved search
-      if (shouldSearchPosts) {
-        let postsQuery = supabase
-          .from('posts')
-          .select('id, content, created_at')
-          .ilike('content', `%${searchQuery}%`)
-          .limit(5);
-        
-        if (dateFilter) {
-          postsQuery = postsQuery.gte('created_at', dateFilter);
-        }
-
-        const { data: posts } = await postsQuery;
-
-        posts?.forEach(post => {
-          searchResults.push({
-            id: post.id,
-            type: 'post',
-            title: post.content.substring(0, 60) + (post.content.length > 60 ? '...' : ''),
-            subtitle: new Date(post.created_at).toLocaleDateString(),
-            created_at: post.created_at
-          });
-          totalResults++;
-        });
-      }
-
-      // Search marketplace
-      if (shouldSearchMarketplace) {
-        let marketplaceQuery = supabase
-          .from('marketplace_items')
-          .select('id, title, description, price, created_at')
-          .or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`)
-          .eq('is_available', true)
-          .limit(5);
-        
-        if (dateFilter) {
-          marketplaceQuery = marketplaceQuery.gte('created_at', dateFilter);
-        }
-
-        const { data: items } = await marketplaceQuery;
-
-        items?.forEach(item => {
-          searchResults.push({
-            id: item.id,
-            type: 'marketplace',
-            title: item.title,
-            subtitle: `$${item.price}`
-          });
-          totalResults++;
-        });
-      }
-
-      setResults(searchResults);
-      setShowResults(true);
+      setResults(data || []);
       
       // Track search
       await supabase.rpc('track_search', { 
         search_query: searchQuery, 
-        results_count: totalResults 
+        results_count: data?.length || 0
       });
       
     } catch (error) {
@@ -220,46 +132,8 @@ export default function GlobalSearch() {
           placeholder="Search users, posts, marketplace..."
           className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         />
-        <button
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-        >
-          <Filter className="w-4 h-4" />
-        </button>
+        <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
       </div>
-
-      {/* Advanced Filters */}
-      {showAdvanced && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 z-50">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Type</label>
-              <select
-                value={filters.type}
-                onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
-                className="w-full px-3 py-1 border rounded text-sm"
-              >
-                <option value="all">All</option>
-                <option value="users">Users</option>
-                <option value="posts">Posts</option>
-                <option value="marketplace">Marketplace</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Date Range</label>
-              <select
-                value={filters.dateRange}
-                onChange={(e) => setFilters(prev => ({ ...prev, dateRange: e.target.value }))}
-                className="w-full px-3 py-1 border rounded text-sm"
-              >
-                <option value="all">All Time</option>
-                <option value="week">Past Week</option>
-                <option value="month">Past Month</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showResults && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-96 overflow-y-auto z-50">

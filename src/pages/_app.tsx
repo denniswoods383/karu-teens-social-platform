@@ -10,7 +10,10 @@ import MobileNavbar from '../components/layout/MobileNavbar'
 import { ThemeProvider } from '../contexts/ThemeContext'
 import { useGamificationStore } from '../store/gamificationStore'
 import { usePremiumStore } from '../store/premiumStore'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { useAuth } from '../hooks/useSupabase'
+import { supabase } from '../lib/supabase'
+import Onboarding from '../components/auth/Onboarding'
 import UpgradeModal from '../components/premium/UpgradeModal'
 import QuickActionsWidget from '../components/gamification/QuickActionsWidget'
 import { initializeNotifications } from '../lib/notifications'
@@ -26,6 +29,25 @@ export default function App({ Component, pageProps }: AppProps) {
   const { notifications, removeNotification } = useNotifications();
   const { updateStreak } = useGamificationStore();
   const { checkPremiumStatus } = usePremiumStore();
+  const { user } = useAuth();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      const checkOnboarding = async () => {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('has_completed_onboarding')
+          .eq('id', user.id)
+          .single();
+
+        if (profile && !profile.has_completed_onboarding) {
+          setShowOnboarding(true);
+        }
+      };
+      checkOnboarding();
+    }
+  }, [user]);
   
   useEffect(() => {
     // Initialize gamification and premium features
@@ -57,6 +79,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <SWRConfig value={{ fetcher, ...swrConfig }}>
         <ThemeProvider>
         <ImagePerformanceMonitor />
+        {showOnboarding && <Onboarding onComplete={() => setShowOnboarding(false)} />}
         <Component {...pageProps} />
         <FloatingFeedbackButton />
         <QuickActionsWidget />

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import StorySkeleton from '../../components/stories/StorySkeleton';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import { useGamificationStore } from '../../store/gamificationStore';
@@ -39,6 +40,7 @@ export default function StoriesPage() {
   const { ref, inView } = useInView({ threshold: 0 });
   const [replyText, setReplyText] = useState('');
   const [showReplyInput, setShowReplyInput] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   const STORIES_PER_PAGE = 20;
   const { addPoints } = useGamificationStore();
@@ -136,6 +138,8 @@ export default function StoriesPage() {
       }
     } catch (error) {
       console.error('Failed to load stories:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -414,100 +418,104 @@ export default function StoriesPage() {
 
           {/* Stories Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {filteredStories.map((story) => (
-              <div
-                key={story.id}
-                onClick={() => handleViewStory(story)}
-                className={`relative cursor-pointer bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group ${
-                  !story.isViewed ? 'ring-3 ring-purple-500 ring-opacity-50' : ''
-                }`}
-              >
-                {/* Story Preview */}
-                <div className="aspect-[9/16] relative">
-                  {story.content.type === 'image' && story.content.media ? (
-                    <img 
-                      src={story.content.media} 
-                      alt="Story" 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : story.content.type === 'video' && story.content.media ? (
-                    <video 
-                      src={story.content.media} 
-                      className="w-full h-full object-cover"
-                      muted
-                      loop
-                      autoPlay
-                    />
-                  ) : (
-                    <div className={`w-full h-full ${story.content.backgroundColor || 'bg-gradient-to-br from-blue-400 to-purple-500'} flex items-center justify-center p-4`}>
-                      <p className="text-white font-medium text-center text-sm leading-relaxed">
-                        {story.content.text}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Overlay */}
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300" />
-
-                  {/* Category Badge */}
-                  <div className={`absolute top-3 right-3 w-6 h-6 ${getCategoryColor(story.category)} rounded-full flex items-center justify-center`}>
-                    <span className="text-white text-xs">
-                      {categories.find(c => c.id === story.category)?.icon}
-                    </span>
-                  </div>
-
-                  {/* New Indicator */}
-                  {!story.isViewed && (
-                    <div className="absolute top-3 left-3 w-3 h-3 bg-purple-500 rounded-full animate-pulse" />
-                  )}
-
-                  {/* Author Info */}
-                  <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 to-transparent">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                        {story.author.name.charAt(0)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-1">
-                          <p className="text-white font-medium text-sm truncate">
-                            {story.author.name}
-                          </p>
-                          {story.author.isVerified && (
-                            <span className="text-blue-400 text-xs">✓</span>
-                          )}
-                        </div>
-                        <p className="text-gray-300 text-xs">
-                          {getTimeAgo(story.timestamp)}
+            {isLoading ? (
+              [...Array(10)].map((_, i) => <StorySkeleton key={i} />)
+            ) : (
+              filteredStories.map((story) => (
+                <div
+                  key={story.id}
+                  onClick={() => handleViewStory(story)}
+                  className={`relative cursor-pointer bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group ${
+                    !story.isViewed ? 'ring-3 ring-purple-500 ring-opacity-50' : ''
+                  }`}
+                >
+                  {/* Story Preview */}
+                  <div className="aspect-[9/16] relative">
+                    {story.content.type === 'image' && story.content.media ? (
+                      <img
+                        src={story.content.media}
+                        alt="Story"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : story.content.type === 'video' && story.content.media ? (
+                      <video
+                        src={story.content.media}
+                        className="w-full h-full object-cover"
+                        muted
+                        loop
+                        autoPlay
+                      />
+                    ) : (
+                      <div className={`w-full h-full ${story.content.backgroundColor || 'bg-gradient-to-br from-blue-400 to-purple-500'} flex items-center justify-center p-4`}>
+                        <p className="text-white font-medium text-center text-sm leading-relaxed">
+                          {story.content.text}
                         </p>
                       </div>
-                    </div>
-                  </div>
-                </div>
+                    )}
 
-                {/* Story Stats */}
-                <div className="p-3 bg-white dark:bg-gray-800">
-                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <span>👁️ {story.views} views</span>
-                    <div className="flex items-center space-x-2">
-                      {story.tags.slice(0, 2).map(tag => (
-                        <span key={tag} className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
-                          #{tag}
-                        </span>
-                      ))}
+                    {/* Overlay */}
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300" />
+
+                    {/* Category Badge */}
+                    <div className={`absolute top-3 right-3 w-6 h-6 ${getCategoryColor(story.category)} rounded-full flex items-center justify-center`}>
+                      <span className="text-white text-xs">
+                        {categories.find(c => c.id === story.category)?.icon}
+                      </span>
+                    </div>
+
+                    {/* New Indicator */}
+                    {!story.isViewed && (
+                      <div className="absolute top-3 left-3 w-3 h-3 bg-purple-500 rounded-full animate-pulse" />
+                    )}
+
+                    {/* Author Info */}
+                    <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 to-transparent">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                          {story.author.name.charAt(0)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-1">
+                            <p className="text-white font-medium text-sm truncate">
+                              {story.author.name}
+                            </p>
+                            {story.author.isVerified && (
+                              <span className="text-blue-400 text-xs">✓</span>
+                            )}
+                          </div>
+                          <p className="text-gray-300 text-xs">
+                            {getTimeAgo(story.timestamp)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Story Stats */}
+                  <div className="p-3 bg-white dark:bg-gray-800">
+                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <span>👁️ {story.views} views</span>
+                      <div className="flex items-center space-x-2">
+                        {story.tags.slice(0, 2).map(tag => (
+                          <span key={tag} className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
             
             {/* Infinite scroll trigger */}
-            {hasMore && stories.length > 0 && (
+            {!isLoading && hasMore && stories.length > 0 && (
               <div ref={ref} className="col-span-full flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
               </div>
             )}
             
-            {!hasMore && stories.length > 0 && (
+            {!isLoading && !hasMore && stories.length > 0 && (
               <div className="col-span-full text-center py-8 text-gray-500">
                 <p>🎉 You've seen all stories!</p>
               </div>
@@ -515,7 +523,7 @@ export default function StoriesPage() {
           </div>
 
           {/* Empty State */}
-          {filteredStories.length === 0 && (
+          {!isLoading && filteredStories.length === 0 && (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">📱</div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">

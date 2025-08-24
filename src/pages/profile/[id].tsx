@@ -6,82 +6,22 @@ import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import Image from 'next/image';
 
-export default function UserProfilePage() {
+import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
+
+export default function UserProfilePage({ initialProfile, initialPosts, initialStats }) {
   const router = useRouter();
   const { id } = router.query;
   const { user } = useAuth();
-  const [profile, setProfile] = useState<any>(null);
-  const [posts, setPosts] = useState([]);
-  const [stats, setStats] = useState({ followers: 0, following: 0, likes: 0, posts: 0 });
+  const [profile, setProfile] = useState<any>(initialProfile);
+  const [posts, setPosts] = useState(initialPosts);
+  const [stats, setStats] = useState(initialStats);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (id) {
-      loadProfile();
-      loadPosts();
-      loadStats();
       checkFollowStatus();
     }
-  }, [id]);
-
-  const loadProfile = async () => {
-    try {
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', id)
-        .single();
-      
-      setProfile(data);
-    } catch (error) {
-      console.error('Failed to load profile:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadPosts = async () => {
-    try {
-      const { data } = await supabase
-        .from('posts')
-        .select('*')
-        .eq('user_id', id)
-        .order('created_at', { ascending: false });
-      
-      setPosts(data || []);
-    } catch (error) {
-      console.error('Failed to load posts:', error);
-    }
-  };
-
-  const loadStats = async () => {
-    try {
-      const { count: postsCount } = await supabase
-        .from('posts')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', id);
-
-      const { count: followersCount } = await supabase
-        .from('follows')
-        .select('*', { count: 'exact', head: true })
-        .eq('following_id', id);
-
-      const { count: followingCount } = await supabase
-        .from('follows')
-        .select('*', { count: 'exact', head: true })
-        .eq('follower_id', id);
-
-      setStats({
-        posts: postsCount || 0,
-        likes: 0,
-        followers: followersCount || 0,
-        following: followingCount || 0
-      });
-    } catch (error) {
-      console.error('Failed to load stats:', error);
-    }
-  };
+  }, [id, user]);
 
   const checkFollowStatus = async () => {
     if (!user || user.id === id) return;
@@ -103,54 +43,38 @@ export default function UserProfilePage() {
   const handleFollow = async () => {
     if (!user || user.id === id) return;
 
+    const originalIsFollowing = isFollowing;
+    setIsFollowing(!originalIsFollowing);
+    setStats(prev => ({
+      ...prev,
+      followers: originalIsFollowing ? prev.followers - 1 : prev.followers + 1
+    }));
+
     try {
-      if (isFollowing) {
+      if (originalIsFollowing) {
         await supabase
           .from('follows')
           .delete()
           .eq('follower_id', user.id)
           .eq('following_id', id);
-        setIsFollowing(false);
       } else {
         await supabase
           .from('follows')
           .insert({
             follower_id: user.id,
-            following_id: id
+            following_id: id as string,
           });
-        setIsFollowing(true);
       }
-      loadStats(); // Refresh stats
     } catch (error) {
       console.error('Failed to toggle follow:', error);
+      // Revert optimistic update
+      setIsFollowing(originalIsFollowing);
+      setStats(prev => ({
+        ...prev,
+        followers: originalIsFollowing ? prev.followers + 1 : prev.followers - 1
+      }));
     }
   };
-
-  if (loading) {
-    return (
-      <ProtectedRoute>
-        <div className="min-h-screen bg-gradient-to-br from-blue-100 via-cyan-50 to-indigo-100 flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-blue-500 rounded-full animate-pulse mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading profile...</p>
-          </div>
-        </div>
-      </ProtectedRoute>
-    );
-  }
-
-  if (!profile) {
-    return (
-      <ProtectedRoute>
-        <div className="min-h-screen bg-gradient-to-br from-blue-100 via-cyan-50 to-indigo-100 flex items-center justify-center">
-          <div className="text-center">
-            <span className="text-6xl mb-4 block">😕</span>
-            <p className="text-gray-600 text-lg">Profile not found</p>
-          </div>
-        </div>
-      </ProtectedRoute>
-    );
-  }
 
   return (
     <ProtectedRoute>
@@ -255,3 +179,37 @@ export default function UserProfilePage() {
     </ProtectedRoute>
   );
 }
+
+export const getServerSideProps = async (ctx) => {
+  const { id } = ctx.params;
+  const supabase = createServerSupabaseClient(ctx);
+
+  const [profileRes, postsRes, followersRes, followingRes] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', id).single(),
+    supabase.from('posts').select('*').eq('user_id', id).order('created_at', { ascending: false }),
+    supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', id),
+    supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', id)
+  ]);
+
+  if (profileRes.error) {
+    console.error('SSR Error fetching profile:', profileRes.error.message);
+    return { notFound: true };
+  }
+
+  const initialProfile = profileRes.data;
+  const initialPosts = postsRes.data || [];
+  const initialStats = {
+    posts: initialPosts.length,
+    followers: followersRes.count || 0,
+    following: followingRes.count || 0,
+    likes: 0
+  };
+
+  return {
+    props: {
+      initialProfile,
+      initialPosts,
+      initialStats,
+    },
+  };
+};
