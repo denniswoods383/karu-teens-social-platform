@@ -37,6 +37,8 @@ export default function StoriesPage() {
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
   const { ref, inView } = useInView({ threshold: 0 });
+  const [replyText, setReplyText] = useState('');
+  const [showReplyInput, setShowReplyInput] = useState(false);
   
   const STORIES_PER_PAGE = 20;
   const { addPoints } = useGamificationStore();
@@ -307,6 +309,33 @@ export default function StoriesPage() {
       }
     } catch (error) {
       console.error('Failed to like story:', error);
+    }
+  };
+
+  const handleReplyStory = async (storyId: string) => {
+    if (!user || !replyText.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from('story_replies')
+        .insert({
+          story_id: storyId,
+          user_id: user.id,
+          reply_text: replyText.trim()
+        });
+
+      if (error) {
+        console.error('Error sending reply:', error);
+        alert('Failed to send reply.');
+      } else {
+        alert('Reply sent! +3 XP');
+        addPoints(3);
+        setReplyText('');
+        setShowReplyInput(false);
+      }
+    } catch (error) {
+      console.error('Failed to reply to story:', error);
+      alert('Failed to send reply.');
     }
   };
 
@@ -646,7 +675,9 @@ export default function StoriesPage() {
                           <span>❤️</span>
                           <span>Like</span>
                         </button>
-                        <button className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-blue-500 transition-colors">
+                        <button
+                          onClick={() => setShowReplyInput(!showReplyInput)}
+                          className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-blue-500 transition-colors">
                           <span>💬</span>
                           <span>Reply</span>
                         </button>
@@ -655,6 +686,23 @@ export default function StoriesPage() {
                         👁️ {selectedStory.views} views
                       </span>
                     </div>
+                    {showReplyInput && (
+                      <div className="mt-4 flex items-center space-x-2">
+                        <input
+                          type="text"
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          placeholder="Write a reply..."
+                          className="w-full flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        />
+                        <button
+                          onClick={() => handleReplyStory(selectedStory.id)}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                        >
+                          Send
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
