@@ -7,7 +7,22 @@ import { useRouter } from 'next/router';
 import { MessageCircle } from 'lucide-react';
 import Image from 'next/image';
 import { commentSchema, reportSchema, validateData } from '../../lib/validation';
+import Comment from '../comments/Comment';
 import CommentLikeButton from '../comments/CommentLikeButton';
+
+interface CommentType {
+  id: string;
+  content: string;
+  created_at: string;
+  user_id: string;
+  post_id: string;
+  parent_id: string | null;
+  author: {
+    username: string;
+    avatar_url: string;
+  };
+  replies: CommentType[];
+}
 
 interface PostCardProps {
   post: Post;
@@ -16,10 +31,10 @@ interface PostCardProps {
 export default function PostCard({ post }: PostCardProps) {
   const { user } = useAuth();
   const router = useRouter();
-  const [comments, setComments] = useState([]);
+  const [comments, setComments] = useState<CommentType[]>([]);
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loadingComments, setLoadingComments] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(post.likes_count || 0);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -112,56 +127,112 @@ export default function PostCard({ post }: PostCardProps) {
   };
 
   const loadComments = async () => {
-    if (!showComments) {
-      try {
-        const { data } = await supabase
-          .from('comments')
-          .select('*')
-          .eq('post_id', post.id)
-          .order('created_at', { ascending: true });
-        
-        setComments(data || []);
-      } catch (error) {
-        console.error('Failed to load comments:', error);
-      }
+    if (showComments) {
+      setShowComments(false);
+      return;
     }
-    setShowComments(!showComments);
+
+    setLoadingComments(true);
+    try {
+      const { data, error } = await supabase
+        .from('comments')
+        .select('*, author:profiles(username, avatar_url)')
+        .eq('post_id', post.id)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      const commentsById = {};
+      const rootComments = [];
+
+      data.forEach(comment => {
+        commentsById[comment.id] = { ...comment, replies: [] };
+      });
+
+      data.forEach(comment => {
+        if (comment.parent_id) {
+          commentsById[comment.parent_id]?.replies.push(commentsById[comment.id]);
+        } else {
+          rootComments.push(commentsById[comment.id]);
+        }
+      });
+
+      setComments(rootComments);
+      setShowComments(true);
+    } catch (error) {
+      console.error('Failed to load comments:', error);
+    } finally {
+      setLoadingComments(false);
+    }
   };
 
-  const addComment = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const addComment = async (content: string, parentId: string | null = null) => {
     if (!user) return;
 
-    const validation = validateData(commentSchema, {
-      content: newComment.trim(),
-      post_id: post.id
-    });
-
+    const validation = validateData(commentSchema, { content, post_id: post.id });
     if (!validation.success) {
       alert('errors' in validation ? validation.errors.join(', ') : 'Validation failed');
       return;
     }
 
-    setLoading(true);
+    try {
+      const { data: newCommentData, error } = await supabase
+        .from('comments')
+        .insert({ post_id: post.id, user_id: user.id, content, parent_id: parentId })
+        .select('*, author:profiles(username, avatar_url)')
+        .single();
+
+      if (error) throw error;
+
+      if (newCommentData) {
+        // Refresh comments to show the new one in its thread
+        loadCommentsAfterMutation();
+      }
+      setNewComment(''); // Clear top-level input
+    } catch (error) {
+      console.error('Failed to add comment:', error);
+    }
+  };
+
+  const editComment = async (commentId: string, newContent: string) => {
+    try {
+      const { error } = await supabase
+        .from('comments')
+        .update({ content: newContent })
+        .eq('id', commentId);
+
+      if (error) throw error;
+
+      // Refresh comments to show the change
+      loadCommentsAfterMutation();
+    } catch(error) {
+      console.error('Failed to edit comment:', error);
+    }
+  };
+
+  const loadCommentsAfterMutation = async () => {
+    // This is a simplified refresh. A more advanced implementation might update the state optimistically.
     try {
       const { data, error } = await supabase
         .from('comments')
-        .insert({
-          post_id: post.id,
-          user_id: user.id,
-          content: newComment.trim()
-        })
-        .select()
-        .single();
+        .select('*, author:profiles(username, avatar_url)')
+        .eq('post_id', post.id)
+        .order('created_at', { ascending: true });
 
-      if (!error && data) {
-        setComments([...comments, data]);
-        setNewComment('');
-      }
+      if (error) throw error;
+
+      const commentsById = {};
+      const rootComments = [];
+      data.forEach(comment => {
+        commentsById[comment.id] = { ...comment, replies: [] };
+      });
+      data.forEach(comment => {
+        if (comment.parent_id) commentsById[comment.parent_id]?.replies.push(commentsById[comment.id]);
+        else rootComments.push(commentsById[comment.id]);
+      });
+      setComments(rootComments);
     } catch (error) {
-      console.error('Failed to add comment:', error);
-    } finally {
-      setLoading(false);
+      console.error('Failed to refresh comments:', error);
     }
   };
 
@@ -538,46 +609,31 @@ export default function PostCard({ post }: PostCardProps) {
       
       {/* Comments Section */}
       {showComments && (
-        <div className="border-t border-gray-100">
-          <form onSubmit={addComment} className="p-4 border-b border-gray-100">
-            <div className="flex space-x-3">
-              <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white text-sm">
-                U
-              </div>
-              <div className="flex-1">
-                <input
-                  type="text"
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Write a comment..."
-                  className="w-full px-3 py-2 bg-gray-100 rounded-full focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-          </form>
-          
-          <div className="max-h-96 overflow-y-auto">
-            {comments.map((comment) => (
-              <div key={comment.id} className="p-4 hover:bg-gray-50">
-                <div className="flex space-x-3">
-                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm">
-                    🎓
-                  </div>
-                  <div className="flex-1">
-                    <div className="bg-gray-100 rounded-2xl px-3 py-2">
-                      <p className="font-semibold text-sm">Student</p>
-                      <p className="text-gray-900">{comment.content}</p>
-                    </div>
-                    <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
-                      <CommentLikeButton commentId={comment.id} />
-                      <button className="hover:underline">Reply</button>
-                      <span>{new Date(comment.created_at).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+        <div className="border-t border-gray-100 dark:border-gray-700 p-4">
+          {/* New Comment Form */}
+          <div className="flex space-x-3 mb-4">
+            <div className="w-8 h-8 bg-gray-400 rounded-full flex-shrink-0"></div>
+            <form onSubmit={(e) => { e.preventDefault(); addComment(newComment); }} className="flex-1 flex space-x-2">
+              <input
+                type="text"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Write a comment..."
+                className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-full focus:outline-none focus:bg-white dark:focus:bg-black focus:ring-2 focus:ring-blue-500"
+              />
+              <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-full">Post</button>
+            </form>
           </div>
+
+          {loadingComments ? (
+            <p>Loading comments...</p>
+          ) : (
+            <div className="max-h-96 overflow-y-auto space-y-4">
+              {comments.map((comment) => (
+                <Comment key={comment.id} comment={comment} onReply={addComment} onEdit={editComment} />
+              ))}
+            </div>
+          )}
         </div>
       )}
       
