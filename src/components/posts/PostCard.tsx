@@ -497,14 +497,7 @@ export default function PostCard({ post }: PostCardProps) {
                     <div 
                       className="w-full h-48 bg-gray-100 rounded-xl shadow-lg border border-blue-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
                       onClick={() => {
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = '';
-                        link.target = '_blank';
-                        link.rel = 'noopener noreferrer';
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
+                        window.location.href = url;
                       }}
                     >
                       <div className="text-center">
@@ -544,14 +537,7 @@ export default function PostCard({ post }: PostCardProps) {
                 <div 
                   className="w-full h-64 bg-gray-100 rounded-2xl shadow-lg border-2 border-blue-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
                   onClick={() => {
-                    const link = document.createElement('a');
-                    link.href = post.image_url;
-                    link.download = '';
-                    link.target = '_blank';
-                    link.rel = 'noopener noreferrer';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                    window.location.href = post.image_url;
                   }}
                 >
                   <div className="text-center">
