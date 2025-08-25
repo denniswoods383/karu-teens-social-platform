@@ -53,6 +53,8 @@ export const uploadToCloudinary = async (file: File, onProgress?: (progress: num
     resourceType = 'video';
   } else if (file.type.startsWith('image/')) {
     resourceType = 'image';
+  } else {
+    resourceType = 'raw';
   }
   
   formData.append('resource_type', resourceType);
