@@ -28,7 +28,7 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
     // Validate input
     const validation = validateData(postSchema, {
       content: content.trim(),
-      media_urls: files.length > 0 ? ['placeholder'] : undefined
+      media_urls: files.length > 0 ? ['https://example.com/placeholder'] : undefined
     });
 
     if (!validation.success) {
@@ -97,16 +97,21 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
         return;
       }
 
+      console.log('Creating post with attachments:', attachments);
+      const postData = {
+        user_id: user.id,
+        content: content.trim(),
+        media_urls: attachments.length > 0 ? attachments.map(a => a.url) : null,
+        image_url: attachments.length > 0 ? attachments[0].url : null
+      };
+      console.log('Post data:', postData);
+      
       const { error } = await supabase
         .from('posts')
-        .insert({
-          user_id: user.id,
-          content: content.trim(),
-          media_urls: attachments.length > 0 ? attachments.map(a => a.url) : null,
-          image_url: attachments.length > 0 ? attachments[0].url : null
-        });
+        .insert(postData);
 
       if (!error) {
+        console.log('Post created successfully!');
         setContent('');
         setFiles([]);
         setUploadProgress({});
@@ -118,6 +123,9 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
         import('../../lib/analytics').then(({ trackEvent, events }) => {
           trackEvent(events.POST_CREATED, { hasMedia: files.length > 0 });
         });
+      } else {
+        console.error('Post creation error:', error);
+        alert('Failed to create post: ' + error.message);
       }
     } catch (error) {
       console.error('Failed to create post:', error);
