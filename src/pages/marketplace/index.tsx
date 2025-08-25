@@ -805,8 +805,3 @@ export default function MarketplacePage() {
 
 
 
-import { SWRConfig } from 'swr';
-
-export default function MarketplacePage() {
-  return <MarketplaceContent />;
-}
