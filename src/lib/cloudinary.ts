@@ -47,6 +47,12 @@ export const uploadToCloudinary = async (file: File, onProgress?: (progress: num
   formData.append('file', file);
   formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
   
+  // Ensure public access for documents
+  if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+    formData.append('type', 'upload');
+    formData.append('access_mode', 'public');
+  }
+  
   // Determine resource type based on file type
   let resourceType = 'auto';
   if (file.type.startsWith('video/')) {
