@@ -215,12 +215,14 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
   const getFileIcon = (fileType: string) => {
     if (fileType.startsWith('image/')) return '📷';
     if (fileType.startsWith('video/')) return '🎥';
+    if (fileType.startsWith('audio/')) return '🎵';
     if (fileType.includes('pdf')) return '📄';
-    if (fileType.includes('word') || fileType.includes('document')) return '📄';
-    if (fileType.includes('sheet') || fileType.includes('excel')) return '📈';
+    if (fileType.includes('word') || fileType.includes('document') || fileType.includes('msword')) return '📄';
+    if (fileType.includes('sheet') || fileType.includes('excel') || fileType.includes('spreadsheet')) return '📈';
     if (fileType.includes('presentation') || fileType.includes('powerpoint')) return '📊';
-    if (fileType.includes('zip') || fileType.includes('rar')) return '🗂️';
-    if (fileType.includes('text')) return '📄';
+    if (fileType.includes('zip') || fileType.includes('rar') || fileType.includes('7z') || fileType.includes('compressed')) return '🗂️';
+    if (fileType.includes('text') || fileType.includes('plain')) return '📄';
+    if (fileType.includes('json') || fileType.includes('xml') || fileType.includes('csv')) return '📋';
     return '📁';
   };
 
@@ -263,7 +265,7 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
           <input
             type="file"
             multiple
-            accept="image/*,video/*,.pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx,.zip,.rar"
+            accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx,.zip,.rar,.7z,.csv,.json,.xml,.rtf,.odt,.ods,.odp"
             onChange={handleFileSelect}
             className="hidden"
             id="file-upload"
