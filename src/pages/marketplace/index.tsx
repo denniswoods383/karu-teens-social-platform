@@ -12,7 +12,7 @@ import { marketplaceItemSchema, validateData } from '../../lib/validation';
 import Image from 'next/image';
 import { useMarketplace } from '../../hooks/useCachedData';
 import { memoryCache, CACHE_KEYS } from '../../lib/cache';
-import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
+
 
 interface MarketplaceItem {
   id: string;
