@@ -101,8 +101,8 @@ export default function GlobalSearch() {
         // Search posts
         const { data: posts } = await supabase
           .from('posts')
-          .select('id, content, profiles(username)')
-          .textSearch('content', searchQuery)
+          .select('id, content, user_id, profiles!posts_user_id_fkey(username)')
+          .ilike('content', `%${searchQuery}%`)
           .limit(5);
         
         posts?.forEach(post => {
