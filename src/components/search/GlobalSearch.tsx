@@ -66,20 +66,79 @@ export default function GlobalSearch() {
   const performSearch = async (searchQuery: string) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('global_search', { p_search_term: searchQuery });
-
-      if (error) throw error;
-
-      setResults(data || []);
+      // Try RPC function first, fallback to manual search
+      let searchResults: SearchResult[] = [];
       
-      // Track search
-      await supabase.rpc('track_search', { 
-        search_query: searchQuery, 
-        results_count: data?.length || 0
-      });
+      try {
+        const { data, error } = await supabase.rpc('global_search', { p_search_term: searchQuery });
+        if (!error && data) {
+          searchResults = data;
+        } else {
+          throw new Error('RPC failed, using fallback');
+        }
+      } catch (rpcError) {
+        console.log('Using fallback search method');
+        // Fallback: Manual search
+        const results = [];
+        
+        // Search users
+        const { data: users } = await supabase
+          .from('profiles')
+          .select('id, username, full_name, avatar_url')
+          .or(`username.ilike.%${searchQuery}%,full_name.ilike.%${searchQuery}%`)
+          .limit(5);
+        
+        users?.forEach(user => {
+          results.push({
+            id: user.id,
+            type: 'user' as const,
+            title: user.full_name || user.username,
+            subtitle: `@${user.username}`,
+            avatar: user.avatar_url
+          });
+        });
+        
+        // Search posts
+        const { data: posts } = await supabase
+          .from('posts')
+          .select('id, content, profiles(username)')
+          .textSearch('content', searchQuery)
+          .limit(5);
+        
+        posts?.forEach(post => {
+          results.push({
+            id: post.id,
+            type: 'post' as const,
+            title: post.content.substring(0, 50) + '...',
+            subtitle: `Post by ${(post as any).profiles?.username || 'User'}`
+          });
+        });
+        
+        // Search marketplace
+        const { data: items } = await supabase
+          .from('marketplace_items')
+          .select('id, title, description, price')
+          .or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`)
+          .eq('is_available', true)
+          .limit(5);
+        
+        items?.forEach(item => {
+          results.push({
+            id: item.id,
+            type: 'marketplace' as const,
+            title: item.title,
+            subtitle: `$${item.price}`
+          });
+        });
+        
+        searchResults = results;
+      }
+
+      setResults(searchResults);
       
     } catch (error) {
       console.error('Search failed:', error);
+      setResults([]);
     } finally {
       setLoading(false);
     }
