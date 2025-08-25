@@ -66,13 +66,13 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
           }
           
           console.log('Starting upload for:', file.name, file.type);
-          const fileUrl = await uploadFile(fileToUpload);
+          const uploadResult = await uploadFile(fileToUpload);
           
-          console.log('Upload successful, URL:', fileUrl);
+          console.log('Upload successful, URL:', uploadResult.url);
           attachments.push({
             type: file.type,
-            url: fileUrl,
-            name: file.name,
+            url: uploadResult.url,
+            name: uploadResult.originalName,
             size: file.size
           });
         } catch (error) {
@@ -92,7 +92,8 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
         user_id: user.id,
         content: content.trim(),
         media_urls: attachments.length > 0 ? attachments.map(a => a.url) : null,
-        image_url: attachments.length > 0 ? attachments[0].url : null
+        image_url: attachments.length > 0 ? attachments[0].url : null,
+        file_names: attachments.length > 0 ? attachments.map(a => a.name) : null
       };
       console.log('Post data:', postData);
       

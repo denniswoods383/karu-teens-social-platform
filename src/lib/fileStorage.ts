@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-export const uploadFile = async (file: File): Promise<string> => {
+export const uploadFile = async (file: File): Promise<{url: string, originalName: string}> => {
   const fileExt = file.name.split('.').pop();
   const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
   
@@ -22,7 +22,10 @@ export const uploadFile = async (file: File): Promise<string> => {
     .from('files')
     .getPublicUrl(fileName);
 
-  return publicUrl;
+  return {
+    url: publicUrl,
+    originalName: file.name
+  };
 };
 
 export const downloadFile = (url: string, filename: string) => {

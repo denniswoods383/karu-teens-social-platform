@@ -496,14 +496,21 @@ export default function PostCard({ post }: PostCardProps) {
                   ) : url.includes('.pdf') || url.includes('.doc') || url.includes('.txt') || url.includes('.zip') || url.includes('.rar') || url.includes('.ppt') || url.includes('.xls') || url.includes('.csv') || url.includes('.json') || url.includes('.xml') ? (
                     <div 
                       className="w-full h-48 bg-gray-100 rounded-xl shadow-lg border border-blue-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
-                      onClick={() => {
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = url.split('/').pop() || 'document';
-                        link.style.display = 'none';
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
+                      onClick={async () => {
+                        try {
+                          const response = await fetch(url);
+                          const blob = await response.blob();
+                          const downloadUrl = window.URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.href = downloadUrl;
+                          link.download = (post as any).file_names?.[index] || url.split('/').pop() || 'document';
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          window.URL.revokeObjectURL(downloadUrl);
+                        } catch (error) {
+                          console.error('Download failed:', error);
+                        }
                       }}
                     >
                       <div className="text-center">
@@ -548,14 +555,21 @@ export default function PostCard({ post }: PostCardProps) {
               ) : (post.image_url?.includes('.pdf') || post.image_url?.includes('.doc') || post.image_url?.includes('.txt') || post.image_url?.includes('.zip') || post.image_url?.includes('.rar') || post.image_url?.includes('.ppt') || post.image_url?.includes('.xls') || post.image_url?.includes('.csv') || post.image_url?.includes('.json') || post.image_url?.includes('.xml')) ? (
                 <div 
                   className="w-full h-64 bg-gray-100 rounded-2xl shadow-lg border-2 border-blue-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
-                  onClick={() => {
-                    const link = document.createElement('a');
-                    link.href = post.image_url;
-                    link.download = post.image_url.split('/').pop() || 'document';
-                    link.style.display = 'none';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(post.image_url);
+                      const blob = await response.blob();
+                      const downloadUrl = window.URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.href = downloadUrl;
+                      link.download = (post as any).file_names?.[0] || post.image_url.split('/').pop() || 'document';
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      window.URL.revokeObjectURL(downloadUrl);
+                    } catch (error) {
+                      console.error('Download failed:', error);
+                    }
                   }}
                 >
                   <div className="text-center">
