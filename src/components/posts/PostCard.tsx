@@ -497,14 +497,13 @@ export default function PostCard({ post }: PostCardProps) {
                     <div 
                       className="w-full h-48 bg-gray-100 rounded-xl shadow-lg border border-blue-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
                       onClick={() => {
-                        const downloadUrl = url.replace('/upload/', '/upload/fl_attachment/');
-                        const iframe = document.createElement('iframe');
-                        iframe.style.display = 'none';
-                        iframe.src = downloadUrl;
-                        document.body.appendChild(iframe);
-                        setTimeout(() => {
-                          document.body.removeChild(iframe);
-                        }, 2000);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = url.split('/').pop() || 'document';
+                        link.style.display = 'none';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
                       }}
                     >
                       <div className="text-center">
@@ -544,14 +543,13 @@ export default function PostCard({ post }: PostCardProps) {
                 <div 
                   className="w-full h-64 bg-gray-100 rounded-2xl shadow-lg border-2 border-blue-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
                   onClick={() => {
-                    const downloadUrl = post.image_url.replace('/upload/', '/upload/fl_attachment/');
-                    const iframe = document.createElement('iframe');
-                    iframe.style.display = 'none';
-                    iframe.src = downloadUrl;
-                    document.body.appendChild(iframe);
-                    setTimeout(() => {
-                      document.body.removeChild(iframe);
-                    }, 2000);
+                    const link = document.createElement('a');
+                    link.href = post.image_url;
+                    link.download = post.image_url.split('/').pop() || 'document';
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
                   }}
                 >
                   <div className="text-center">
