@@ -69,15 +69,28 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
             setUploadProgress(prev => ({ ...prev, [file.name]: progress }));
           });
           
-          attachments.push({
-            type: file.type,
-            url: cloudinaryResult.url,
-            name: file.name,
-            size: file.size
-          });
+          // Only add to attachments if upload was successful and has a valid URL
+          if (cloudinaryResult && cloudinaryResult.url) {
+            attachments.push({
+              type: file.type,
+              url: cloudinaryResult.url,
+              name: file.name,
+              size: file.size
+            });
+          } else {
+            console.error('Upload succeeded but no URL returned for:', file.name);
+            alert(`Failed to upload ${file.name}. Please try again.`);
+          }
         } catch (error) {
           console.error('Failed to upload file:', file.name, error);
+          alert(`Failed to upload ${file.name}: ${error.message || 'Unknown error'}`);
         }
+      }
+      
+      // Check if any uploads failed
+      if (files.length > 0 && attachments.length === 0) {
+        alert('All file uploads failed. Please check your internet connection and try again.');
+        return;
       }
 
       const { error } = await supabase
