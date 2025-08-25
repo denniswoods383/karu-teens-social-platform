@@ -75,13 +75,18 @@ export default function EnhancedNavbar() {
                 </span>
               </div>
               
-              <div className="hidden md:block w-80">
+              <div className="hidden lg:block w-80">
                 <GlobalSearch />
               </div>
+              
+              {/* Search Icon for smaller screens */}
+              <button className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors duration-200">
+                <span className="text-xl">🔍</span>
+              </button>
             </div>
 
-            {/* Center Navigation - Icon Only with Hover Labels */}
-            <div className="hidden xl:flex items-center space-x-2">
+            {/* Center Navigation - Icon Only with Side Labels */}
+            <div className="hidden md:flex items-center space-x-2">
               {updatedNavItems.map((item) => (
                 <div key={item.name} className="relative group">
                   <button 
@@ -98,10 +103,13 @@ export default function EnhancedNavbar() {
                     )}
                   </button>
                   
-                  {/* Hover Label */}
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-1 bg-gray-900 dark:bg-gray-700 text-white text-sm font-medium rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
-                    {item.name}
-                    <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 dark:bg-gray-700 rotate-45"></div>
+                  {/* Side Sliding Label */}
+                  <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-3 px-4 py-2 bg-gradient-to-r from-gray-900 to-gray-800 dark:from-gray-700 dark:to-gray-600 text-white text-sm font-medium rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 whitespace-nowrap z-50 group-hover:translate-x-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg">{item.icon}</span>
+                      <span>{item.name}</span>
+                    </div>
+                    <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-8 border-transparent border-r-gray-900 dark:border-r-gray-700"></div>
                   </div>
                 </div>
               ))}
@@ -269,23 +277,29 @@ export default function EnhancedNavbar() {
       </nav>
 
       {/* Mobile Bottom Navigation */}
-      <div className="xl:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-700 px-2 py-2 z-40">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-700 px-2 py-2 z-40">
         <div className="flex justify-around items-center">
           {updatedNavItems.slice(0, 5).map((item) => (
-            <button 
-              key={item.name}
-              onClick={() => window.location.href = item.href}
-              className={`relative p-2 rounded-xl transition-all duration-300 transform active:scale-95 ${
-                item.active 
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg' 
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-600 hover:text-white'
-              }`}
-            >
-              <span className="text-xl filter drop-shadow-sm">{item.icon}</span>
-              {item.active && (
-                <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full animate-pulse"></div>
-              )}
-            </button>
+            <div key={item.name} className="relative group">
+              <button 
+                onClick={() => window.location.href = item.href}
+                className={`relative p-3 rounded-xl transition-all duration-300 transform active:scale-95 ${
+                  item.active 
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg' 
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-600 hover:text-white'
+                }`}
+              >
+                <span className="text-xl filter drop-shadow-sm">{item.icon}</span>
+                {item.active && (
+                  <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                )}
+              </button>
+              
+              {/* Mobile Side Label */}
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gradient-to-r from-gray-900 to-gray-800 text-white text-xs font-medium rounded-lg opacity-0 invisible group-active:opacity-100 group-active:visible transition-all duration-200 whitespace-nowrap z-50">
+                {item.name}
+              </div>
+            </div>
           ))}
         </div>
       </div>
