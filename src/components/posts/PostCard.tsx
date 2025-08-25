@@ -472,7 +472,10 @@ export default function PostCard({ post }: PostCardProps) {
       </div>
       
       {/* Content */}
-      <div className="px-6 pb-4">
+      <div 
+        className="px-6 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+        onClick={() => window.dispatchEvent(new CustomEvent('openPostModal', { detail: { postId: post.id } }))}
+      >
         <p className="text-gray-800 text-lg leading-relaxed font-medium">{post.content}</p>
       </div>
       

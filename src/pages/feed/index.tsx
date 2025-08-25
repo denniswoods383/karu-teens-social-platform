@@ -5,16 +5,46 @@ import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import GlobalSearch from '../../components/search/GlobalSearch';
 import PointsDisplay from '../../components/gamification/PointsDisplay';
 import FeedStories from '../../components/stories/FeedStories';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { useGamificationStore } from '../../store/gamificationStore';
+import PostModal from '../../components/posts/PostModal';
 
 export default function FeedPage() {
   const [refreshPosts, setRefreshPosts] = useState(false);
+  const [modalPostId, setModalPostId] = useState<string | null>(null);
   const { addPoints } = useGamificationStore();
+  const router = useRouter();
   
   const handlePostCreated = () => {
     setRefreshPosts(prev => !prev);
     addPoints(5);
+  };
+  
+  useEffect(() => {
+    // Check for post parameter in URL
+    if (router.query.post) {
+      setModalPostId(router.query.post as string);
+    }
+    
+    // Listen for post modal events from search
+    const handleOpenPostModal = (event: CustomEvent) => {
+      setModalPostId(event.detail.postId);
+    };
+    
+    window.addEventListener('openPostModal', handleOpenPostModal as EventListener);
+    
+    return () => {
+      window.removeEventListener('openPostModal', handleOpenPostModal as EventListener);
+    };
+  }, [router.query]);
+  
+  const closeModal = () => {
+    setModalPostId(null);
+    // Remove post parameter from URL without page reload
+    if (router.query.post) {
+      router.replace('/feed', undefined, { shallow: true });
+    }
   };
   
   return (
@@ -35,6 +65,15 @@ export default function FeedPage() {
             <PostFeed key={refreshPosts.toString()} />
           </div>
         </div>
+        
+        {/* Post Modal */}
+        {modalPostId && (
+          <PostModal
+            postId={modalPostId}
+            isOpen={!!modalPostId}
+            onClose={closeModal}
+          />
+        )}
       </div>
     </ProtectedRoute>
   );

@@ -99,18 +99,20 @@ export default function GlobalSearch() {
         });
         
         // Search posts
-        const { data: posts } = await supabase
+        const { data: posts, error: postsError } = await supabase
           .from('posts')
-          .select('id, content, user_id, profiles!posts_user_id_fkey(username)')
+          .select('id, content, user_id')
           .ilike('content', `%${searchQuery}%`)
           .limit(5);
+        
+        console.log('Post search results:', posts, 'Error:', postsError);
         
         posts?.forEach(post => {
           results.push({
             id: post.id,
             type: 'post' as const,
-            title: post.content.substring(0, 50) + '...',
-            subtitle: `Post by ${(post as any).profiles?.username || 'User'}`
+            title: post.content.substring(0, 50) + (post.content.length > 50 ? '...' : ''),
+            subtitle: `Post content`
           });
         });
         
@@ -153,7 +155,8 @@ export default function GlobalSearch() {
         router.push(`/profile/${result.id}`);
         break;
       case 'post':
-        router.push(`/feed#post-${result.id}`);
+        // Trigger post modal
+        window.dispatchEvent(new CustomEvent('openPostModal', { detail: { postId: result.id } }));
         break;
       case 'marketplace':
         router.push(`/marketplace#item-${result.id}`);
