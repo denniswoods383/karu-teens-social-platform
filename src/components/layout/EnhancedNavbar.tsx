@@ -104,7 +104,7 @@ export default function EnhancedNavbar() {
                   </button>
                   
                   {/* Side Sliding Label */}
-                  <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-3 px-4 py-2 bg-gradient-to-r from-gray-900 to-gray-800 dark:from-gray-700 dark:to-gray-600 text-white text-sm font-medium rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 whitespace-nowrap z-50 group-hover:translate-x-2">
+                  <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-3 px-4 py-2 bg-gradient-to-r from-gray-900 to-gray-800 dark:from-gray-700 dark:to-gray-600 text-white text-sm font-medium rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 whitespace-nowrap z-50 group-hover:translate-x-2 pointer-events-none">
                     <div className="flex items-center space-x-2">
                       <span className="text-lg">{item.icon}</span>
                       <span>{item.name}</span>
