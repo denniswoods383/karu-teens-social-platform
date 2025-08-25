@@ -254,11 +254,9 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
                 {previews[file.name] && (
                   <div className="mb-3">
                     {file.type.startsWith('image/') ? (
-                      <Image 
+                      <img 
                         src={previews[file.name]} 
                         alt="Preview" 
-                        width={400}
-                        height={192}
                         className="max-w-full h-48 object-cover rounded-lg border"
                       />
                     ) : (
