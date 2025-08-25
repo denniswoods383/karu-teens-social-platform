@@ -141,7 +141,7 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
       console.log('Processing file:', file.name, file.type, file.size);
       
       // Check for corrupted/empty files
-      if (file.size < 100) {
+      if (file.size < 4) {
         alert(`File ${file.name} appears to be corrupted or empty (${file.size} bytes). Please select a valid file.`);
         return;
       }
@@ -180,7 +180,7 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
     
     const validFiles = selectedFiles.filter(file => {
       // Filter out corrupted/empty files
-      if (file.size < 100) {
+      if (file.size < 4) {
         return false;
       }
       if (file.type.startsWith('video/')) {

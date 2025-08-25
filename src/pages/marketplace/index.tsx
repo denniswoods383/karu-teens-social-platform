@@ -35,7 +35,7 @@ interface MarketplaceItem {
   is_saved?: boolean;
 }
 
-function MarketplaceContent() {
+export default function MarketplacePage() {
   const { data: items = [], mutate, isLoading } = useMarketplace();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -803,39 +803,10 @@ function MarketplaceContent() {
   );
 }
 
-export default function MarketplacePage({ fallback }) {
-  return (
-    <SWRConfig value={{ fallback }}>
-      <MarketplaceContent />
-    </SWRConfig>
-  );
+
+
+import { SWRConfig } from 'swr';
+
+export default function MarketplacePage() {
+  return <MarketplaceContent />;
 }
-
-export const getServerSideProps = async (ctx) => {
-  const supabase = createServerSupabaseClient(ctx);
-  const ITEMS_PER_PAGE = 12;
-
-  const { data: itemsData, error } = await supabase
-    .from('marketplace_items')
-    .select('*, seller:profiles!seller_id(*)')
-    .eq('is_available', true)
-    .order('created_at', { ascending: false })
-    .range(0, ITEMS_PER_PAGE - 1);
-
-  if (error) {
-    console.error('SSR Error fetching items:', error.message);
-    return { props: { initialItems: [], initialHasMore: false } };
-  }
-
-  const initialHasMore = itemsData.length >= ITEMS_PER_PAGE;
-
-  // Note: Saved status will be fetched on the client side for logged-in users.
-  const formattedItems = itemsData.map(item => ({ ...item, is_saved: false }));
-
-  return {
-    props: {
-      initialItems: formattedItems,
-      initialHasMore,
-    },
-  };
-};
