@@ -91,9 +91,8 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
       const postData = {
         user_id: user.id,
         content: content.trim(),
-        media_urls: attachments.length > 0 ? attachments.map(a => a.url) : null,
-        image_url: attachments.length > 0 ? attachments[0].url : null,
-        file_names: attachments.length > 0 ? attachments.map(a => a.name) : null
+        media_urls: attachments.length > 0 ? attachments.map(a => `${a.url}|${a.name}`) : null,
+        image_url: attachments.length > 0 ? attachments[0].url : null
       };
       console.log('Post data:', postData);
       

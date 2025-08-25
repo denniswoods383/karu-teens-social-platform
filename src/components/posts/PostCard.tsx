@@ -484,7 +484,9 @@ export default function PostCard({ post }: PostCardProps) {
         <div className="px-6 pb-4">
           {(post as any).media_urls && (post as any).media_urls.length > 1 ? (
             <div className="grid grid-cols-2 gap-2">
-              {(post as any).media_urls.slice(0, 4).map((url, index) => (
+              {(post as any).media_urls.slice(0, 4).map((urlWithName, index) => {
+                const url = urlWithName.split('|')[0];
+                return (
                 <div key={index} className="relative">
                   {url.includes('.mp4') || url.includes('.webm') || url.includes('video') ? (
                     <video 
@@ -498,12 +500,12 @@ export default function PostCard({ post }: PostCardProps) {
                       className="w-full h-48 bg-gray-100 rounded-xl shadow-lg border border-blue-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
                       onClick={async () => {
                         try {
-                          const response = await fetch(url);
+                          const response = await fetch(url.split('|')[0]);
                           const blob = await response.blob();
                           const downloadUrl = window.URL.createObjectURL(blob);
                           const link = document.createElement('a');
                           link.href = downloadUrl;
-                          link.download = (post as any).file_names?.[index] || url.split('/').pop() || 'document';
+                          link.download = url.includes('|') ? url.split('|')[1] : url.split('/').pop() || 'document';
                           document.body.appendChild(link);
                           link.click();
                           document.body.removeChild(link);
@@ -541,7 +543,8 @@ export default function PostCard({ post }: PostCardProps) {
                     </div>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div>
@@ -557,12 +560,12 @@ export default function PostCard({ post }: PostCardProps) {
                   className="w-full h-64 bg-gray-100 rounded-2xl shadow-lg border-2 border-blue-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
                   onClick={async () => {
                     try {
-                      const response = await fetch(post.image_url);
+                      const response = await fetch(post.image_url.split('|')[0]);
                       const blob = await response.blob();
                       const downloadUrl = window.URL.createObjectURL(blob);
                       const link = document.createElement('a');
                       link.href = downloadUrl;
-                      link.download = (post as any).file_names?.[0] || post.image_url.split('/').pop() || 'document';
+                      link.download = post.image_url.includes('|') ? post.image_url.split('|')[1] : post.image_url.split('/').pop() || 'document';
                       document.body.appendChild(link);
                       link.click();
                       document.body.removeChild(link);
