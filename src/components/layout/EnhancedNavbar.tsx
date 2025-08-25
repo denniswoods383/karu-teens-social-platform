@@ -20,6 +20,7 @@ export default function EnhancedNavbar() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -80,7 +81,10 @@ export default function EnhancedNavbar() {
               </div>
               
               {/* Search Icon for smaller screens */}
-              <button className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors duration-200">
+              <button 
+                onClick={() => setShowMobileSearch(!showMobileSearch)}
+                className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors duration-200"
+              >
                 <span className="text-xl">🔍</span>
               </button>
             </div>
@@ -261,6 +265,13 @@ export default function EnhancedNavbar() {
             </div>
           </div>
         </div>
+        
+        {/* Mobile Search Bar */}
+        {showMobileSearch && (
+          <div className="lg:hidden px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg">
+            <GlobalSearch />
+          </div>
+        )}
       </nav>
 
       {/* Mobile Bottom Navigation */}
