@@ -117,20 +117,7 @@ export default function EnhancedNavbar() {
 
             {/* Right Section - User Stats & Profile */}
             <div className="flex items-center space-x-4">
-              {/* Gamification Stats */}
-              <div className="hidden md:flex items-center space-x-3">
-                <div className="flex items-center space-x-2 px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full text-white text-sm font-medium">
-                  <span>🔥</span>
-                  <span>0</span>
-                </div>
-                <div className="flex items-center space-x-2 px-3 py-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-full text-white text-sm font-medium">
-                  <span>⚡</span>
-                  <span>{points}</span>
-                </div>
-                <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Lvl {level}
-                </div>
-              </div>
+
 
               {/* Notifications */}
               <button
