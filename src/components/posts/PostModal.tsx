@@ -30,15 +30,20 @@ export default function PostModal({ postId, isOpen, onClose }: PostModalProps) {
     try {
       const { data, error } = await supabase
         .from('posts')
-        .select(`
-          *,
-          profiles!posts_user_id_fkey(username, full_name, avatar_url)
-        `)
+        .select('*')
         .eq('id', postId)
         .single();
 
       if (error) throw error;
-      setPost(data);
+      
+      // Get author profile separately
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, full_name, avatar_url')
+        .eq('id', data.user_id)
+        .single();
+      
+      setPost({ ...data, profiles: profile });
 
       // Check if liked
       if (user) {
@@ -70,15 +75,26 @@ export default function PostModal({ postId, isOpen, onClose }: PostModalProps) {
     try {
       const { data, error } = await supabase
         .from('comments')
-        .select(`
-          *,
-          profiles!comments_user_id_fkey(username, full_name, avatar_url)
-        `)
+        .select('*')
         .eq('post_id', postId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setComments(data || []);
+      
+      // Get profiles for each comment
+      const commentsWithProfiles = await Promise.all(
+        (data || []).map(async (comment) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('username, full_name, avatar_url')
+            .eq('id', comment.user_id)
+            .single();
+          
+          return { ...comment, profiles: profile };
+        })
+      );
+      
+      setComments(commentsWithProfiles);
     } catch (error) {
       console.error('Failed to load comments:', error);
     }
