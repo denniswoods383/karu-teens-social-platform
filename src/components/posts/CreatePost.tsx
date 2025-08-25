@@ -151,30 +151,32 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
         return;
       }
       
-      // Create preview
-      try {
-        const url = URL.createObjectURL(file);
-        console.log('Created blob URL:', url);
-        setPreviews(prev => ({ ...prev, [file.name]: url }));
-        
-        // Set default video trimming (auto-cut to 60 seconds)
-        if (file.type.startsWith('video/')) {
-          const video = document.createElement('video');
-          video.src = url;
-          video.onloadedmetadata = () => {
-            const duration = Math.min(video.duration, 60); // Max 60 seconds
-            setVideoTrimming(prev => ({
-              ...prev,
-              [file.name]: { start: 0, end: duration, duration: video.duration }
-            }));
-          };
-          video.onerror = (e) => {
-            console.error('Video load error:', e);
-          };
+      // Create preview for images and videos only
+      if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
+        try {
+          const url = URL.createObjectURL(file);
+          console.log('Created blob URL:', url);
+          setPreviews(prev => ({ ...prev, [file.name]: url }));
+          
+          // Set default video trimming (auto-cut to 60 seconds)
+          if (file.type.startsWith('video/')) {
+            const video = document.createElement('video');
+            video.src = url;
+            video.onloadedmetadata = () => {
+              const duration = Math.min(video.duration, 60); // Max 60 seconds
+              setVideoTrimming(prev => ({
+                ...prev,
+                [file.name]: { start: 0, end: duration, duration: video.duration }
+              }));
+            };
+            video.onerror = (e) => {
+              console.error('Video load error:', e);
+            };
+          }
+        } catch (error) {
+          console.error('Error creating object URL:', error);
+          alert(`Failed to process file: ${file.name}`);
         }
-      } catch (error) {
-        console.error('Error creating object URL:', error);
-        alert(`Failed to process file: ${file.name}`);
       }
     });
     
@@ -208,6 +210,18 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
       delete newTrimming[file.name];
       return newTrimming;
     });
+  };
+
+  const getFileIcon = (fileType: string) => {
+    if (fileType.startsWith('image/')) return '📷';
+    if (fileType.startsWith('video/')) return '🎥';
+    if (fileType.includes('pdf')) return '📄';
+    if (fileType.includes('word') || fileType.includes('document')) return '📄';
+    if (fileType.includes('sheet') || fileType.includes('excel')) return '📈';
+    if (fileType.includes('presentation') || fileType.includes('powerpoint')) return '📉';
+    if (fileType.includes('zip') || fileType.includes('rar')) return '🗁';
+    if (fileType.includes('text')) return '📄';
+    return '📁';
   };
 
   const trimVideo = async (file: File, start: number, end: number): Promise<File> => {
@@ -249,7 +263,7 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
           <input
             type="file"
             multiple
-            accept="image/*,video/*"
+            accept="image/*,video/*,.pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx,.zip,.rar"
             onChange={handleFileSelect}
             className="hidden"
             id="file-upload"
@@ -258,7 +272,7 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
             htmlFor="file-upload"
             className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-full cursor-pointer hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 transform hover:scale-105 shadow-lg font-medium"
           >
-            📸 Add Media
+📎 Add Files
           </label>
         </div>
         
@@ -269,7 +283,7 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
               <div key={index} className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-2">
-                    <span className="text-lg">{file.type.startsWith('video/') ? '🎥' : '📷'}</span>
+                    <span className="text-lg">{getFileIcon(file.type)}</span>
                     <span className="text-sm font-medium text-gray-700 truncate">{file.name}</span>
                     <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
                       {(file.size / 1024 / 1024).toFixed(1)}MB
@@ -284,7 +298,7 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
                 </div>
                 
                 {/* Preview */}
-                {previews[file.name] && (
+                {(previews[file.name] || !file.type.startsWith('image/')) && (
                   <div className="mb-3">
                     {file.type.startsWith('image/') ? (
                       <img 
@@ -296,7 +310,7 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
                           e.currentTarget.style.display = 'none';
                         }}
                       />
-                    ) : (
+                    ) : file.type.startsWith('video/') ? (
                       <div className="relative">
                         <video 
                           ref={el => { if (el) videoRefs.current[file.name] = el; }}
@@ -307,6 +321,14 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
                             console.error('Video load error for:', file.name, previews[file.name]);
                           }}
                         />
+                    ) : (
+                      <div className="flex items-center justify-center h-32 bg-gray-100 rounded-lg border">
+                        <div className="text-center">
+                          <span className="text-4xl mb-2 block">{getFileIcon(file.type)}</span>
+                          <p className="text-sm text-gray-600 font-medium">{file.name}</p>
+                          <p className="text-xs text-gray-500">{file.type}</p>
+                        </div>
+                      </div>
                         
                         {/* Video Trimming Controls */}
                         {videoTrimming[file.name] && (
