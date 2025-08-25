@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useSupabase';
-import { uploadToCloudinary, CLOUDINARY_CONFIG } from '../../lib/cloudinary';
+import { uploadFile } from '../../lib/fileStorage';
 import { Trash2, Play, Pause, Scissors } from 'lucide-react';
 import Image from 'next/image';
 import { postSchema, validateData } from '../../lib/validation';
@@ -66,25 +66,15 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
           }
           
           console.log('Starting upload for:', file.name, file.type);
-          const cloudinaryResult = await uploadToCloudinary(fileToUpload, (progress) => {
-            setUploadProgress(prev => ({ ...prev, [file.name]: progress }));
+          const fileUrl = await uploadFile(fileToUpload);
+          
+          console.log('Upload successful, URL:', fileUrl);
+          attachments.push({
+            type: file.type,
+            url: fileUrl,
+            name: file.name,
+            size: file.size
           });
-          
-          console.log('Cloudinary result:', cloudinaryResult);
-          
-          // Only add to attachments if upload was successful and has a valid URL
-          if (cloudinaryResult && cloudinaryResult.url) {
-            console.log('Upload successful, URL:', cloudinaryResult.url);
-            attachments.push({
-              type: file.type,
-              url: cloudinaryResult.url,
-              name: file.name,
-              size: file.size
-            });
-          } else {
-            console.error('Upload succeeded but no URL returned for:', file.name, cloudinaryResult);
-            alert(`Failed to upload ${file.name}. Please try again.`);
-          }
         } catch (error) {
           console.error('Failed to upload file:', file.name, error);
           alert(`Failed to upload ${file.name}: ${error.message || 'Unknown error'}`);
