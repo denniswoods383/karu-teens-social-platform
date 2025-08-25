@@ -239,7 +239,7 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="What's happening on campus? Share your thoughts! 📚✨"
-            className="flex-1 p-4 border-2 border-blue-200 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent bg-white/80 backdrop-blur-sm text-gray-800 placeholder-blue-400"
+            className="flex-1 p-4 border-2 border-blue-200 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent bg-white backdrop-blur-sm text-gray-900 dark:text-gray-100 dark:bg-gray-800 placeholder-blue-400 dark:placeholder-blue-300"
             rows={3}
           />
         </div>
