@@ -218,8 +218,8 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
     if (fileType.includes('pdf')) return '📄';
     if (fileType.includes('word') || fileType.includes('document')) return '📄';
     if (fileType.includes('sheet') || fileType.includes('excel')) return '📈';
-    if (fileType.includes('presentation') || fileType.includes('powerpoint')) return '📉';
-    if (fileType.includes('zip') || fileType.includes('rar')) return '🗁';
+    if (fileType.includes('presentation') || fileType.includes('powerpoint')) return '📊';
+    if (fileType.includes('zip') || fileType.includes('rar')) return '🗂️';
     if (fileType.includes('text')) return '📄';
     return '📁';
   };
@@ -272,7 +272,7 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
             htmlFor="file-upload"
             className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-full cursor-pointer hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 transform hover:scale-105 shadow-lg font-medium"
           >
-📎 Add Files
+            📎 Add Files
           </label>
         </div>
         
@@ -298,105 +298,103 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
                 </div>
                 
                 {/* Preview */}
-                {(previews[file.name] || !file.type.startsWith('image/')) && (
-                  <div className="mb-3">
-                    {file.type.startsWith('image/') ? (
-                      <img 
+                <div className="mb-3">
+                  {file.type.startsWith('image/') && previews[file.name] ? (
+                    <img 
+                      src={previews[file.name]} 
+                      alt="Preview" 
+                      className="max-w-full h-48 object-cover rounded-lg border"
+                      onError={(e) => {
+                        console.error('Image load error for:', file.name, previews[file.name]);
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  ) : file.type.startsWith('video/') && previews[file.name] ? (
+                    <div className="relative">
+                      <video 
+                        ref={el => { if (el) videoRefs.current[file.name] = el; }}
                         src={previews[file.name]} 
-                        alt="Preview" 
                         className="max-w-full h-48 object-cover rounded-lg border"
+                        controls
                         onError={(e) => {
-                          console.error('Image load error for:', file.name, previews[file.name]);
-                          e.currentTarget.style.display = 'none';
+                          console.error('Video load error for:', file.name, previews[file.name]);
                         }}
                       />
-                    ) : file.type.startsWith('video/') ? (
-                      <div className="relative">
-                        <video 
-                          ref={el => { if (el) videoRefs.current[file.name] = el; }}
-                          src={previews[file.name]} 
-                          className="max-w-full h-48 object-cover rounded-lg border"
-                          controls
-                          onError={(e) => {
-                            console.error('Video load error for:', file.name, previews[file.name]);
-                          }}
-                        />
-                    ) : (
-                      <div className="flex items-center justify-center h-32 bg-gray-100 rounded-lg border">
-                        <div className="text-center">
-                          <span className="text-4xl mb-2 block">{getFileIcon(file.type)}</span>
-                          <p className="text-sm text-gray-600 font-medium">{file.name}</p>
-                          <p className="text-xs text-gray-500">{file.type}</p>
-                        </div>
-                      </div>
-                        
-                        {/* Video Trimming Controls */}
-                        {videoTrimming[file.name] && (
-                          <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <Scissors className="w-4 h-4 text-blue-600" />
-                              <span className="text-sm font-medium text-gray-700">Trim Video</span>
-                              <span className="text-xs text-gray-500">
-                                (Auto-limited to 60s)
+                      
+                      {/* Video Trimming Controls */}
+                      {videoTrimming[file.name] && (
+                        <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <Scissors className="w-4 h-4 text-blue-600" />
+                            <span className="text-sm font-medium text-gray-700">Trim Video</span>
+                            <span className="text-xs text-gray-500">
+                              (Auto-limited to 60s)
+                            </span>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                              <label className="text-xs text-gray-600 w-12">Start:</label>
+                              <input
+                                type="range"
+                                min="0"
+                                max={videoTrimming[file.name].duration}
+                                step="0.1"
+                                value={videoTrimming[file.name].start}
+                                onChange={(e) => {
+                                  const start = parseFloat(e.target.value);
+                                  setVideoTrimming(prev => ({
+                                    ...prev,
+                                    [file.name]: {
+                                      ...prev[file.name],
+                                      start,
+                                      end: Math.min(start + 60, prev[file.name].duration)
+                                    }
+                                  }));
+                                }}
+                                className="flex-1"
+                              />
+                              <span className="text-xs text-gray-600 w-12">
+                                {videoTrimming[file.name].start.toFixed(1)}s
                               </span>
                             </div>
-                            <div className="space-y-2">
-                              <div className="flex items-center space-x-2">
-                                <label className="text-xs text-gray-600 w-12">Start:</label>
-                                <input
-                                  type="range"
-                                  min="0"
-                                  max={videoTrimming[file.name].duration}
-                                  step="0.1"
-                                  value={videoTrimming[file.name].start}
-                                  onChange={(e) => {
-                                    const start = parseFloat(e.target.value);
-                                    setVideoTrimming(prev => ({
-                                      ...prev,
-                                      [file.name]: {
-                                        ...prev[file.name],
-                                        start,
-                                        end: Math.min(start + 60, prev[file.name].duration)
-                                      }
-                                    }));
-                                  }}
-                                  className="flex-1"
-                                />
-                                <span className="text-xs text-gray-600 w-12">
-                                  {videoTrimming[file.name].start.toFixed(1)}s
-                                </span>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <label className="text-xs text-gray-600 w-12">End:</label>
-                                <input
-                                  type="range"
-                                  min={videoTrimming[file.name].start}
-                                  max={Math.min(videoTrimming[file.name].start + 60, videoTrimming[file.name].duration)}
-                                  step="0.1"
-                                  value={videoTrimming[file.name].end}
-                                  onChange={(e) => {
-                                    const end = parseFloat(e.target.value);
-                                    setVideoTrimming(prev => ({
-                                      ...prev,
-                                      [file.name]: { ...prev[file.name], end }
-                                    }));
-                                  }}
-                                  className="flex-1"
-                                />
-                                <span className="text-xs text-gray-600 w-12">
-                                  {videoTrimming[file.name].end.toFixed(1)}s
-                                </span>
-                              </div>
-                              <div className="text-xs text-center text-blue-600 font-medium">
-                                Duration: {(videoTrimming[file.name].end - videoTrimming[file.name].start).toFixed(1)}s
-                              </div>
+                            <div className="flex items-center space-x-2">
+                              <label className="text-xs text-gray-600 w-12">End:</label>
+                              <input
+                                type="range"
+                                min={videoTrimming[file.name].start}
+                                max={Math.min(videoTrimming[file.name].start + 60, videoTrimming[file.name].duration)}
+                                step="0.1"
+                                value={videoTrimming[file.name].end}
+                                onChange={(e) => {
+                                  const end = parseFloat(e.target.value);
+                                  setVideoTrimming(prev => ({
+                                    ...prev,
+                                    [file.name]: { ...prev[file.name], end }
+                                  }));
+                                }}
+                                className="flex-1"
+                              />
+                              <span className="text-xs text-gray-600 w-12">
+                                {videoTrimming[file.name].end.toFixed(1)}s
+                              </span>
+                            </div>
+                            <div className="text-xs text-center text-blue-600 font-medium">
+                              Duration: {(videoTrimming[file.name].end - videoTrimming[file.name].start).toFixed(1)}s
                             </div>
                           </div>
-                        )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-32 bg-gray-100 rounded-lg border">
+                      <div className="text-center">
+                        <span className="text-4xl mb-2 block">{getFileIcon(file.type)}</span>
+                        <p className="text-sm text-gray-600 font-medium">{file.name}</p>
+                        <p className="text-xs text-gray-500">{file.type}</p>
                       </div>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  )}
+                </div>
                 
                 {/* Upload Progress */}
                 {uploadProgress[file.name] && (
