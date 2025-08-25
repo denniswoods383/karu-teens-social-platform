@@ -80,44 +80,33 @@ export default function EnhancedNavbar() {
               </div>
             </div>
 
-            {/* Center Navigation */}
-            <div className="hidden xl:flex items-center space-x-1">
-              {updatedNavItems.slice(0, 6).map((item) => (
-                <button 
-                  key={item.name}
-                  onClick={() => window.location.href = item.href}
-                  className={`flex flex-col items-center py-3 px-3 rounded-xl transition-all duration-200 ${
-                    item.active 
-                      ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' 
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-blue-600 dark:hover:text-blue-400'
-                  }`}
-                >
-                  <span className="text-lg mb-1">{item.icon}</span>
-                  <span className="text-xs font-medium">{item.name}</span>
-                </button>
-              ))}
-              
-              {/* More Menu for Additional Items */}
-              <div className="relative group">
-                <button className="flex flex-col items-center py-3 px-3 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200">
-                  <span className="text-lg mb-1">⋯</span>
-                  <span className="text-xs font-medium">More</span>
-                </button>
-                
-                {/* Dropdown */}
-                <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                  {updatedNavItems.slice(6).map((item) => (
-                    <button
-                      key={item.name}
-                      onClick={() => window.location.href = item.href}
-                      className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center space-x-3 transition-colors duration-200"
-                    >
-                      <span className="text-lg">{item.icon}</span>
-                      <span className="text-gray-700 dark:text-gray-300">{item.name}</span>
-                    </button>
-                  ))}
+            {/* Center Navigation - Icon Only with Hover Labels */}
+            <div className="hidden xl:flex items-center space-x-2">
+              {updatedNavItems.map((item) => (
+                <div key={item.name} className="relative group">
+                  <button 
+                    onClick={() => window.location.href = item.href}
+                    className={`relative p-3 rounded-2xl transition-all duration-300 transform hover:scale-110 ${
+                      item.active 
+                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/25' 
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-600 hover:text-white hover:shadow-lg hover:shadow-blue-500/25'
+                    }`}
+                  >
+                    <span className="text-2xl filter drop-shadow-sm">{item.icon}</span>
+                    {item.active && (
+                      <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                    )}
+                  </button>
+                  
+                  {/* Hover Label */}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-1 bg-gray-900 dark:bg-gray-700 text-white text-sm font-medium rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                    {item.name}
+                    <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 dark:bg-gray-700 rotate-45"></div>
+                  </div>
                 </div>
-              </div>
+              ))}
+            </div>
+
             </div>
 
             {/* Right Section - User Stats & Profile */}
@@ -282,20 +271,22 @@ export default function EnhancedNavbar() {
       </nav>
 
       {/* Mobile Bottom Navigation */}
-      <div className="xl:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-700 px-4 py-2 z-40">
+      <div className="xl:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-700 px-2 py-2 z-40">
         <div className="flex justify-around items-center">
           {updatedNavItems.slice(0, 5).map((item) => (
             <button 
               key={item.name}
               onClick={() => window.location.href = item.href}
-              className={`flex flex-col items-center py-2 px-2 rounded-xl transition-all duration-200 ${
+              className={`relative p-2 rounded-xl transition-all duration-300 transform active:scale-95 ${
                 item.active 
-                  ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' 
-                  : 'text-gray-600 dark:text-gray-400'
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg' 
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-600 hover:text-white'
               }`}
             >
-              <span className="text-lg mb-1">{item.icon}</span>
-              <span className="text-xs font-medium">{item.name}</span>
+              <span className="text-xl filter drop-shadow-sm">{item.icon}</span>
+              {item.active && (
+                <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              )}
             </button>
           ))}
         </div>
