@@ -493,6 +493,19 @@ export default function PostCard({ post }: PostCardProps) {
                       className="w-full h-48 object-cover rounded-xl shadow-lg border border-blue-100"
                       preload="metadata"
                     />
+                  ) : url.includes('.pdf') || url.includes('.doc') || url.includes('.txt') || url.includes('.zip') ? (
+                    <div 
+                      className="w-full h-48 bg-gray-100 rounded-xl shadow-lg border border-blue-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
+                      onClick={() => window.open(url, '_blank')}
+                    >
+                      <div className="text-center">
+                        <span className="text-4xl mb-2 block">
+                          {url.includes('.pdf') ? '📄' : url.includes('.doc') ? '📄' : url.includes('.zip') ? '🗂️' : '📁'}
+                        </span>
+                        <p className="text-sm text-gray-600 font-medium">Document</p>
+                        <p className="text-xs text-blue-600">Click to open</p>
+                      </div>
+                    </div>
                   ) : (
                     <img 
                       src={url}
@@ -518,6 +531,19 @@ export default function PostCard({ post }: PostCardProps) {
                   className="w-full max-h-96 rounded-2xl shadow-lg border-2 border-blue-100"
                   preload="metadata"
                 />
+              ) : (post.image_url?.includes('.pdf') || post.image_url?.includes('.doc') || post.image_url?.includes('.txt') || post.image_url?.includes('.zip')) ? (
+                <div 
+                  className="w-full h-64 bg-gray-100 rounded-2xl shadow-lg border-2 border-blue-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
+                  onClick={() => window.open(post.image_url, '_blank')}
+                >
+                  <div className="text-center">
+                    <span className="text-6xl mb-4 block">
+                      {post.image_url?.includes('.pdf') ? '📄' : post.image_url?.includes('.doc') ? '📄' : post.image_url?.includes('.zip') ? '🗂️' : '📁'}
+                    </span>
+                    <p className="text-lg text-gray-700 font-medium mb-2">Document Attached</p>
+                    <p className="text-sm text-blue-600">Click to open</p>
+                  </div>
+                </div>
               ) : (
                 <img 
                   src={post.image_url}
