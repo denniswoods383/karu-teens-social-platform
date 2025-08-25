@@ -496,14 +496,26 @@ export default function PostCard({ post }: PostCardProps) {
                   ) : url.includes('.pdf') || url.includes('.doc') || url.includes('.txt') || url.includes('.zip') ? (
                     <div 
                       className="w-full h-48 bg-gray-100 rounded-xl shadow-lg border border-blue-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
-                      onClick={() => {
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = url.split('/').pop() || 'document';
-                        link.style.display = 'none';
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
+                      onClick={async () => {
+                        try {
+                          // Try direct download first
+                          const response = await fetch(url, { method: 'HEAD' });
+                          if (response.ok) {
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = url.split('/').pop() || 'document';
+                            link.style.display = 'none';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                          } else {
+                            // Fallback: open in new tab if direct download fails
+                            window.open(url, '_blank');
+                          }
+                        } catch (error) {
+                          // If fetch fails, try opening in new tab
+                          window.open(url, '_blank');
+                        }
                       }}
                     >
                       <div className="text-center">
@@ -542,14 +554,26 @@ export default function PostCard({ post }: PostCardProps) {
               ) : (post.image_url?.includes('.pdf') || post.image_url?.includes('.doc') || post.image_url?.includes('.txt') || post.image_url?.includes('.zip')) ? (
                 <div 
                   className="w-full h-64 bg-gray-100 rounded-2xl shadow-lg border-2 border-blue-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
-                  onClick={() => {
-                    const link = document.createElement('a');
-                    link.href = post.image_url;
-                    link.download = post.image_url.split('/').pop() || 'document';
-                    link.style.display = 'none';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                  onClick={async () => {
+                    try {
+                      // Try direct download first
+                      const response = await fetch(post.image_url, { method: 'HEAD' });
+                      if (response.ok) {
+                        const link = document.createElement('a');
+                        link.href = post.image_url;
+                        link.download = post.image_url.split('/').pop() || 'document';
+                        link.style.display = 'none';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      } else {
+                        // Fallback: open in new tab if direct download fails
+                        window.open(post.image_url, '_blank');
+                      }
+                    } catch (error) {
+                      // If fetch fails, try opening in new tab
+                      window.open(post.image_url, '_blank');
+                    }
                   }}
                 >
                   <div className="text-center">
