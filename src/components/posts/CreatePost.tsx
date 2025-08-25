@@ -126,26 +126,37 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
     const selectedFiles = Array.from(e.target.files || []);
     
     selectedFiles.forEach(file => {
+      console.log('Processing file:', file.name, file.type, file.size);
+      
       if (file.type.startsWith('video/') && file.size > 50 * 1024 * 1024) {
         alert(`Video ${file.name} is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Please use videos under 50MB.`);
         return;
       }
       
       // Create preview
-      const url = URL.createObjectURL(file);
-      setPreviews(prev => ({ ...prev, [file.name]: url }));
-      
-      // Set default video trimming (auto-cut to 60 seconds)
-      if (file.type.startsWith('video/')) {
-        const video = document.createElement('video');
-        video.src = url;
-        video.onloadedmetadata = () => {
-          const duration = Math.min(video.duration, 60); // Max 60 seconds
-          setVideoTrimming(prev => ({
-            ...prev,
-            [file.name]: { start: 0, end: duration, duration: video.duration }
-          }));
-        };
+      try {
+        const url = URL.createObjectURL(file);
+        console.log('Created blob URL:', url);
+        setPreviews(prev => ({ ...prev, [file.name]: url }));
+        
+        // Set default video trimming (auto-cut to 60 seconds)
+        if (file.type.startsWith('video/')) {
+          const video = document.createElement('video');
+          video.src = url;
+          video.onloadedmetadata = () => {
+            const duration = Math.min(video.duration, 60); // Max 60 seconds
+            setVideoTrimming(prev => ({
+              ...prev,
+              [file.name]: { start: 0, end: duration, duration: video.duration }
+            }));
+          };
+          video.onerror = (e) => {
+            console.error('Video load error:', e);
+          };
+        }
+      } catch (error) {
+        console.error('Error creating object URL:', error);
+        alert(`Failed to process file: ${file.name}`);
       }
     });
     
@@ -258,6 +269,10 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
                         src={previews[file.name]} 
                         alt="Preview" 
                         className="max-w-full h-48 object-cover rounded-lg border"
+                        onError={(e) => {
+                          console.error('Image load error for:', file.name, previews[file.name]);
+                          e.currentTarget.style.display = 'none';
+                        }}
                       />
                     ) : (
                       <div className="relative">
@@ -266,6 +281,9 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
                           src={previews[file.name]} 
                           className="max-w-full h-48 object-cover rounded-lg border"
                           controls
+                          onError={(e) => {
+                            console.error('Video load error for:', file.name, previews[file.name]);
+                          }}
                         />
                         
                         {/* Video Trimming Controls */}
