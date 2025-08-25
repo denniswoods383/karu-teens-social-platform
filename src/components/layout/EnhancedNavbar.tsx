@@ -107,8 +107,6 @@ export default function EnhancedNavbar() {
               ))}
             </div>
 
-            </div>
-
             {/* Right Section - User Stats & Profile */}
             <div className="flex items-center space-x-4">
               {/* Gamification Stats */}
