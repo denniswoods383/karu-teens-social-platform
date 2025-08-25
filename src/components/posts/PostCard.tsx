@@ -498,9 +498,9 @@ export default function PostCard({ post }: PostCardProps) {
                       className="w-full h-48 bg-gray-100 rounded-xl shadow-lg border border-blue-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
                       onClick={() => {
                         const link = document.createElement('a');
-                        link.href = url;
+                        const downloadUrl = url.replace('/upload/', '/upload/fl_attachment/');
+                        link.href = downloadUrl;
                         link.download = url.split('/').pop() || 'document';
-                        link.target = '_blank';
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
@@ -544,9 +544,9 @@ export default function PostCard({ post }: PostCardProps) {
                   className="w-full h-64 bg-gray-100 rounded-2xl shadow-lg border-2 border-blue-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
                   onClick={() => {
                     const link = document.createElement('a');
-                    link.href = post.image_url;
+                    const downloadUrl = post.image_url.replace('/upload/', '/upload/fl_attachment/');
+                    link.href = downloadUrl;
                     link.download = post.image_url.split('/').pop() || 'document';
-                    link.target = '_blank';
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
