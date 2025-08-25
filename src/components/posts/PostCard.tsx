@@ -491,11 +491,9 @@ export default function PostCard({ post }: PostCardProps) {
                       preload="metadata"
                     />
                   ) : (
-                    <Image 
+                    <img 
                       src={url}
                       alt={`Media ${index + 1}`}
-                      width={300}
-                      height={192}
                       className="w-full h-48 object-cover rounded-xl shadow-lg border border-blue-100 cursor-pointer"
                       onClick={() => window.open(url, '_blank')}
                     />
@@ -518,11 +516,9 @@ export default function PostCard({ post }: PostCardProps) {
                   preload="metadata"
                 />
               ) : (
-                <Image 
+                <img 
                   src={post.image_url}
                   alt="Post media"
-                  width={600}
-                  height={384}
                   className="w-full max-h-96 object-cover rounded-2xl shadow-lg border-2 border-blue-100"
                 />
               )}
