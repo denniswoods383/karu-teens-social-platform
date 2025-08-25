@@ -579,7 +579,7 @@ export default function PostCard({ post }: PostCardProps) {
           </button>
           
           <button 
-            onClick={loadComments}
+            onClick={() => window.dispatchEvent(new CustomEvent('openPostModal', { detail: { postId: post.id } }))}
             className="group flex items-center justify-center px-3 py-3 rounded-full flex-1 text-gray-600 bg-white border-2 border-gray-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all duration-300 transform hover:scale-105 font-semibold shadow-md mx-1"
           >
             <span className="text-xl mr-2 transition-transform duration-300 group-hover:scale-125">💬</span>
