@@ -65,12 +65,16 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
             }
           }
           
+          console.log('Starting upload for:', file.name, file.type);
           const cloudinaryResult = await uploadToCloudinary(fileToUpload, (progress) => {
             setUploadProgress(prev => ({ ...prev, [file.name]: progress }));
           });
           
+          console.log('Cloudinary result:', cloudinaryResult);
+          
           // Only add to attachments if upload was successful and has a valid URL
           if (cloudinaryResult && cloudinaryResult.url) {
+            console.log('Upload successful, URL:', cloudinaryResult.url);
             attachments.push({
               type: file.type,
               url: cloudinaryResult.url,
@@ -78,7 +82,7 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
               size: file.size
             });
           } else {
-            console.error('Upload succeeded but no URL returned for:', file.name);
+            console.error('Upload succeeded but no URL returned for:', file.name, cloudinaryResult);
             alert(`Failed to upload ${file.name}. Please try again.`);
           }
         } catch (error) {
@@ -128,6 +132,12 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
     selectedFiles.forEach(file => {
       console.log('Processing file:', file.name, file.type, file.size);
       
+      // Check for corrupted/empty files
+      if (file.size < 100) {
+        alert(`File ${file.name} appears to be corrupted or empty (${file.size} bytes). Please select a valid file.`);
+        return;
+      }
+      
       if (file.type.startsWith('video/') && file.size > 50 * 1024 * 1024) {
         alert(`Video ${file.name} is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Please use videos under 50MB.`);
         return;
@@ -161,6 +171,10 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
     });
     
     const validFiles = selectedFiles.filter(file => {
+      // Filter out corrupted/empty files
+      if (file.size < 100) {
+        return false;
+      }
       if (file.type.startsWith('video/')) {
         return file.size <= 50 * 1024 * 1024;
       }
