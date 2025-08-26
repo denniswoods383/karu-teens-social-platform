@@ -283,7 +283,27 @@ export default function MessagesPage() {
         .select('id, username, full_name')
         .neq('id', user?.id)
         .limit(10);
-      setConversations(data || []);
+      
+      if (data) {
+        // Get unread count for each conversation
+        const conversationsWithUnread = await Promise.all(
+          data.map(async (conv) => {
+            const { count } = await supabase
+              .from('messages')
+              .select('*', { count: 'exact', head: true })
+              .eq('sender_id', conv.id)
+              .eq('receiver_id', user?.id)
+              .eq('is_read', false);
+            
+            return {
+              ...conv,
+              unread_count: count || 0
+            };
+          })
+        );
+        
+        setConversations(conversationsWithUnread);
+      }
     } catch (error) {
       console.error('Failed to load conversations');
     }
@@ -399,6 +419,9 @@ export default function MessagesPage() {
           return [...filtered, data[0]];
         });
         setReplyingTo(null);
+        
+        // Update conversation unread count
+        loadConversations();
       }
     } catch (error) {
       setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
@@ -460,10 +483,19 @@ export default function MessagesPage() {
       if (data) {
         const userExists = conversations.find(c => c.id === userId);
         if (!userExists) {
+          // Get unread count for this user
+          const { count } = await supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('sender_id', userId)
+            .eq('receiver_id', user?.id)
+            .eq('is_read', false);
+          
           setConversations(prev => [...prev, {
             id: data.id,
             username: data.username || data.id,
-            full_name: data.full_name || 'Student'
+            full_name: data.full_name || 'Student',
+            unread_count: count || 0
           }]);
         }
       }
