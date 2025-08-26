@@ -69,7 +69,10 @@ export default function FollowButton({ userId, onFollowChange }: FollowButtonPro
           .eq('follower_id', user.id)
           .eq('following_id', userId);
 
-        if (!error) {
+        if (error) {
+          console.error('Unfollow error:', error);
+          alert('Failed to unfollow. Please try again.');
+        } else {
           setIsFollowing(false);
           setFollowerCount(prev => prev - 1);
           onFollowChange?.(false, followerCount - 1);
@@ -83,7 +86,10 @@ export default function FollowButton({ userId, onFollowChange }: FollowButtonPro
             following_id: userId
           });
 
-        if (!error) {
+        if (error) {
+          console.error('Follow error:', error);
+          alert(`Failed to follow: ${error.message}`);
+        } else {
           setIsFollowing(true);
           setFollowerCount(prev => prev + 1);
           onFollowChange?.(true, followerCount + 1);
@@ -91,6 +97,7 @@ export default function FollowButton({ userId, onFollowChange }: FollowButtonPro
       }
     } catch (error) {
       console.error('Follow action failed:', error);
+      alert('Follow action failed. Please try again.');
     } finally {
       setLoading(false);
     }
