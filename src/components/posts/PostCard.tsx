@@ -9,6 +9,7 @@ import Image from 'next/image';
 import { commentSchema, reportSchema, validateData } from '../../lib/validation';
 import Comment from '../comments/Comment';
 import CommentLikeButton from '../comments/CommentLikeButton';
+import FollowButton from '../profile/FollowButton';
 
 interface CommentType {
   id: string;
@@ -458,13 +459,9 @@ export default function PostCard({ post }: PostCardProps) {
                 >
                   🙈 Hide Post
                 </button>
-                <button
-                  onClick={handleFollow}
-                  className="w-full text-left px-4 py-2 hover:bg-gray-50 text-blue-600 rounded-b-lg"
-                  disabled={isFollowing}
-                >
-                  {isFollowing ? '✅ Following' : '👤 Follow User'}
-                </button>
+                <div className="px-4 py-2">
+                  <FollowButton userId={post.user_id} />
+                </div>
               </div>
             )}
           </div>
