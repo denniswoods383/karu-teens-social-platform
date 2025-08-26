@@ -170,14 +170,28 @@ export default function CustomUrlsPage() {
                 <div className="bg-white p-4 rounded-lg">
                   <h3 className="font-bold text-gray-900">{userUrl.title}</h3>
                   <p className="text-gray-600 mb-2">{userUrl.description}</p>
-                  <a 
-                    href={userUrl.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 font-medium break-all"
-                  >
-                    {userUrl.url}
-                  </a>
+                  <div className="bg-gray-50 p-3 rounded border">
+                    <p className="text-blue-600 font-medium break-all mb-2">{userUrl.url}</p>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(userUrl.url);
+                          alert('URL copied to clipboard!');
+                        }}
+                        className="bg-blue-100 text-blue-600 px-3 py-1 rounded text-sm hover:bg-blue-200"
+                      >
+                        📋 Copy URL
+                      </button>
+                      <a 
+                        href={userUrl.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="bg-green-100 text-green-600 px-3 py-1 rounded text-sm hover:bg-green-200"
+                      >
+                        🔗 Visit URL
+                      </a>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -229,7 +243,22 @@ export default function CustomUrlsPage() {
                       <div className="flex-1">
                         <h3 className="font-bold text-gray-900 mb-2">{url.title}</h3>
                         <p className="text-gray-600 text-sm mb-3">{url.description}</p>
-                        <p className="text-xs text-gray-500 break-all">{url.url}</p>
+                        {url.claimed_by === user?.id ? (
+                          <div className="bg-gray-50 p-2 rounded border">
+                            <p className="text-xs text-gray-500 break-all mb-2">{url.url}</p>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(url.url);
+                                alert('URL copied to clipboard!');
+                              }}
+                              className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded hover:bg-blue-200"
+                            >
+                              📋 Copy URL
+                            </button>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-400">🔒 URL hidden until purchased</p>
+                        )}
                       </div>
                       <div className="ml-4">
                         {url.claimed_by ? (
