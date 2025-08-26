@@ -40,20 +40,20 @@ export function useRealtimeNotifications() {
       })
       .subscribe();
 
-    // Subscribe to new follows
-    const followsChannel = supabase
-      .channel('follows-notifications')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'follows'
-      }, (payload) => {
-        const newFollow = payload.new;
-        if (newFollow.following_id === user.id) {
-          addNotification('👥 Someone followed you!', 'success');
-        }
-      })
-      .subscribe();
+    // Subscribe to new follows (temporarily disabled due to RLS issues)
+    // const followsChannel = supabase
+    //   .channel('follows-notifications')
+    //   .on('postgres_changes', {
+    //     event: 'INSERT',
+    //     schema: 'public',
+    //     table: 'follows'
+    //   }, (payload) => {
+    //     const newFollow = payload.new;
+    //     if (newFollow.following_id === user.id) {
+    //       addNotification('👥 Someone followed you!', 'success');
+    //     }
+    //   })
+    //   .subscribe();
 
     // Subscribe to new users
     const usersChannel = supabase
@@ -73,7 +73,7 @@ export function useRealtimeNotifications() {
     return () => {
       postsChannel.unsubscribe();
       messagesChannel.unsubscribe();
-      followsChannel.unsubscribe();
+      // followsChannel.unsubscribe();
       usersChannel.unsubscribe();
     };
   }, [user, addNotification]);
