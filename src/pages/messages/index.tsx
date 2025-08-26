@@ -805,7 +805,7 @@ export default function MessagesPage() {
                             {selectedChat !== 'admin' && (
                               <button
                                 onClick={() => setReplyingTo(message)}
-                                className={`absolute -left-8 top-1/2 transform -translate-y-1/2 opacity-30 group-hover:opacity-100 transition-opacity p-2 rounded-full ${
+                                className={`absolute ${message.sender_id === user?.id ? '-left-8' : '-right-8'} top-1/2 transform -translate-y-1/2 opacity-30 group-hover:opacity-100 transition-opacity p-2 rounded-full ${
                                   message.sender_id === user?.id 
                                     ? 'bg-blue-500 hover:bg-blue-600 text-white' 
                                     : 'bg-gray-200 hover:bg-gray-300 text-gray-600'
