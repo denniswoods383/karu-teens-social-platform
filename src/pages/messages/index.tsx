@@ -278,6 +278,7 @@ export default function MessagesPage() {
       const { data } = await supabase
         .from('profiles')
         .select('id, username, full_name')
+        .neq('id', user?.id)
         .limit(10);
       setConversations(data || []);
     } catch (error) {
