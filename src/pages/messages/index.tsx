@@ -425,7 +425,7 @@ export default function MessagesPage() {
         <div className="max-w-7xl mx-auto px-4 pt-20 pb-6">
           <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 h-[calc(100vh-8rem)] flex overflow-hidden">
             {/* Conversations List */}
-            <div className="w-1/3 lg:w-1/4 xl:w-1/3 border-r border-gray-200/50 flex flex-col bg-gradient-to-b from-gray-50/50 to-white/50">
+            <div className={`${selectedChat ? 'w-0 lg:w-1/4' : 'w-full lg:w-1/3'} border-r border-gray-200/50 flex flex-col bg-gradient-to-b from-gray-50/50 to-white/50 transition-all duration-300 ${selectedChat ? 'hidden lg:flex' : 'flex'}`}>
               <div className="p-6 border-b border-gray-200/50">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -556,7 +556,7 @@ export default function MessagesPage() {
             </div>
 
             {/* Chat Area */}
-            <div className="flex-1 flex flex-col">
+            <div className={`${selectedChat ? 'flex-1' : 'hidden lg:flex lg:flex-1'} flex flex-col`}>
               {selectedChat ? (
                 <>
                   {/* Chat Header */}
@@ -581,6 +581,12 @@ export default function MessagesPage() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
+                        <button 
+                          onClick={() => setSelectedChat(null)}
+                          className="lg:hidden p-2 hover:bg-white/50 rounded-lg transition-colors"
+                        >
+                          <span className="text-xl">←</span>
+                        </button>
                         <button className="p-2 hover:bg-white/50 rounded-lg transition-colors">
                           <span className="text-xl">📞</span>
                         </button>
