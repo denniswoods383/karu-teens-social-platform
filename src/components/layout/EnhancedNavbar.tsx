@@ -11,6 +11,7 @@ export default function EnhancedNavbar() {
   const { toggleTheme, isDark } = useTheme();
   const { points, level } = useGamificationStore();
   const { isPremium, setUpgradeModal } = usePremiumStore();
+  const [unreadCount, setUnreadCount] = useState(0);
   
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -40,6 +41,52 @@ export default function EnhancedNavbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
+  // Load unread message count
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const loadUnreadCount = async () => {
+      const { count } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('receiver_id', user.id)
+        .eq('is_read', false);
+      
+      setUnreadCount(count || 0);
+    };
+
+    loadUnreadCount();
+
+    // Subscribe to new messages
+    const channel = supabase
+      .channel('unread-messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_id=eq.${user.id}`
+        },
+        () => loadUnreadCount()
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_id=eq.${user.id}`
+        },
+        () => loadUnreadCount()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
   const navigationItems = [
     { name: 'Home', icon: '🏠', href: '/feed', active: false },
     { name: 'Study Groups', icon: '📚', href: '/study-groups', active: false },
@@ -47,7 +94,7 @@ export default function EnhancedNavbar() {
     { name: 'Marketplace', icon: '🛍️', href: '/marketplace', active: false },
     { name: 'AI Study Buddy', icon: '🤖', href: '/ai-study-buddy', active: false },
     { name: 'Comrades', icon: '👥', href: '/comrades', active: false },
-    { name: 'Messages', icon: '💬', href: '/messages', active: false },
+    { name: 'Messages', icon: '💬', href: '/messages', active: false, badge: unreadCount },
     { name: 'Analytics', icon: '📊', href: '/analytics', active: false },
   ];
 
@@ -102,6 +149,11 @@ export default function EnhancedNavbar() {
                     }`}
                   >
                     <span className="text-2xl filter drop-shadow-sm">{item.icon}</span>
+                    {(item as any).badge > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                        {(item as any).badge > 99 ? '99+' : (item as any).badge}
+                      </span>
+                    )}
                     {item.active && (
                       <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full animate-pulse"></div>
                     )}
@@ -288,6 +340,11 @@ export default function EnhancedNavbar() {
                 }`}
               >
                 <span className="text-xl filter drop-shadow-sm">{item.icon}</span>
+                {(item as any).badge > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center animate-pulse">
+                    {(item as any).badge > 9 ? '9+' : (item as any).badge}
+                  </span>
+                )}
                 {item.active && (
                   <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full animate-pulse"></div>
                 )}
