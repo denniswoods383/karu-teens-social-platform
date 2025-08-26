@@ -422,21 +422,26 @@ export default function MessagesPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-100 via-cyan-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900 transition-colors duration-300">
         <EnhancedNavbar />
         
-        <div className="max-w-6xl mx-auto px-4 pt-20 pb-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-[calc(100vh-8rem)] flex">
+        <div className="max-w-7xl mx-auto px-4 pt-20 pb-6">
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 h-[calc(100vh-8rem)] flex overflow-hidden">
             {/* Conversations List */}
-            <div className="w-1/3 border-r border-gray-200 flex flex-col">
-              <div className="p-4 border-b">
+            <div className="w-1/3 lg:w-1/4 xl:w-1/3 border-r border-gray-200/50 flex flex-col bg-gradient-to-b from-gray-50/50 to-white/50">
+              <div className="p-6 border-b border-gray-200/50">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-gray-900">Messages</h2>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center">
+                      <span className="text-white text-lg">💬</span>
+                    </div>
+                    <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Messages</h2>
+                  </div>
                   <button 
                     onClick={() => {
                       setShowNewChat(!showNewChat);
                       if (!showNewChat) loadAllUsers();
                     }}
-                    className="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                    className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl text-sm hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 transform hover:scale-105 shadow-lg font-medium"
                   >
-                    + New
+                    ✨ New Chat
                   </button>
                 </div>
               </div>
@@ -458,20 +463,23 @@ export default function MessagesPage() {
                         <button
                           key={user.id}
                           onClick={() => startNewChat(user.id)}
-                          className="w-full p-4 text-left hover:bg-gray-50 border-b border-gray-100 transition-colors"
+                          className="w-full p-4 text-left hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 border-b border-gray-100/50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-md rounded-lg mx-2 my-1"
                         >
                           <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                              🎓
+                            <div className="relative">
+                              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
+                                🎓
+                              </div>
+                              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-gray-900 truncate">
+                              <p className="font-semibold text-gray-900 truncate">
                                 {user.full_name || user.username}
                               </p>
-                              <p className="text-sm text-gray-500 truncate">
+                              <p className="text-sm text-gray-500 truncate flex items-center">
                                 @{user.username}
                                 {conversations.find(c => c.id === user.id) && (
-                                  <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">Recent</span>
+                                  <span className="ml-2 text-xs bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 px-2 py-1 rounded-full font-medium">Recent</span>
                                 )}
                               </p>
                             </div>
@@ -492,27 +500,42 @@ export default function MessagesPage() {
                         <button
                           key={conv.id}
                           onClick={() => setSelectedChat(conv.id)}
-                          className={`w-full p-4 text-left hover:bg-gray-50 border-b border-gray-100 transition-colors ${
-                            selectedChat === conv.id ? 'bg-blue-50 border-blue-200' : ''
+                          className={`w-full p-4 text-left transition-all duration-300 transform hover:scale-[1.02] rounded-xl mx-2 my-1 ${
+                            selectedChat === conv.id 
+                              ? 'bg-gradient-to-r from-blue-100 to-cyan-100 border-2 border-blue-300 shadow-lg' 
+                              : 'hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 hover:shadow-md'
                           }`}
                         >
                           <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                              🎓
+                            <div className="relative">
+                              <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold shadow-lg ${
+                                selectedChat === conv.id 
+                                  ? 'bg-gradient-to-r from-blue-600 to-cyan-600' 
+                                  : 'bg-gradient-to-r from-blue-500 to-cyan-500'
+                              }`}>
+                                🎓
+                              </div>
+                              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-gray-900 truncate">
+                              <p className={`font-semibold truncate ${
+                                selectedChat === conv.id ? 'text-blue-900' : 'text-gray-900'
+                              }`}>
                                 {conv.full_name || conv.username}
                               </p>
-                              <p className="text-sm text-gray-500 truncate">@{conv.username}</p>
+                              <p className={`text-sm truncate ${
+                                selectedChat === conv.id ? 'text-blue-700' : 'text-gray-500'
+                              }`}>@{conv.username}</p>
                               {conv.last_message && (
-                                <p className="text-xs text-gray-400 truncate mt-1">
+                                <p className={`text-xs truncate mt-1 ${
+                                  selectedChat === conv.id ? 'text-blue-600' : 'text-gray-400'
+                                }`}>
                                   {conv.last_message}
                                 </p>
                               )}
                             </div>
                             {conv.unread_count && conv.unread_count > 0 && (
-                              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                              <div className="w-6 h-6 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg animate-bounce">
                                 <span className="text-xs text-white font-bold">
                                   {conv.unread_count > 9 ? '9+' : conv.unread_count}
                                 </span>
@@ -537,19 +560,36 @@ export default function MessagesPage() {
               {selectedChat ? (
                 <>
                   {/* Chat Header */}
-                  <div className="p-4 border-b bg-gray-50">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                        🎓
+                  <div className="p-6 border-b border-gray-200/50 bg-gradient-to-r from-blue-50/50 to-cyan-50/50 backdrop-blur-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="relative">
+                          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
+                            🎓
+                          </div>
+                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-lg bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                            {conversations.find(c => c.id === selectedChat)?.full_name || 
+                             conversations.find(c => c.id === selectedChat)?.username}
+                          </h3>
+                          <p className="text-sm text-gray-600 flex items-center">
+                            <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                            Online • @{conversations.find(c => c.id === selectedChat)?.username}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900">
-                          {conversations.find(c => c.id === selectedChat)?.full_name || 
-                           conversations.find(c => c.id === selectedChat)?.username}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          @{conversations.find(c => c.id === selectedChat)?.username}
-                        </p>
+                      <div className="flex items-center space-x-2">
+                        <button className="p-2 hover:bg-white/50 rounded-lg transition-colors">
+                          <span className="text-xl">📞</span>
+                        </button>
+                        <button className="p-2 hover:bg-white/50 rounded-lg transition-colors">
+                          <span className="text-xl">📹</span>
+                        </button>
+                        <button className="p-2 hover:bg-white/50 rounded-lg transition-colors">
+                          <span className="text-xl">⚙️</span>
+                        </button>
                       </div>
                     </div>
                   </div>
