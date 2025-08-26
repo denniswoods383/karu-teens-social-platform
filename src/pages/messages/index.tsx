@@ -4,6 +4,7 @@ import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useSupabase';
+import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { initializeNotifications, showNotification } from '../../lib/notifications';
 import Image from 'next/image';
 import { messageSchema, validateData } from '../../lib/validation';
@@ -132,6 +133,9 @@ export default function MessagesPage() {
   const [otherUserTyping, setOtherUserTyping] = useState(false);
   const { user } = useAuth();
   const router = useRouter();
+  
+  // Update user's online status
+  useOnlineStatus();
   const typingTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
