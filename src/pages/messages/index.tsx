@@ -21,6 +21,8 @@ interface Message {
   is_delivered?: boolean;
   is_read?: boolean;
   created_at: string;
+  reply_to?: string;
+  reply_content?: string;
 }
 
 interface Conversation {
@@ -131,6 +133,7 @@ export default function MessagesPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [otherUserTyping, setOtherUserTyping] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const { user } = useAuth();
   const router = useRouter();
   
@@ -380,7 +383,9 @@ export default function MessagesPage() {
           content: messageContent || (fileUrl ? `Shared ${fileType?.startsWith('image/') ? 'photo' : 'file'}` : ''),
           file_url: fileUrl,
           file_type: fileType,
-          file_name: fileName
+          file_name: fileName,
+          reply_to: replyingTo?.id,
+          reply_content: replyingTo?.content
         })
         .select();
       
@@ -393,6 +398,7 @@ export default function MessagesPage() {
           const filtered = prev.filter(msg => msg.id !== tempMessage.id);
           return [...filtered, data[0]];
         });
+        setReplyingTo(null);
       }
     } catch (error) {
       setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
@@ -694,17 +700,33 @@ export default function MessagesPage() {
                       messages.map((message) => (
                         <div
                           key={message.id}
-                          className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'} animate-fadeIn`}
+                          className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'} animate-fadeIn group`}
                         >
-                          <div
-                            className={`max-w-sm px-4 py-3 rounded-2xl shadow-md transition-all duration-300 hover:shadow-lg ${
-                              (message as any).is_admin_message
-                                ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white border-2 border-red-300'
-                                : message.sender_id === user?.id
-                                ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white'
-                                : 'bg-white text-gray-900 border border-gray-200'
-                            }`}
-                          >
+                          <div className="relative">
+                            <div
+                              className={`max-w-sm px-4 py-3 rounded-2xl shadow-md transition-all duration-300 hover:shadow-lg ${
+                                (message as any).is_admin_message
+                                  ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white border-2 border-red-300'
+                                  : message.sender_id === user?.id
+                                  ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white'
+                                  : 'bg-white text-gray-900 border border-gray-200'
+                              }`}
+                            >
+                              {/* Reply Preview */}
+                              {message.reply_to && message.reply_content && (
+                                <div className={`mb-2 p-2 rounded-lg border-l-4 ${
+                                  message.sender_id === user?.id 
+                                    ? 'bg-blue-500/20 border-blue-300' 
+                                    : 'bg-gray-100 border-gray-400'
+                                }`}>
+                                  <p className={`text-xs font-medium ${
+                                    message.sender_id === user?.id ? 'text-blue-100' : 'text-gray-600'
+                                  }`}>Replying to:</p>
+                                  <p className={`text-sm truncate ${
+                                    message.sender_id === user?.id ? 'text-blue-200' : 'text-gray-700'
+                                  }`}>{message.reply_content}</p>
+                                </div>
+                              )}
                             {(message as any).is_admin_message && (
                               <div className="flex items-center mb-2 text-yellow-200">
                                 <span className="text-xs font-bold">🚫 ADMIN MESSAGE - NO REPLY</span>
@@ -763,6 +785,20 @@ export default function MessagesPage() {
                                 ) : null}
                               </span>
                             </div>
+                            
+                            {/* Reply Button */}
+                            {selectedChat !== 'admin' && (
+                              <button
+                                onClick={() => setReplyingTo(message)}
+                                className={`absolute -left-8 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full ${
+                                  message.sender_id === user?.id 
+                                    ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                                    : 'bg-gray-200 hover:bg-gray-300 text-gray-600'
+                                }`}
+                              >
+                                <span className="text-xs">↩️</span>
+                              </button>
+                            )}
                           </div>
                         </div>
                       ))
@@ -795,6 +831,23 @@ export default function MessagesPage() {
                   {/* Message Input - Disabled for admin conversations */}
                   {selectedChat !== 'admin' ? (
                     <form onSubmit={sendMessage} className="p-4 border-t bg-gradient-to-r from-blue-50 to-cyan-50">
+                    {/* Reply Preview */}
+                    {replyingTo && (
+                      <div className="mb-3 bg-white rounded-lg p-3 border border-blue-200 flex items-center justify-between">
+                        <div className="flex-1">
+                          <p className="text-xs text-blue-600 font-medium mb-1">Replying to:</p>
+                          <p className="text-sm text-gray-700 truncate">{replyingTo.content}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setReplyingTo(null)}
+                          className="ml-2 p-1 text-gray-400 hover:text-red-500 transition-colors"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
+                    
                     {/* File Preview */}
                     {selectedFiles.length > 0 && (
                       <div className="mb-3 flex flex-wrap gap-2">
