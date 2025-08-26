@@ -95,6 +95,7 @@ export default function EnhancedNavbar() {
     { name: 'AI Study Buddy', icon: '🤖', href: '/ai-study-buddy', active: false },
     { name: 'Comrades', icon: '👥', href: '/comrades', active: false },
     { name: 'Messages', icon: '💬', href: '/messages', active: false, badge: unreadCount },
+    { name: 'Custom URLs', icon: '🔗', href: '/custom-urls', active: false },
     { name: 'Analytics', icon: '📊', href: '/analytics', active: false },
   ];
 
