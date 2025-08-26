@@ -785,6 +785,7 @@ export default function MessagesPage() {
                                 ) : null}
                               </span>
                             </div>
+                            </div>
                             
                             {/* Reply Button */}
                             {selectedChat !== 'admin' && (
