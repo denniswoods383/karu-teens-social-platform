@@ -30,6 +30,92 @@ interface Conversation {
   unread_count?: number;
 }
 
+function UserOnlineStatus({ userId }: { userId: string | null }) {
+  const [isOnline, setIsOnline] = useState(false);
+  
+  useEffect(() => {
+    if (!userId) return;
+    
+    // Check if user is online by checking their presence
+    const checkOnlineStatus = async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('last_seen')
+        .eq('id', userId)
+        .single();
+      
+      if (data?.last_seen) {
+        const lastSeen = new Date(data.last_seen);
+        const now = new Date();
+        const diffMinutes = (now.getTime() - lastSeen.getTime()) / (1000 * 60);
+        setIsOnline(diffMinutes < 5); // Online if active within 5 minutes
+      }
+    };
+    
+    checkOnlineStatus();
+    const interval = setInterval(checkOnlineStatus, 30000); // Check every 30 seconds
+    
+    return () => clearInterval(interval);
+  }, [userId]);
+  
+  if (!userId) return null;
+  
+  return (
+    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
+      isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
+    }`}></div>
+  );
+}
+
+function UserOnlineText({ userId, username }: { userId: string | null; username?: string }) {
+  const [isOnline, setIsOnline] = useState(false);
+  const [lastSeen, setLastSeen] = useState<string>('');
+  
+  useEffect(() => {
+    if (!userId) return;
+    
+    const checkOnlineStatus = async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('last_seen')
+        .eq('id', userId)
+        .single();
+      
+      if (data?.last_seen) {
+        const lastSeenDate = new Date(data.last_seen);
+        const now = new Date();
+        const diffMinutes = (now.getTime() - lastSeenDate.getTime()) / (1000 * 60);
+        const online = diffMinutes < 5;
+        
+        setIsOnline(online);
+        if (!online) {
+          if (diffMinutes < 60) {
+            setLastSeen(`${Math.floor(diffMinutes)}m ago`);
+          } else if (diffMinutes < 1440) {
+            setLastSeen(`${Math.floor(diffMinutes / 60)}h ago`);
+          } else {
+            setLastSeen(`${Math.floor(diffMinutes / 1440)}d ago`);
+          }
+        }
+      }
+    };
+    
+    checkOnlineStatus();
+    const interval = setInterval(checkOnlineStatus, 30000);
+    
+    return () => clearInterval(interval);
+  }, [userId]);
+  
+  return (
+    <p className="text-sm text-gray-600 flex items-center">
+      <span className={`w-2 h-2 rounded-full mr-2 ${
+        isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
+      }`}></span>
+      {isOnline ? 'Online' : `Last seen ${lastSeen}`} • @{username}
+    </p>
+  );
+}
+
 export default function MessagesPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
@@ -470,7 +556,7 @@ export default function MessagesPage() {
                               <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
                                 🎓
                               </div>
-                              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                              <UserOnlineStatus userId={user.id} />
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-semibold text-gray-900 truncate">
@@ -515,7 +601,7 @@ export default function MessagesPage() {
                               }`}>
                                 🎓
                               </div>
-                              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
+                              <UserOnlineStatus userId={conv.id} />
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className={`font-semibold truncate ${
@@ -563,30 +649,27 @@ export default function MessagesPage() {
                   <div className="p-6 border-b border-gray-200/50 bg-gradient-to-r from-blue-50/50 to-cyan-50/50 backdrop-blur-sm">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
-                        <div className="relative">
-                          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
-                            🎓
-                          </div>
-                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-lg bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                            {conversations.find(c => c.id === selectedChat)?.full_name || 
-                             conversations.find(c => c.id === selectedChat)?.username}
-                          </h3>
-                          <p className="text-sm text-gray-600 flex items-center">
-                            <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-                            Online • @{conversations.find(c => c.id === selectedChat)?.username}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
                         <button 
                           onClick={() => setSelectedChat(null)}
                           className="lg:hidden p-2 hover:bg-white/50 rounded-lg transition-colors"
                         >
                           <span className="text-xl">←</span>
                         </button>
+                        <div className="relative">
+                          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
+                            🎓
+                          </div>
+                          <UserOnlineStatus userId={selectedChat} />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-lg bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                            {conversations.find(c => c.id === selectedChat)?.full_name || 
+                             conversations.find(c => c.id === selectedChat)?.username}
+                          </h3>
+                          <UserOnlineText userId={selectedChat} username={conversations.find(c => c.id === selectedChat)?.username} />
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
                         <button className="p-2 hover:bg-white/50 rounded-lg transition-colors">
                           <span className="text-xl">📞</span>
                         </button>
