@@ -96,6 +96,7 @@ export default function EnhancedNavbar() {
     { name: 'Comrades', icon: '👥', href: '/comrades', active: false },
     { name: 'Messages', icon: '💬', href: '/messages', active: false, badge: unreadCount },
     { name: 'Custom URLs', icon: '🔗', href: '/custom-urls', active: false },
+    { name: 'Streaming', icon: '🎬', href: '/streaming', active: false },
     { name: 'Analytics', icon: '📊', href: '/analytics', active: false },
   ];
 
