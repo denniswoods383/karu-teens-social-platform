@@ -11,6 +11,7 @@ import { ThemeProvider } from '../contexts/ThemeContext'
 import { useGamificationStore } from '../store/gamificationStore'
 import { usePremiumStore } from '../store/premiumStore'
 import { useEffect, useState } from 'react'
+import { InAppNotificationContainer } from '../components/notifications/InAppNotification'
 import { useAuth } from '../hooks/useSupabase'
 import { supabase } from '../lib/supabase'
 import Onboarding from '../components/auth/Onboarding'
@@ -81,6 +82,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <ImagePerformanceMonitor />
         {showOnboarding && <Onboarding onComplete={() => setShowOnboarding(false)} />}
         <Component {...pageProps} />
+        <InAppNotificationContainer />
         <FloatingFeedbackButton />
         <QuickActionsWidget />
         <UpgradeModal />

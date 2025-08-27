@@ -3,6 +3,7 @@ import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useSupabase';
+import { showInAppNotification } from '../../components/notifications/InAppNotification';
 
 interface CustomUrl {
   id: string;
@@ -102,7 +103,7 @@ export default function CustomUrlsPage() {
 
   const initiatePayment = async (urlId: string) => {
     if (userUrl) {
-      alert('You have already claimed a URL!');
+      showInAppNotification('warning', 'Already Claimed', 'You have already claimed a URL!');
       return;
     }
 
@@ -131,15 +132,15 @@ export default function CustomUrlsPage() {
         .eq('claimed_by', null);
 
       if (!error) {
-        alert('Payment successful! URL claimed.');
+        showInAppNotification('success', 'Payment Successful', 'URL claimed successfully!');
         loadUrls();
         loadUserUrl();
       } else {
-        alert('URL already claimed by someone else!');
+        showInAppNotification('error', 'Already Claimed', 'URL already claimed by someone else!');
       }
     } catch (error) {
       console.error('Payment failed:', error);
-      alert('Payment failed. Please try again.');
+      showInAppNotification('error', 'Payment Failed', 'Payment failed. Please try again.');
     } finally {
       setPaymentLoading(null);
     }
