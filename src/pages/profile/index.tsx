@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useSupabase';
 import { supabase } from '../../lib/supabase';
 import { uploadToCloudinary } from '../../lib/cloudinary';
+import { uploadWithRetry } from '../../lib/multi-cloudinary';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import EditProfileModal from '../../components/profile/EditProfileModal';
@@ -114,7 +115,7 @@ export default function ProfilePage() {
 
     setUploading(true);
     try {
-      const result = await uploadToCloudinary(file);
+      const result = await uploadWithRetry(file);
       
       const { data, error } = await supabase
         .from('profiles')
