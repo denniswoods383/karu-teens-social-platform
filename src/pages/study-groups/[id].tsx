@@ -365,24 +365,28 @@ export default function StudyGroupDetail() {
                             </div>
                           </div>
                           <div className="flex space-x-2">
-                            <>
-                              <button 
-                                onClick={() => window.open(`/study-groups/${id}/meeting/${session.room_id}`, '_blank')}
-                                className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
-                              >
-                                🎥 Join Meeting
-                              </button>
-                              <button 
-                                onClick={() => {
-                                  const shareUrl = `${window.location.origin}/study-groups/${id}/meeting/${session.room_id}`;
-                                  navigator.clipboard.writeText(shareUrl);
-                                  alert('Meeting link copied to clipboard!');
-                                }}
-                                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-                              >
-                                🔗 Share Link
-                              </button>
-                            </>
+                            <button 
+                              onClick={() => window.open(`/study-groups/${id}/meeting/${session.room_id}`, '_blank')}
+                              className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
+                            >
+                              🎥 Join Meeting
+                            </button>
+                            <button 
+                              onClick={() => {
+                                const shareUrl = `${window.location.origin}/study-groups/${id}/meeting/${session.room_id}`;
+                                navigator.clipboard.writeText(shareUrl);
+                                alert('Meeting link copied to clipboard!');
+                              }}
+                              className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                            >
+                              🔗 Share Link
+                            </button>
+                            <button 
+                              onClick={() => window.open(`/study-groups/${id}/recordings/${session.id}`, '_blank')}
+                              className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700"
+                            >
+                              🎥 Recordings
+                            </button>
                           </div>
                         </div>
                       </div>

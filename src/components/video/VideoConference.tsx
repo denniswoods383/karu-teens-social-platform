@@ -12,8 +12,11 @@ export default function VideoConference({ roomId, studyGroupId, onLeave }: Video
   const [isVideoOn, setIsVideoOn] = useState(false);
   const [isAudioOn, setIsAudioOn] = useState(false);
   const [participants, setParticipants] = useState<any[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
 
   useEffect(() => {
     initializeMedia();
@@ -56,6 +59,69 @@ export default function VideoConference({ roomId, studyGroupId, onLeave }: Video
         audioTrack.enabled = !isAudioOn;
         setIsAudioOn(!isAudioOn);
       }
+    }
+  };
+
+  const startRecording = async () => {
+    if (!localStream) return;
+    
+    try {
+      const recorder = new MediaRecorder(localStream);
+      const chunks: Blob[] = [];
+      
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunks.push(event.data);
+        }
+      };
+      
+      recorder.onstop = async () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        await saveRecording(blob);
+      };
+      
+      recorder.start();
+      setMediaRecorder(recorder);
+      setIsRecording(true);
+      setRecordedChunks(chunks);
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+    }
+  };
+  
+  const stopRecording = () => {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+      setIsRecording(false);
+      setMediaRecorder(null);
+    }
+  };
+  
+  const saveRecording = async (blob: Blob) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', blob, `meeting-${roomId}-${Date.now()}.webm`);
+      formData.append('upload_preset', 'meeting_recordings');
+      
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/your_cloud_name/video/upload`,
+        { method: 'POST', body: formData }
+      );
+      
+      const result = await response.json();
+      
+      // Save recording info to database
+      await fetch('/api/meetings/recordings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          meeting_id: roomId,
+          recording_url: result.secure_url,
+          duration: result.duration
+        })
+      });
+    } catch (error) {
+      console.error('Failed to save recording:', error);
     }
   };
 
@@ -118,6 +184,13 @@ export default function VideoConference({ roomId, studyGroupId, onLeave }: Video
         
         <button className="p-3 rounded-full bg-gray-600 text-white">
           🖥️
+        </button>
+        
+        <button
+          onClick={isRecording ? stopRecording : startRecording}
+          className={`p-3 rounded-full ${isRecording ? 'bg-red-600' : 'bg-gray-600'} text-white`}
+        >
+          {isRecording ? '⏹️' : '🔴'}
         </button>
       </div>
     </div>
