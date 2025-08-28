@@ -372,7 +372,7 @@ export default function StudyGroupDetail() {
                           </div>
                           <div className="flex space-x-2">
                             <button 
-                              onClick={() => window.open(`/study-groups/${id}/meeting/${session.room_id}`, '_blank')}
+                              onClick={() => router.push(`/study-groups/${id}/meeting/${session.room_id}`)}
                               className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
                             >
                               🎥 Join Meeting
