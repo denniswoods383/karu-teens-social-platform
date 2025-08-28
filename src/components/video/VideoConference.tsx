@@ -215,7 +215,19 @@ export default function VideoConference({ roomId, studyGroupId, onLeave }: Video
     </div>
   );
 
-  const handleLeave = () => {
+  const handleLeave = async () => {
+    // Force stop all media tracks
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      stream.getTracks().forEach(track => {
+        track.stop();
+        console.log('Force stopped:', track.kind, track.label);
+      });
+    } catch (error) {
+      console.log('Media cleanup error:', error);
+    }
+    
     cleanupMedia();
     onLeave();
   };
