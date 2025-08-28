@@ -65,6 +65,28 @@ export const CLOUDINARY_ACCOUNTS = [
   }
 ];
 
+// Separate Cloudinary accounts for streaming content
+export const STREAMING_CLOUDINARY_ACCOUNTS = [
+  {
+    id: 'streaming_1',
+    cloudName: process.env.NEXT_PUBLIC_STREAMING_CLOUDINARY_1 || '',
+    uploadPreset: process.env.NEXT_PUBLIC_STREAMING_PRESET_1 || 'streaming_uploads',
+    active: true
+  },
+  {
+    id: 'streaming_2',
+    cloudName: process.env.NEXT_PUBLIC_STREAMING_CLOUDINARY_2 || '',
+    uploadPreset: process.env.NEXT_PUBLIC_STREAMING_PRESET_2 || 'streaming_uploads',
+    active: true
+  },
+  {
+    id: 'streaming_3',
+    cloudName: process.env.NEXT_PUBLIC_STREAMING_CLOUDINARY_3 || '',
+    uploadPreset: process.env.NEXT_PUBLIC_STREAMING_PRESET_3 || 'streaming_uploads',
+    active: true
+  }
+];
+
 // Account rotation logic
 let currentSupabaseIndex = 0;
 let currentCloudinaryIndex = 0;
