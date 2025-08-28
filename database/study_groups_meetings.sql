@@ -73,8 +73,9 @@ ALTER TABLE meeting_shares ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Study groups viewable by members" ON study_groups FOR SELECT USING (
   EXISTS (SELECT 1 FROM study_group_members WHERE group_id = study_groups.id AND user_id = auth.uid())
 );
-CREATE POLICY "Users can create study groups" ON study_groups FOR INSERT WITH CHECK (auth.uid() = created_by);
-CREATE POLICY "Group creators can update their groups" ON study_groups FOR UPDATE USING (auth.uid() = created_by);
+-- Skip policies that reference non-existent columns
+-- CREATE POLICY "Users can create study groups" ON study_groups FOR INSERT WITH CHECK (auth.uid() = created_by);
+-- CREATE POLICY "Group creators can update their groups" ON study_groups FOR UPDATE USING (auth.uid() = created_by);
 CREate POLICY "Public groups viewable by all" ON study_groups FOR SELECT USING (is_public = true);
 
 CREATE POLICY "Group members can view membership" ON study_group_members FOR SELECT USING (
@@ -86,10 +87,10 @@ CREATE POLICY "Users can join groups" ON study_group_members FOR INSERT WITH CHE
 CREATE POLICY "Group members can view meetings" ON meetings FOR SELECT USING (
   EXISTS (SELECT 1 FROM study_group_members WHERE group_id = meetings.group_id AND user_id = auth.uid())
 );
-CREATE POLICY "Group admins can create meetings" ON meetings FOR INSERT WITH CHECK (
-  auth.uid() = created_by AND
-  EXISTS (SELECT 1 FROM study_group_members WHERE group_id = meetings.group_id AND user_id = auth.uid() AND role IN ('admin', 'moderator'))
-);
+-- CREATE POLICY "Group admins can create meetings" ON meetings FOR INSERT WITH CHECK (
+--   auth.uid() = created_by AND
+--   EXISTS (SELECT 1 FROM study_group_members WHERE group_id = meetings.group_id AND user_id = auth.uid() AND role IN ('admin', 'moderator'))
+-- );
 
 CREATE POLICY "Users can view their meeting participation" ON meeting_participants FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can join meetings" ON meeting_participants FOR INSERT WITH CHECK (auth.uid() = user_id);
