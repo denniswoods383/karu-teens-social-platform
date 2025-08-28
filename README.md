@@ -73,7 +73,7 @@ A modern social media platform built for university students with real-time mess
    npm run dev
    ```
 
-5. **Open [http://localhost:3000](http://localhost:3000)**
+5. **Open [https://your-domain.com](https://your-domain.com)**
 
 ## 📱 Features Overview
 

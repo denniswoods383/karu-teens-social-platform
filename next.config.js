@@ -6,7 +6,7 @@ const nextConfig = {
     domains: [
       'res.cloudinary.com',
       'cloudinary.com',
-      'localhost',
+      'your-domain.com',
       '127.0.0.1',
       'supabase.co',
       'xsgames.co'

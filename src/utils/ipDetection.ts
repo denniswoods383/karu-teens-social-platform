@@ -9,25 +9,19 @@ export const getCurrentIP = (): string => {
       return hostname;
     }
     
-    // If localhost, try to detect network IP
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      // Fallback to localhost for local development
-      return 'localhost';
-    }
-    
     // Use whatever hostname we're on
     return hostname;
   }
   
-  return 'localhost';
+  return window?.location?.hostname || 'your-domain.com';
 };
 
 export const getAPIBaseURL = (): string => {
-  const ip = getCurrentIP();
-  return `http://${ip}:8001`;
+  const hostname = getCurrentIP();
+  return `https://${hostname}/api`;
 };
 
 export const getWebSocketURL = (): string => {
-  const ip = getCurrentIP();
-  return `ws://${ip}:8001`;
+  const hostname = getCurrentIP();
+  return `wss://${hostname}/ws`;
 };
