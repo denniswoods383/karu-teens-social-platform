@@ -225,6 +225,12 @@ const AdminPanel = () => {
                 >
                   🔗 Custom URLs
                 </button>
+                <button
+                  onClick={() => window.location.href = '/mhesh/movies'}
+                  className="bg-teal-600 text-white py-3 px-4 rounded-lg hover:bg-teal-700 text-sm font-medium"
+                >
+                  🎬 Manage Movies
+                </button>
               </div>
               
               <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg">

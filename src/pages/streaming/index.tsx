@@ -31,38 +31,14 @@ export default function StreamingPage() {
 
   const loadContent = async () => {
     try {
-      // Mock data - replace with actual Supabase query
-      const mockContent: StreamContent[] = [
-        {
-          id: '1',
-          title: 'The Matrix',
-          description: 'A computer programmer discovers reality is a simulation.',
-          thumbnail_url: 'https://via.placeholder.com/300x400?text=Matrix',
-          stream_url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
-          type: 'movie',
-          genre: 'Sci-Fi',
-          rating: 8.7,
-          duration: '2h 16m',
-          is_live: false,
-          viewers_count: 1250
-        },
-        {
-          id: '2',
-          title: 'Breaking Bad',
-          description: 'A chemistry teacher turns to cooking meth.',
-          thumbnail_url: 'https://via.placeholder.com/300x400?text=Breaking+Bad',
-          stream_url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_2mb.mp4',
-          type: 'series',
-          genre: 'Drama',
-          rating: 9.5,
-          duration: '45m per episode',
-          is_live: false,
-          viewers_count: 2100
-        },
+      const { data: movies, error } = await supabase
+        .from('movies')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      ];
+      if (error) throw error;
 
-      const filtered = mockContent.filter(item => {
+      const filtered = (movies || []).filter(item => {
         if (activeTab === 'live') return item.is_live;
         return item.type === activeTab;
       });
