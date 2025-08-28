@@ -33,6 +33,13 @@ interface Session {
   location: string;
   is_online: boolean;
   created_by: string;
+  room_id?: string;
+  recordings?: Array<{
+    id: string;
+    recording_url: string;
+    duration: number;
+    created_at: string;
+  }>;
 }
 
 export default function StudyGroupDetail() {
