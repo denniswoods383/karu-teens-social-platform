@@ -147,7 +147,10 @@ export default function StudyGroupDetail() {
   const loadSessions = async () => {
     const { data } = await supabase
       .from('meetings')
-      .select('*')
+      .select(`
+        *,
+        recordings:meeting_recordings(id, recording_url, duration, created_at)
+      `)
       .eq('group_id', id)
       .order('scheduled_at', { ascending: true });
     
@@ -362,6 +365,9 @@ export default function StudyGroupDetail() {
                               <span>📅 {new Date(session.scheduled_at).toLocaleString()}</span>
                               <span>⏱️ {session.duration_minutes} mins</span>
                               <span>💻 Online Meeting</span>
+                              {session.recordings && session.recordings.length > 0 && (
+                                <span className="text-green-600 font-medium">🎥 {session.recordings.length} recording(s)</span>
+                              )}
                             </div>
                           </div>
                           <div className="flex space-x-2">
@@ -381,14 +387,58 @@ export default function StudyGroupDetail() {
                             >
                               🔗 Share Link
                             </button>
-                            <button 
-                              onClick={() => window.open(`/study-groups/${id}/recordings/${session.id}`, '_blank')}
-                              className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700"
-                            >
-                              🎥 Recordings
-                            </button>
+                            {session.recordings && session.recordings.length > 0 ? (
+                              <button 
+                                onClick={() => window.open(`/study-groups/${id}/recordings/${session.id}`, '_blank')}
+                                className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700"
+                              >
+                                🎥 View Recordings ({session.recordings.length})
+                              </button>
+                            ) : (
+                              <span className="px-3 py-1 bg-gray-200 text-gray-500 rounded text-sm">
+                                No recordings
+                              </span>
+                            )}
                           </div>
                         </div>
+                        
+                        {/* Show recordings directly in the session */}
+                        {session.recordings && session.recordings.length > 0 && (
+                          <div className="mt-4 pt-4 border-t">
+                            <h5 className="font-medium text-gray-900 mb-3">🎥 Session Recordings</h5>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {session.recordings.slice(0, 2).map((recording: any) => (
+                                <div key={recording.id} className="bg-gray-50 rounded-lg p-3">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-sm font-medium text-gray-700">
+                                      {new Date(recording.created_at).toLocaleDateString()}
+                                    </span>
+                                    <button
+                                      onClick={() => window.open(recording.recording_url, '_blank')}
+                                      className="text-blue-600 hover:text-blue-800 text-sm"
+                                    >
+                                      ▶️ Watch
+                                    </button>
+                                  </div>
+                                  <video
+                                    src={recording.recording_url}
+                                    className="w-full h-24 bg-black rounded object-cover cursor-pointer"
+                                    onClick={() => window.open(recording.recording_url, '_blank')}
+                                    preload="metadata"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                            {session.recordings.length > 2 && (
+                              <button
+                                onClick={() => window.open(`/study-groups/${id}/recordings/${session.id}`, '_blank')}
+                                className="mt-2 text-sm text-blue-600 hover:text-blue-800"
+                              >
+                                View all {session.recordings.length} recordings →
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
