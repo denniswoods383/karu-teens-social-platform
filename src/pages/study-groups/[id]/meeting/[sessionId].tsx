@@ -7,7 +7,7 @@ import { useAuth } from '../../../../hooks/useSupabase';
 
 export default function StudyGroupMeeting() {
   const router = useRouter();
-  const { id: groupId, sessionId } = router.query;
+  const { id: groupId, sessionId: roomId } = router.query;
   const { user } = useAuth();
   const [session, setSession] = useState<any>(null);
   const [group, setGroup] = useState<any>(null);
@@ -25,7 +25,7 @@ export default function StudyGroupMeeting() {
       const { data: sessionData } = await supabase
         .from('meetings')
         .select('*')
-        .eq('room_id', sessionId)
+        .eq('room_id', roomId)
         .eq('group_id', groupId)
         .single();
 
@@ -50,7 +50,7 @@ export default function StudyGroupMeeting() {
       const { data: sharedMeeting } = await supabase
         .from('meeting_shares')
         .select('*')
-        .eq('meeting_id', sessionId)
+        .eq('meeting_id', sessionData?.id)
         .eq('shared_with', user?.id)
         .single();
 
@@ -64,7 +64,7 @@ export default function StudyGroupMeeting() {
         await supabase
           .from('meeting_participants')
           .upsert({
-            meeting_id: sessionId,
+            meeting_id: sessionData.id,
             user_id: user?.id,
             joined_at: new Date().toISOString(),
             is_present: true
@@ -85,7 +85,7 @@ export default function StudyGroupMeeting() {
           left_at: new Date().toISOString(),
           is_present: false
         })
-        .eq('meeting_id', sessionId)
+        .eq('meeting_id', session?.id)
         .eq('user_id', user?.id);
       
       router.push(`/study-groups/${groupId}`);
@@ -135,7 +135,7 @@ export default function StudyGroupMeeting() {
   return (
     <ProtectedRoute>
       <VideoConference
-        roomId={sessionId as string}
+        roomId={roomId as string}
         studyGroupId={groupId as string}
         onLeave={leaveMeeting}
       />
