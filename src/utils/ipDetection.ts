@@ -13,7 +13,7 @@ export const getCurrentIP = (): string => {
     return hostname;
   }
   
-  return window?.location?.hostname || 'your-domain.com';
+  return 'your-domain.com';
 };
 
 export const getAPIBaseURL = (): string => {
