@@ -362,9 +362,18 @@ export default function StudyGroupDetail() {
                               <span>{session.is_online ? '💻 Online' : `📍 ${session.location}`}</span>
                             </div>
                           </div>
-                          <button className="px-3 py-1 bg-blue-100 text-blue-600 rounded text-sm">
-                            Join
-                          </button>
+                          {session.is_online ? (
+                            <button 
+                              onClick={() => window.open(`/meeting/${session.id}`, '_blank')}
+                              className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
+                            >
+                              🎥 Join Meeting
+                            </button>
+                          ) : (
+                            <button className="px-3 py-1 bg-blue-100 text-blue-600 rounded text-sm">
+                              📍 View Location
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}
