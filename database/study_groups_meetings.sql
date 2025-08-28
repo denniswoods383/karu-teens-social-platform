@@ -70,9 +70,12 @@ ALTER TABLE meeting_participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE meeting_shares ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
-CREATE POLICY "Public study groups viewable by all" ON study_groups FOR SELECT USING (is_public = true);
+CREATE POLICY "Study groups viewable by members" ON study_groups FOR SELECT USING (
+  EXISTS (SELECT 1 FROM study_group_members WHERE group_id = study_groups.id AND user_id = auth.uid())
+);
 CREATE POLICY "Users can create study groups" ON study_groups FOR INSERT WITH CHECK (auth.uid() = created_by);
 CREATE POLICY "Group creators can update their groups" ON study_groups FOR UPDATE USING (auth.uid() = created_by);
+CREATE POLICY "Public groups viewable by all" ON study_groups FOR SELECT USING (is_public = true);
 
 CREATE POLICY "Group members can view membership" ON study_group_members FOR SELECT USING (
   user_id = auth.uid() OR 
