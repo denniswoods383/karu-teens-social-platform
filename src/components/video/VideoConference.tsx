@@ -8,20 +8,6 @@ interface VideoConferenceProps {
 }
 
 export default function VideoConference({ roomId, studyGroupId, onLeave }: VideoConferenceProps) {
-  
-  // Cleanup media when component unmounts or user leaves
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      cleanupMedia();
-    };
-    
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      cleanupMedia();
-    };
-  }, [localStream]);
   const { user } = useAuth();
   const [isVideoOn, setIsVideoOn] = useState(false);
   const [isAudioOn, setIsAudioOn] = useState(false);
@@ -31,13 +17,6 @@ export default function VideoConference({ roomId, studyGroupId, onLeave }: Video
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
-
-  useEffect(() => {
-    initializeMedia();
-    return () => {
-      cleanupMedia();
-    };
-  }, []);
 
   const cleanupMedia = () => {
     if (localStream) {
@@ -51,6 +30,21 @@ export default function VideoConference({ roomId, studyGroupId, onLeave }: Video
       localVideoRef.current.srcObject = null;
     }
   };
+
+  useEffect(() => {
+    initializeMedia();
+    
+    const handleBeforeUnload = () => {
+      cleanupMedia();
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      cleanupMedia();
+    };
+  }, []);
 
   const initializeMedia = async () => {
     try {
@@ -221,13 +215,11 @@ export default function VideoConference({ roomId, studyGroupId, onLeave }: Video
     </div>
   );
 
-  // Enhanced leave function with media cleanup
   const handleLeave = () => {
     cleanupMedia();
     onLeave();
   };
 
-  // Update the leave button to use enhanced function
   return (
     <div className="fixed inset-0 bg-black z-50 flex flex-col">
       <div className="bg-gray-900 text-white p-4 flex items-center justify-between">
