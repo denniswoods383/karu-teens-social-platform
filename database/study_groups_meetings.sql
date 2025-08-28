@@ -73,30 +73,30 @@ ALTER TABLE meeting_shares ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Study groups viewable by members" ON study_groups FOR SELECT USING (
   EXISTS (SELECT 1 FROM study_group_members WHERE group_id = study_groups.id AND user_id = auth.uid())
 );
-CREATE POLICY "Users can create study groups" ON study_groups FOR INSERT WITH CHECK (auth.uid() = created_by);
-CREATE POLICY "Group creators can update their groups" ON study_groups FOR UPDATE USING (auth.uid() = created_by);
+CREATE POLICY "Users can create study groups" ON study_groups FOR INSERT WITH CHECK (auth.uid() = study_groups.created_by);
+CREATE POLICY "Group creators can update their groups" ON study_groups FOR UPDATE USING (auth.uid() = study_groups.created_by);
 CREATE POLICY "Public groups viewable by all" ON study_groups FOR SELECT USING (is_public = true);
 
 CREATE POLICY "Group members can view membership" ON study_group_members FOR SELECT USING (
-  user_id = auth.uid() OR 
-  EXISTS (SELECT 1 FROM study_group_members WHERE group_id = study_group_members.group_id AND user_id = auth.uid())
+  study_group_members.user_id = auth.uid() OR 
+  EXISTS (SELECT 1 FROM study_group_members sgm WHERE sgm.group_id = study_group_members.group_id AND sgm.user_id = auth.uid())
 );
-CREATE POLICY "Users can join groups" ON study_group_members FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can join groups" ON study_group_members FOR INSERT WITH CHECK (auth.uid() = study_group_members.user_id);
 
 CREATE POLICY "Group members can view meetings" ON meetings FOR SELECT USING (
   EXISTS (SELECT 1 FROM study_group_members WHERE group_id = meetings.group_id AND user_id = auth.uid())
 );
 CREATE POLICY "Group admins can create meetings" ON meetings FOR INSERT WITH CHECK (
-  auth.uid() = created_by AND
+  auth.uid() = meetings.created_by AND
   EXISTS (SELECT 1 FROM study_group_members WHERE group_id = meetings.group_id AND user_id = auth.uid() AND role IN ('admin', 'moderator'))
 );
 
-CREATE POLICY "Users can view their meeting participation" ON meeting_participants FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can join meetings" ON meeting_participants FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update their participation" ON meeting_participants FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can view their meeting participation" ON meeting_participants FOR SELECT USING (auth.uid() = meeting_participants.user_id);
+CREATE POLICY "Users can join meetings" ON meeting_participants FOR INSERT WITH CHECK (auth.uid() = meeting_participants.user_id);
+CREATE POLICY "Users can update their participation" ON meeting_participants FOR UPDATE USING (auth.uid() = meeting_participants.user_id);
 
-CREATE POLICY "Users can view shared meetings" ON meeting_shares FOR SELECT USING (auth.uid() = shared_with OR auth.uid() = shared_by);
-CREATE POLICY "Users can share meetings" ON meeting_shares FOR INSERT WITH CHECK (auth.uid() = shared_by);
+CREATE POLICY "Users can view shared meetings" ON meeting_shares FOR SELECT USING (auth.uid() = meeting_shares.shared_with OR auth.uid() = meeting_shares.shared_by);
+CREATE POLICY "Users can share meetings" ON meeting_shares FOR INSERT WITH CHECK (auth.uid() = meeting_shares.shared_by);
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_study_groups_created_by ON study_groups(created_by);
