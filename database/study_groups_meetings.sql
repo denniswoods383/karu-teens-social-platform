@@ -76,7 +76,7 @@ CREATE POLICY "Study groups viewable by members" ON study_groups FOR SELECT USIN
 -- Skip policies that reference non-existent columns
 -- CREATE POLICY "Users can create study groups" ON study_groups FOR INSERT WITH CHECK (auth.uid() = created_by);
 -- CREATE POLICY "Group creators can update their groups" ON study_groups FOR UPDATE USING (auth.uid() = created_by);
-CREate POLICY "Public groups viewable by all" ON study_groups FOR SELECT USING (is_public = true);
+-- CREATE POLICY "Public groups viewable by all" ON study_groups FOR SELECT USING (is_public = true);
 
 CREATE POLICY "Group members can view membership" ON study_group_members FOR SELECT USING (
   user_id = auth.uid() OR 
