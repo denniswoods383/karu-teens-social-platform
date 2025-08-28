@@ -146,7 +146,7 @@ export default function StudyGroupDetail() {
 
   const loadSessions = async () => {
     const { data } = await supabase
-      .from('study_sessions')
+      .from('meetings')
       .select('*')
       .eq('group_id', id)
       .order('scheduled_at', { ascending: true });
@@ -195,15 +195,17 @@ export default function StudyGroupDetail() {
       return;
     }
 
-    await supabase.from('study_sessions').insert({
+    const roomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    await supabase.from('meetings').insert({
       group_id: id,
       title,
       description,
       scheduled_at: scheduledAt,
       duration_minutes: duration,
-      location,
-      is_online: isOnline,
-      created_by: user?.id
+      room_id: roomId,
+      created_by: user?.id,
+      meeting_url: `${window.location.origin}/study-groups/${id}/meeting/${roomId}`
     });
 
     setShowScheduleModal(false);
@@ -359,34 +361,28 @@ export default function StudyGroupDetail() {
                             <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
                               <span>📅 {new Date(session.scheduled_at).toLocaleString()}</span>
                               <span>⏱️ {session.duration_minutes} mins</span>
-                              <span>{session.is_online ? '💻 Online' : `📍 ${session.location}`}</span>
+                              <span>💻 Online Meeting</span>
                             </div>
                           </div>
                           <div className="flex space-x-2">
-                            {session.is_online ? (
-                              <>
-                                <button 
-                                  onClick={() => window.open(`/study-groups/${id}/meeting/${session.id}`, '_blank')}
-                                  className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
-                                >
-                                  🎥 Join Meeting
-                                </button>
-                                <button 
-                                  onClick={() => {
-                                    const shareUrl = `${window.location.origin}/study-groups/${id}/meeting/${session.id}`;
-                                    navigator.clipboard.writeText(shareUrl);
-                                    alert('Meeting link copied to clipboard!');
-                                  }}
-                                  className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-                                >
-                                  🔗 Share Link
-                                </button>
-                              </>
-                            ) : (
-                              <button className="px-3 py-1 bg-blue-100 text-blue-600 rounded text-sm">
-                                📍 View Location
+                            <>
+                              <button 
+                                onClick={() => window.open(`/study-groups/${id}/meeting/${session.room_id}`, '_blank')}
+                                className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
+                              >
+                                🎥 Join Meeting
                               </button>
-                            )}
+                              <button 
+                                onClick={() => {
+                                  const shareUrl = `${window.location.origin}/study-groups/${id}/meeting/${session.room_id}`;
+                                  navigator.clipboard.writeText(shareUrl);
+                                  alert('Meeting link copied to clipboard!');
+                                }}
+                                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                              >
+                                🔗 Share Link
+                              </button>
+                            </>
                           </div>
                         </div>
                       </div>

@@ -23,9 +23,9 @@ export default function StudyGroupMeeting() {
   const checkAccess = async () => {
     try {
       const { data: sessionData } = await supabase
-        .from('study_sessions')
+        .from('meetings')
         .select('*')
-        .eq('id', sessionId)
+        .eq('room_id', sessionId)
         .eq('group_id', groupId)
         .single();
 
