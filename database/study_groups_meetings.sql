@@ -91,7 +91,7 @@ ALTER TABLE meeting_shares ENABLE ROW LEVEL SECURITY;
 -- CREATE POLICY "Users can share meetings" ON meeting_shares FOR INSERT WITH CHECK (auth.uid() = shared_by);
 
 -- Indexes
-CREATE INDEX IF NOT EXISTS idx_study_groups_created_by ON study_groups(created_by);
+-- CREATE INDEX IF NOT EXISTS idx_study_groups_created_by ON study_groups(created_by);
 CREATE INDEX IF NOT EXISTS idx_study_group_members_group_id ON study_group_members(group_id);
 CREATE INDEX IF NOT EXISTS idx_study_group_members_user_id ON study_group_members(user_id);
 CREATE INDEX IF NOT EXISTS idx_meetings_group_id ON meetings(group_id);
