@@ -59,19 +59,7 @@ export default function StreamingPage() {
           is_live: false,
           viewers_count: 2100
         },
-        {
-          id: '3',
-          title: 'Live Study Session',
-          description: 'Mathematics tutorial - Calculus basics',
-          thumbnail_url: 'https://via.placeholder.com/300x400?text=Live+Math',
-          stream_url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
-          type: 'movie',
-          genre: 'Education',
-          rating: 0,
-          duration: 'Live',
-          is_live: true,
-          viewers_count: 45
-        }
+
       ];
 
       const filtered = mockContent.filter(item => {
