@@ -18,7 +18,8 @@ export default function VideoConference({ roomId, studyGroupId, onLeave }: Video
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
 
-  const cleanupMedia = () => {
+  const cleanupMedia = async () => {
+    // Stop current stream
     if (localStream) {
       localStream.getTracks().forEach(track => {
         track.stop();
@@ -26,6 +27,18 @@ export default function VideoConference({ roomId, studyGroupId, onLeave }: Video
       });
       setLocalStream(null);
     }
+    
+    // Force stop any active media
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      stream.getTracks().forEach(track => {
+        track.stop();
+        console.log('Force stopped:', track.kind);
+      });
+    } catch (e) {
+      console.log('No active media to force stop');
+    }
+    
     if (localVideoRef.current) {
       localVideoRef.current.srcObject = null;
     }
@@ -216,19 +229,7 @@ export default function VideoConference({ roomId, studyGroupId, onLeave }: Video
   );
 
   const handleLeave = async () => {
-    // Force stop all media tracks
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      stream.getTracks().forEach(track => {
-        track.stop();
-        console.log('Force stopped:', track.kind, track.label);
-      });
-    } catch (error) {
-      console.log('Media cleanup error:', error);
-    }
-    
-    cleanupMedia();
+    await cleanupMedia();
     onLeave();
   };
 
