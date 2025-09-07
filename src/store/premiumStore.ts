@@ -54,7 +54,7 @@ const premiumPlans: SubscriptionPlan[] = [
   {
     id: 'student_pro_weekly',
     name: 'Student Pro (Weekly)',
-    price: 10,
+    price: 1300,
     interval: 'monthly',
     popular: true,
     features: [
@@ -71,7 +71,7 @@ const premiumPlans: SubscriptionPlan[] = [
   {
     id: 'student_pro_monthly',
     name: 'Student Pro (Monthly)',
-    price: 40,
+    price: 5200,
     interval: 'monthly',
     savings: 'Most Popular',
     features: [

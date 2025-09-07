@@ -84,7 +84,7 @@ export default function UpgradeModal() {
                     </h3>
                     <div className="flex items-center justify-center">
                       <span className="text-3xl font-bold text-gray-900 dark:text-white">
-                        ${plan.price}
+                        KSh {plan.price}
                       </span>
                       <span className="text-gray-500 dark:text-gray-400 ml-1">
                         /{plan.interval === 'yearly' ? 'year' : 'month'}
@@ -92,7 +92,7 @@ export default function UpgradeModal() {
                     </div>
                     {plan.interval === 'yearly' && (
                       <p className="text-sm text-green-600 dark:text-green-400 mt-1">
-                        Just $3.33/month billed yearly
+                        Just KSh 433/month billed yearly
                       </p>
                     )}
                   </div>
@@ -154,7 +154,7 @@ export default function UpgradeModal() {
               disabled={!selectedPlan}
               className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              🚀 Upgrade Now {selectedPlan && `- $${selectedPlan.price}/${selectedPlan.interval === 'yearly' ? 'year' : 'month'}`}
+              🚀 Upgrade Now {selectedPlan && `- KSh ${selectedPlan.price}/${selectedPlan.interval === 'yearly' ? 'year' : 'month'}`}
             </button>
             <button
               onClick={() => setUpgradeModal(false)}
