@@ -245,7 +245,7 @@ export default function HelpPage() {
                 <h3 className="text-xl font-bold text-gray-900 mb-3">{article.title}</h3>
                 <p className="text-gray-600 mb-4">{article.description}</p>
                 <div className="space-y-2">
-                  {(expandedArticles[index] ? (article.fullContent || article.content) : article.content.slice(0, 3)).map((step, idx) => (
+                  {(expandedArticles[index] ? article.content : article.content.slice(0, 3)).map((step, idx) => (
                     <div key={idx} className="flex items-start">
                       <span className="text-blue-500 mr-2 mt-1">•</span>
                       <span className="text-gray-700 text-sm whitespace-pre-line">{step}</span>
