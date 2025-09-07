@@ -92,7 +92,7 @@ export default function UpgradeModal() {
                     </div>
                     {plan.interval === 'yearly' && (
                       <p className="text-sm text-green-600 dark:text-green-400 mt-1">
-                        Just KSh 433/month billed yearly
+                        Just KSh 3.33/month billed yearly
                       </p>
                     )}
                   </div>
