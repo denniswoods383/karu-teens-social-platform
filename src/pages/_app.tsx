@@ -23,10 +23,14 @@ import { fetcher, swrConfig } from '../lib/swr'
 import Head from 'next/head'
 import Script from 'next/script'
 import ImagePerformanceMonitor from '../components/performance/ImagePerformanceMonitor'
+import { useRouter } from 'next/router'
 
 export default function App({ Component, pageProps }: AppProps) {
-  useAutoLogout();
-  useRealtimeNotifications();
+  const router = useRouter();
+  const isPublicPage = ['/privacy', '/terms', '/features', '/pricing', '/help', '/contact', '/feedback', '/security', '/landing', '/'].includes(router.pathname);
+  
+  useAutoLogout(isPublicPage);
+  useRealtimeNotifications(isPublicPage);
   const { notifications, removeNotification } = useNotifications();
   const { updateStreak } = useGamificationStore();
   const { checkPremiumStatus } = usePremiumStore();
@@ -82,11 +86,15 @@ export default function App({ Component, pageProps }: AppProps) {
         <ImagePerformanceMonitor />
         {showOnboarding && <Onboarding onComplete={() => setShowOnboarding(false)} />}
         <Component {...pageProps} />
-        <InAppNotificationContainer />
-        <FloatingFeedbackButton />
-        <QuickActionsWidget />
-        <UpgradeModal />
-        <MobileNavbar />
+        {!isPublicPage && (
+          <>
+            <InAppNotificationContainer />
+            <FloatingFeedbackButton />
+            <QuickActionsWidget />
+            <UpgradeModal />
+            <MobileNavbar />
+          </>
+        )}
       
       {/* Global Toast Notifications */}
       <div className="fixed top-4 right-4 z-[9999] space-y-2 pointer-events-none">

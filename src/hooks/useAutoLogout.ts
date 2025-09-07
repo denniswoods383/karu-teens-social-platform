@@ -3,10 +3,11 @@ import { useAuthStore } from '../store/authStore';
 
 const AUTO_LOGOUT_TIME = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
 
-export const useAutoLogout = () => {
+export const useAutoLogout = (isPublicPage = false) => {
   const { logout } = useAuthStore();
 
   useEffect(() => {
+    if (isPublicPage) return;
     const loginTime = localStorage.getItem('loginTime');
     
     if (loginTime) {
@@ -27,13 +28,14 @@ export const useAutoLogout = () => {
       
       return () => clearTimeout(timeoutId);
     }
-  }, [logout]);
+  }, [logout, isPublicPage]);
 
   // Set login time when component mounts
   useEffect(() => {
+    if (isPublicPage) return;
     const token = localStorage.getItem('token');
     if (token && !localStorage.getItem('loginTime')) {
       localStorage.setItem('loginTime', Date.now().toString());
     }
-  }, []);
+  }, [isPublicPage]);
 };

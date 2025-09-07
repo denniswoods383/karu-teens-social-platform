@@ -3,12 +3,12 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from './useSupabase';
 import { useNotifications } from './useNotifications';
 
-export function useRealtimeNotifications() {
+export function useRealtimeNotifications(isPublicPage = false) {
   const { user } = useAuth();
   const { addNotification } = useNotifications();
 
   useEffect(() => {
-    if (!user) return;
+    if (isPublicPage || !user) return;
 
     // Subscribe to new posts
     const postsChannel = supabase
@@ -76,5 +76,5 @@ export function useRealtimeNotifications() {
       // followsChannel.unsubscribe();
       usersChannel.unsubscribe();
     };
-  }, [user, addNotification]);
+  }, [user, addNotification, isPublicPage]);
 }
