@@ -251,7 +251,7 @@ export default function HelpPage() {
                       <span className="text-gray-700 text-sm whitespace-pre-line">{step}</span>
                     </div>
                   ))}
-                  {(article.fullContent || article.content.length > 3) && (
+                  {article.content.length > 3 && (
                     <button 
                       onClick={() => toggleArticle(index)}
                       className="text-blue-600 hover:text-blue-700 text-sm font-semibold"
