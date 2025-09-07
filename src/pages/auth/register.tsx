@@ -24,7 +24,7 @@ export default function RegisterPage() {
     router.push(href);
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'microsoft') => {
+  const handleSocialLogin = async (provider: 'google') => {
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -160,16 +160,7 @@ export default function RegisterPage() {
                   </svg>
                   Continue with Google
                 </button>
-                <button 
-                  onClick={() => handleSocialLogin('microsoft')}
-                  className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 hover:scale-105 transform transition-all duration-200 active:scale-95"
-                >
-                  <svg className="w-5 h-5 mr-3" fill="#00BCF2" viewBox="0 0 24 24">
-                    <path d="M24 12c0-6.627-5.373-12-12-12S0 5.373 0 12s5.373 12 12 12 12-5.373 12-12z"/>
-                    <path fill="white" d="M12.017 18.069h-2.146v-6.771H8.284V9.292h1.587V8.348c0-1.598.761-2.417 2.384-2.417.677 0 1.26.05 1.43.073v1.658l-.982.001c-.77 0-.919.366-.919.902v1.183h1.837l-.239 2.006h-1.598v6.771z"/>
-                  </svg>
-                  Continue with Microsoft
-                </button>
+
               </div>
 
               {/* Divider */}

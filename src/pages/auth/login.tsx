@@ -18,7 +18,7 @@ export default function LoginPage() {
     router.push(href);
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'microsoft' | 'apple') => {
+  const handleSocialLogin = async (provider: 'google') => {
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -132,25 +132,7 @@ export default function LoginPage() {
                   </svg>
                   Continue with Google
                 </button>
-                <button 
-                  onClick={() => handleSocialLogin('microsoft')}
-                  className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 hover:scale-105 transform transition-all duration-200 active:scale-95"
-                >
-                  <svg className="w-5 h-5 mr-3" fill="#00BCF2" viewBox="0 0 24 24">
-                    <path d="M24 12c0-6.627-5.373-12-12-12S0 5.373 0 12s5.373 12 12 12 12-5.373 12-12z"/>
-                    <path fill="white" d="M12.017 18.069h-2.146v-6.771H8.284V9.292h1.587V8.348c0-1.598.761-2.417 2.384-2.417.677 0 1.26.05 1.43.073v1.658l-.982.001c-.77 0-.919.366-.919.902v1.183h1.837l-.239 2.006h-1.598v6.771z"/>
-                  </svg>
-                  Continue with Microsoft
-                </button>
-                <button 
-                  onClick={() => handleSocialLogin('apple')}
-                  className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 hover:scale-105 transform transition-all duration-200 active:scale-95"
-                >
-                  <svg className="w-5 h-5 mr-3" fill="#000" viewBox="0 0 24 24">
-                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-                  </svg>
-                  Continue with Apple
-                </button>
+
               </div>
 
               {/* Divider */}
