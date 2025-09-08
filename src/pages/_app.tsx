@@ -16,7 +16,7 @@ import { useAuth } from '../hooks/useSupabase'
 import { supabase } from '../lib/supabase'
 import Onboarding from '../components/auth/Onboarding'
 import UpgradeModal from '../components/premium/UpgradeModal'
-import QuickActionsWidget from '../components/gamification/QuickActionsWidget'
+import QuickActionsWidget, { WelcomeChecklist } from '../components/gamification/QuickActionsWidget'
 import { initializeNotifications } from '../lib/notifications'
 import { SWRConfig } from 'swr'
 import { fetcher, swrConfig } from '../lib/swr'
@@ -111,6 +111,7 @@ export default function App({ Component, pageProps }: AppProps) {
             <InAppNotificationContainer />
             <FloatingFeedbackButton />
             <QuickActionsWidget />
+            <WelcomeChecklist />
             <UpgradeModal />
             <MobileNavbar />
           </>

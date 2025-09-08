@@ -232,4 +232,100 @@ export class EngagementSystem {
       wellbeingCheck: sessionData.stressLevel <= 5
     };
   }
+
+  // First-session value delivery
+  static async deliverFirstSessionValue(userId: string, userProfile: any) {
+    const { university, subjects } = userProfile;
+    
+    return {
+      autoJoinedGroups: await this.autoJoinStudyGroups(userId, university, subjects),
+      personalizedFeed: await this.generatePersonalizedFeed(userId, subjects),
+      welcomeChecklist: this.generateWelcomeChecklist(),
+      instantValue: await this.provideInstantValue(subjects)
+    };
+  }
+
+  // Auto-join relevant study groups
+  static async autoJoinStudyGroups(userId: string, university: string, subjects: string[]) {
+    const relevantGroups = [
+      { id: '1', name: `${university} - ${subjects[0]}`, members: 45 },
+      { id: '2', name: `${subjects[1]} Study Circle`, members: 32 },
+      { id: '3', name: 'University Prep Group', members: 128 }
+    ];
+    
+    return relevantGroups.slice(0, 3);
+  }
+
+  // Generate personalized feed content
+  static async generatePersonalizedFeed(userId: string, subjects: string[]) {
+    return {
+      welcomePost: {
+        type: 'welcome',
+        title: 'Welcome to KaruTeens! 🎉',
+        content: 'You\'re now connected with thousands of Kenyan university students.',
+        action: 'Explore Groups'
+      },
+      relevantPosts: [
+        {
+          type: 'study_tip',
+          subject: subjects[0],
+          title: `Top 5 ${subjects[0]} Study Tips`,
+          preview: 'Master these concepts before your next exam...',
+        },
+        {
+          type: 'past_paper',
+          subject: subjects[1] || subjects[0],
+          title: `${subjects[1] || subjects[0]} Past Paper - 2023`,
+          preview: 'Practice with real exam questions',
+          action: 'Start Practice'
+        }
+      ]
+    };
+  }
+
+  // Generate welcome checklist
+  static generateWelcomeChecklist() {
+    return [
+      {
+        id: 'join_group',
+        title: 'Join a study group',
+        description: 'Connect with peers in your subjects',
+        completed: true,
+        action: 'Ask your first question',
+        points: 25
+      },
+      {
+        id: 'first_question',
+        title: 'Ask your first question',
+        description: 'Get help from the community',
+        completed: false,
+        action: 'Post a question',
+        points: 50
+      },
+      {
+        id: 'past_paper',
+        title: 'Try a timed past paper',
+        description: 'Test your knowledge with real exam questions',
+        completed: false,
+        action: 'Start practice',
+        points: 100
+      }
+    ];
+  }
+
+  // Provide instant value
+  static async provideInstantValue(subjects: string[]) {
+    return {
+      quickTips: subjects.map(subject => ({
+        subject,
+        tip: `Quick ${subject} study tip: Use active recall - test yourself without looking at notes!`
+      })),
+      resourcesUnlocked: [
+        'Access to 500+ past papers',
+        'Join unlimited study groups',
+        'AI-powered study assistant',
+        'Progress tracking dashboard'
+      ]
+    };
+  }
 }
