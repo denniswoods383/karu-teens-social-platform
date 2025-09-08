@@ -4,6 +4,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import dynamic from 'next/dynamic';
+
+// Lazy load non-critical components
+const LazyFeatureGrid = dynamic(() => import('../components/landing/FeatureGrid'), {
+  loading: () => <div className="h-96 bg-gray-100 animate-pulse rounded-xl" />
+});
 
 export default function LandingPage() {
   const [currentFeature, setCurrentFeature] = useState(0);
@@ -96,9 +102,27 @@ export default function LandingPage() {
         
         <link rel="canonical" href="https://karuteens.site" />
         <link rel="icon" href="/favicon.ico" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+        <link rel="dns-prefetch" href="https://mmeqccelfchvnbvhqmws.supabase.co" />
+        
+        {/* Critical CSS for above-the-fold content */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            .hero-gradient { background: linear-gradient(135deg, #0f172a 0%, #581c87 50%, #0f172a 100%); }
+            .btn-primary { background: linear-gradient(135deg, #9333ea, #ec4899); min-height: 48px; }
+            .animate-blob { animation: blob 7s infinite; }
+            @keyframes blob {
+              0%, 100% { transform: translate(0px, 0px) scale(1); }
+              33% { transform: translate(30px, -50px) scale(1.1); }
+              66% { transform: translate(-20px, 20px) scale(0.9); }
+            }
+          `
+        }} />
       </Head>
       
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-hidden">
+      <div className="min-h-screen hero-gradient text-white overflow-hidden">
       {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
@@ -171,7 +195,7 @@ export default function LandingPage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => router.push('/auth/register')}
-                className="min-h-[48px] px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-lg font-semibold hover:from-purple-700 hover:to-pink-700 focus:ring-4 focus:ring-purple-300 focus:outline-none transition-all duration-300 shadow-lg touch-manipulation"
+                className="btn-primary px-8 py-4 rounded-full text-lg font-semibold hover:opacity-90 focus:ring-4 focus:ring-purple-300 focus:outline-none transition-all duration-300 shadow-lg touch-manipulation"
                 aria-label="Start learning for free - Sign up now"
               >
                 Start Learning Free 🚀

@@ -24,6 +24,7 @@ import Head from 'next/head'
 import Script from 'next/script'
 import ImagePerformanceMonitor from '../components/performance/ImagePerformanceMonitor'
 import { useRouter } from 'next/router'
+import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals'
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
@@ -66,6 +67,25 @@ export default function App({ Component, pageProps }: AppProps) {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js');
     }
+    
+    // Web Vitals monitoring for performance
+    function sendToAnalytics(metric: any) {
+      if (typeof window !== 'undefined' && (window as any).plausible) {
+        (window as any).plausible('Web Vitals', {
+          props: {
+            metric_name: metric.name,
+            metric_value: Math.round(metric.value),
+            metric_rating: metric.rating
+          }
+        });
+      }
+    }
+    
+    getCLS(sendToAnalytics);
+    getFID(sendToAnalytics);
+    getFCP(sendToAnalytics);
+    getLCP(sendToAnalytics);
+    getTTFB(sendToAnalytics);
     
     // Setup error tracking
     import('../lib/errorLogger').then(({ setupErrorTracking }) => {

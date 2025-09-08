@@ -73,7 +73,26 @@ const nextConfig = {
   },
   experimental: {
     optimizeCss: true,
-    scrollRestoration: true
+    scrollRestoration: true,
+    optimizePackageImports: ['framer-motion', '@headlessui/react', '@heroicons/react']
+  },
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production'
+  },
+  webpack: (config, { dev, isServer }) => {
+    if (!dev && !isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+          },
+        },
+      };
+    }
+    return config;
   }
 }
 

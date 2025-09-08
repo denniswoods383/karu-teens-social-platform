@@ -1,4 +1,7 @@
-const CACHE_NAME = 'karu-teens-v1';
+const CACHE_NAME = 'karu-teens-v2';
+const STATIC_CACHE = 'static-v2';
+const DYNAMIC_CACHE = 'dynamic-v2';
+
 const urlsToCache = [
   '/',
   '/feed',
@@ -6,7 +9,16 @@ const urlsToCache = [
   '/comrades',
   '/marketplace',
   '/stories',
-  '/offline.html'
+  '/offline.html',
+  '/ui/karu_logo.png',
+  '/manifest.json'
+];
+
+const staticAssets = [
+  '/_next/static/css/',
+  '/_next/static/js/',
+  '/ui/',
+  '/assets/'
 ];
 
 self.addEventListener('install', event => {
@@ -17,18 +29,53 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request).catch(() => {
-          if (event.request.destination === 'document') {
-            return caches.match('/offline.html');
-          }
+  const { request } = event;
+  const url = new URL(request.url);
+  
+  // Cache static assets
+  if (staticAssets.some(path => url.pathname.startsWith(path))) {
+    event.respondWith(
+      caches.open(STATIC_CACHE).then(cache => {
+        return cache.match(request).then(response => {
+          if (response) return response;
+          return fetch(request).then(fetchResponse => {
+            cache.put(request, fetchResponse.clone());
+            return fetchResponse;
+          });
         });
       })
+    );
+    return;
+  }
+  
+  // Network first for API calls
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(
+      fetch(request).catch(() => {
+        return caches.match(request);
+      })
+    );
+    return;
+  }
+  
+  // Cache first for other requests
+  event.respondWith(
+    caches.match(request).then(response => {
+      if (response) return response;
+      return fetch(request).then(fetchResponse => {
+        if (fetchResponse.status === 200) {
+          const responseClone = fetchResponse.clone();
+          caches.open(DYNAMIC_CACHE).then(cache => {
+            cache.put(request, responseClone);
+          });
+        }
+        return fetchResponse;
+      }).catch(() => {
+        if (request.destination === 'document') {
+          return caches.match('/offline.html');
+        }
+      });
+    })
   );
 });
 
