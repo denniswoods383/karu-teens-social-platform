@@ -1,47 +1,76 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useSupabase';
 import { uploadFile } from '../../lib/fileStorage';
-import { Trash2, Play, Pause, Scissors } from 'lucide-react';
-import Image from 'next/image';
+import { Trash2, X, Plus, Hash, MapPin } from 'lucide-react';
 import { postSchema, validateData } from '../../lib/validation';
 import { checkRateLimit, rateLimitErrors } from '../../lib/rateLimiting';
+import { showSuccessNotification } from '../notifications/InAppNotification';
 
 interface CreatePostProps {
-  onPostCreated?: () => void;
+  onPostCreated?: (post: any) => void;
+  isCompact?: boolean;
 }
 
-export default function CreatePost({ onPostCreated }: CreatePostProps) {
+export default function CreatePost({ onPostCreated, isCompact = false }: CreatePostProps) {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
-  const [uploadProgress, setUploadProgress] = useState<{[key: string]: number}>({});
-  const [previews, setPreviews] = useState<{[key: string]: string}>({});
-  const [videoTrimming, setVideoTrimming] = useState<{[key: string]: {start: number, end: number, duration: number}}>({});
-  const videoRefs = useRef<{[key: string]: HTMLVideoElement}>({});
+  const [tags, setTags] = useState<string[]>([]);
+  const [currentPrompt, setCurrentPrompt] = useState(0);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const contextualPrompts = [
+    { text: 'Ask a question about', subject: true, icon: '❓' },
+    { text: 'Share past paper + marking scheme', subject: false, icon: '📄' },
+    { text: 'Plan a study session for', subject: true, icon: '📅' },
+    { text: 'Need help with homework in', subject: true, icon: '🤝' },
+    { text: 'Share study notes for', subject: true, icon: '📝' },
+    { text: 'Looking for study partner in', subject: true, icon: '👥' },
+    { text: 'Recommend resources for', subject: true, icon: '💡' },
+    { text: 'Celebrate academic achievement', subject: false, icon: '🎉' }
+  ];
+  
+  const quickTags = [
+    'Question', 'Resource', 'Study Group', 'Past Paper', 'Notes', 'Help Needed'
+  ];
+
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('profiles')
+        .select('university, subjects')
+        .eq('id', user.id)
+        .single();
+      setUserProfile(data);
+    };
+    loadUserProfile();
+  }, [user]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentPrompt(prev => (prev + 1) % contextualPrompts.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const getPlaceholder = () => {
+    const prompt = contextualPrompts[currentPrompt];
+    if (prompt.subject && userProfile?.subjects?.length > 0) {
+      const randomSubject = userProfile.subjects[Math.floor(Math.random() * userProfile.subjects.length)];
+      return `${prompt.icon} ${prompt.text} ${randomSubject}...`;
+    }
+    return `${prompt.icon} ${prompt.text}...`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || (!content.trim() && files.length === 0)) return;
 
-    // Validate input
-    const validation = validateData(postSchema, {
-      content: content.trim(),
-      media_urls: files.length > 0 ? ['https://example.com/placeholder'] : undefined
-    });
-
-    if (!validation.success) {
-      alert('errors' in validation ? validation.errors.join(', ') : 'Validation failed');
-      return;
-    }
-
-    if (!content.trim() && files.length === 0) {
-      alert('Please add some content or media to your post');
-      return;
-    }
-
-    // Check rate limit
     const canPost = await checkRateLimit('posts');
     if (!canPost) {
       alert(rateLimitErrors.posts);
@@ -49,76 +78,66 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
     }
 
     setLoading(true);
+    
+    // Optimistic post creation
+    const optimisticPost = {
+      id: `temp-${Date.now()}`,
+      user_id: user.id,
+      content: content.trim(),
+      tags,
+      created_at: new Date().toISOString(),
+      profiles: {
+        name: user.user_metadata?.name || 'You',
+        avatar_url: user.user_metadata?.avatar_url
+      },
+      isOptimistic: true
+    };
+    
+    onPostCreated?.(optimisticPost);
+    
     try {
       let attachments = [];
       
-      // Upload files to Cloudinary
       for (const file of files) {
-        try {
-          let fileToUpload = file;
-          
-          // Apply video trimming if needed
-          if (file.type.startsWith('video/') && videoTrimming[file.name]) {
-            const { start, end } = videoTrimming[file.name];
-            if (start > 0 || end < videoTrimming[file.name].duration) {
-              fileToUpload = await trimVideo(file, start, end);
-            }
-          }
-          
-          console.log('Starting upload for:', file.name, file.type);
-          const uploadResult = await uploadFile(fileToUpload);
-          
-          console.log('Upload successful, URL:', uploadResult.url);
-          attachments.push({
-            type: file.type,
-            url: uploadResult.url,
-            name: uploadResult.originalName,
-            size: file.size
-          });
-        } catch (error) {
-          console.error('Failed to upload file:', file.name, error);
-          alert(`Failed to upload ${file.name}: ${error.message || 'Unknown error'}`);
-        }
+        const uploadResult = await uploadFile(file);
+        attachments.push({
+          type: file.type,
+          url: uploadResult.url,
+          name: uploadResult.originalName
+        });
       }
       
-      // Check if any uploads failed
-      if (files.length > 0 && attachments.length === 0) {
-        alert('All file uploads failed. Please check your internet connection and try again.');
-        return;
-      }
-
-      console.log('Creating post with attachments:', attachments);
       const postData = {
         user_id: user.id,
         content: content.trim(),
-        media_urls: attachments.length > 0 ? attachments.map(a => `${a.url}|${a.name}`) : null,
-        image_url: attachments.length > 0 ? attachments[0].url : null
+        tags: tags.length > 0 ? tags : null,
+        media_urls: attachments.length > 0 ? attachments.map(a => a.url) : null,
+        type: tags.includes('Question') ? 'question' : tags.includes('Resource') ? 'resource' : 'post'
       };
-      console.log('Post data:', postData);
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('posts')
-        .insert(postData);
+        .insert(postData)
+        .select('*, profiles(name, avatar_url)')
+        .single();
 
-      if (!error) {
-        console.log('Post created successfully!');
+      if (!error && data) {
+        // Replace optimistic post with real data
+        onPostCreated?.({ ...data, isUpdate: true, tempId: optimisticPost.id });
+        
         setContent('');
         setFiles([]);
-        setUploadProgress({});
-        setPreviews({});
-        setVideoTrimming({});
-        onPostCreated?.();
+        setTags([]);
+        setIsExpanded(false);
         
-        // Track analytics
-        import('../../lib/analytics').then(({ trackEvent, events }) => {
-          trackEvent(events.POST_CREATED, { hasMedia: files.length > 0 });
-        });
+        showSuccessNotification('Post shared!', 'Your post is now live for everyone to see');
       } else {
-        console.error('Post creation error:', error);
-        alert('Failed to create post: ' + error.message);
+        throw error;
       }
     } catch (error) {
       console.error('Failed to create post:', error);
+      // Remove optimistic post on error
+      onPostCreated?.({ tempId: optimisticPost.id, isError: true });
     } finally {
       setLoading(false);
     }
@@ -126,80 +145,42 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
   
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
-    
-    selectedFiles.forEach(file => {
-      console.log('Processing file:', file.name, file.type, file.size);
-      
-      // Check for corrupted/empty files
-      if (file.size < 4) {
-        alert(`File ${file.name} appears to be corrupted or empty (${file.size} bytes). Please select a valid file.`);
-        return;
-      }
-      
-      if (file.type.startsWith('video/') && file.size > 50 * 1024 * 1024) {
-        alert(`Video ${file.name} is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Please use videos under 50MB.`);
-        return;
-      }
-      
-      // Create preview for images and videos only
-      if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
-        try {
-          const url = URL.createObjectURL(file);
-          console.log('Created blob URL:', url);
-          setPreviews(prev => ({ ...prev, [file.name]: url }));
-          
-          // Set default video trimming (auto-cut to 60 seconds)
-          if (file.type.startsWith('video/')) {
-            const video = document.createElement('video');
-            video.src = url;
-            video.onloadedmetadata = () => {
-              const duration = Math.min(video.duration, 60); // Max 60 seconds
-              setVideoTrimming(prev => ({
-                ...prev,
-                [file.name]: { start: 0, end: duration, duration: video.duration }
-              }));
-            };
-            video.onerror = (e) => {
-              console.error('Video load error:', e);
-            };
-          }
-        } catch (error) {
-          console.error('Error creating object URL:', error);
-          alert(`Failed to process file: ${file.name}`);
+    setFiles(prev => [...prev, ...selectedFiles]);
+    setIsExpanded(true);
+  };
+  
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    setFiles(prev => [...prev, ...droppedFiles]);
+    setIsExpanded(true);
+  };
+  
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const file = items[i].getAsFile();
+        if (file) {
+          setFiles(prev => [...prev, file]);
+          setIsExpanded(true);
         }
       }
-    });
-    
-    const validFiles = selectedFiles.filter(file => {
-      // Filter out corrupted/empty files
-      if (file.size < 4) {
-        return false;
-      }
-      if (file.type.startsWith('video/')) {
-        return file.size <= 50 * 1024 * 1024;
-      }
-      return true;
-    });
-    
-    setFiles(prev => [...prev, ...validFiles]);
+    }
+  };
+  
+  const addTag = (tag: string) => {
+    if (!tags.includes(tag)) {
+      setTags(prev => [...prev, tag]);
+    }
+  };
+  
+  const removeTag = (tag: string) => {
+    setTags(prev => prev.filter(t => t !== tag));
   };
   
   const removeFile = (index: number) => {
-    const file = files[index];
-    if (previews[file.name]) {
-      URL.revokeObjectURL(previews[file.name]);
-      setPreviews(prev => {
-        const newPreviews = { ...prev };
-        delete newPreviews[file.name];
-        return newPreviews;
-      });
-    }
     setFiles(prev => prev.filter((_, i) => i !== index));
-    setVideoTrimming(prev => {
-      const newTrimming = { ...prev };
-      delete newTrimming[file.name];
-      return newTrimming;
-    });
   };
 
   const getFileIcon = (fileType: string) => {
@@ -216,205 +197,180 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
     return '📁';
   };
 
-  const trimVideo = async (file: File, start: number, end: number): Promise<File> => {
-    return new Promise((resolve) => {
-      const video = document.createElement('video');
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d')!;
-      
-      video.src = URL.createObjectURL(file);
-      video.onloadedmetadata = () => {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        
-        // For now, just return the original file
-        // In a real implementation, you'd use FFmpeg.js or similar
-        resolve(file);
-      };
-    });
-  };
+
+
+  if (isCompact) {
+    return (
+      <button
+        onClick={() => setIsExpanded(true)}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center z-40 md:hidden"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
+    );
+  }
 
   return (
-    <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl shadow-lg border border-blue-100 p-6 mb-6">
+    <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 transition-all duration-300 ${
+      isExpanded ? 'p-6' : 'p-4'
+    } mb-6`}>
       <form onSubmit={handleSubmit}>
-        <div className="flex items-start space-x-4 mb-4">
-          <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+        <div className="flex items-start space-x-4">
+          <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg flex-shrink-0">
             🎓
           </div>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="What's happening on campus? Share your thoughts! 📚✨"
-            className="flex-1 p-4 border-2 border-blue-200 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent bg-white backdrop-blur-sm text-gray-900 dark:text-gray-100 dark:bg-gray-800 placeholder-blue-400 dark:placeholder-blue-300"
-            rows={3}
-          />
-        </div>
-        
-        {/* File Upload */}
-        <div className="mt-4">
-          <input
-            type="file"
-            multiple
-            accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx,.zip,.rar,.7z,.csv,.json,.xml,.rtf,.odt,.ods,.odp"
-            onChange={handleFileSelect}
-            className="hidden"
-            id="file-upload"
-          />
-          <label
-            htmlFor="file-upload"
-            className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-full cursor-pointer hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 transform hover:scale-105 shadow-lg font-medium"
-          >
-            📎 Add Files
-          </label>
-        </div>
-        
-        {/* Selected Files with Previews */}
-        {files.length > 0 && (
-          <div className="mt-4 space-y-4">
-            {files.map((file, index) => (
-              <div key={index} className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-lg">{getFileIcon(file.type)}</span>
-                    <span className="text-sm font-medium text-gray-700 truncate">{file.name}</span>
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                      {(file.size / 1024 / 1024).toFixed(1)}MB
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => removeFile(index)}
-                    className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-                
-                {/* Preview */}
-                <div className="mb-3">
-                  {file.type.startsWith('image/') && previews[file.name] ? (
-                    <img 
-                      src={previews[file.name]} 
-                      alt="Preview" 
-                      className="max-w-full h-48 object-cover rounded-lg border"
-                      onError={(e) => {
-                        console.error('Image load error for:', file.name, previews[file.name]);
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                  ) : file.type.startsWith('video/') && previews[file.name] ? (
-                    <div className="relative">
-                      <video 
-                        ref={el => { if (el) videoRefs.current[file.name] = el; }}
-                        src={previews[file.name]} 
-                        className="max-w-full h-48 object-cover rounded-lg border"
-                        controls
-                        onError={(e) => {
-                          console.error('Video load error for:', file.name, previews[file.name]);
-                        }}
-                      />
-                      
-                      {/* Video Trimming Controls */}
-                      {videoTrimming[file.name] && (
-                        <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <Scissors className="w-4 h-4 text-blue-600" />
-                            <span className="text-sm font-medium text-gray-700">Trim Video</span>
-                            <span className="text-xs text-gray-500">
-                              (Auto-limited to 60s)
-                            </span>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex items-center space-x-2">
-                              <label className="text-xs text-gray-600 w-12">Start:</label>
-                              <input
-                                type="range"
-                                min="0"
-                                max={videoTrimming[file.name].duration}
-                                step="0.1"
-                                value={videoTrimming[file.name].start}
-                                onChange={(e) => {
-                                  const start = parseFloat(e.target.value);
-                                  setVideoTrimming(prev => ({
-                                    ...prev,
-                                    [file.name]: {
-                                      ...prev[file.name],
-                                      start,
-                                      end: Math.min(start + 60, prev[file.name].duration)
-                                    }
-                                  }));
-                                }}
-                                className="flex-1"
-                              />
-                              <span className="text-xs text-gray-600 w-12">
-                                {videoTrimming[file.name].start.toFixed(1)}s
-                              </span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <label className="text-xs text-gray-600 w-12">End:</label>
-                              <input
-                                type="range"
-                                min={videoTrimming[file.name].start}
-                                max={Math.min(videoTrimming[file.name].start + 60, videoTrimming[file.name].duration)}
-                                step="0.1"
-                                value={videoTrimming[file.name].end}
-                                onChange={(e) => {
-                                  const end = parseFloat(e.target.value);
-                                  setVideoTrimming(prev => ({
-                                    ...prev,
-                                    [file.name]: { ...prev[file.name], end }
-                                  }));
-                                }}
-                                className="flex-1"
-                              />
-                              <span className="text-xs text-gray-600 w-12">
-                                {videoTrimming[file.name].end.toFixed(1)}s
-                              </span>
-                            </div>
-                            <div className="text-xs text-center text-blue-600 font-medium">
-                              Duration: {(videoTrimming[file.name].end - videoTrimming[file.name].start).toFixed(1)}s
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center h-32 bg-gray-100 rounded-lg border">
-                      <div className="text-center">
-                        <span className="text-4xl mb-2 block">{getFileIcon(file.type)}</span>
-                        <p className="text-sm text-gray-600 font-medium">{file.name}</p>
-                        <p className="text-xs text-gray-500">{file.type}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Upload Progress */}
-                {uploadProgress[file.name] && (
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${uploadProgress[file.name]}%` }}
-                    ></div>
-                    <div className="text-xs text-center mt-1 text-blue-600 font-medium">
-                      {uploadProgress[file.name]}% uploaded
-                    </div>
+          <div className="flex-1">
+            <textarea
+              value={content}
+              onChange={(e) => {
+                setContent(e.target.value);
+                if (!isExpanded && e.target.value.length > 0) {
+                  setIsExpanded(true);
+                }
+              }}
+              onFocus={() => setIsExpanded(true)}
+              onPaste={handlePaste}
+              placeholder={getPlaceholder()}
+              className={`w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-300 ${
+                isExpanded ? 'min-h-[100px]' : 'min-h-[50px]'
+              }`}
+              rows={isExpanded ? 4 : 2}
+            />
+            
+            {/* Tags */}
+            {isExpanded && (
+              <div className="mt-3 space-y-3">
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map(tag => (
+                      <span key={tag} className="inline-flex items-center px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-full text-sm">
+                        <Hash className="w-3 h-3 mr-1" />
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => removeTag(tag)}
+                          className="ml-2 hover:text-purple-600 dark:hover:text-purple-400"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
                   </div>
                 )}
+                
+                <div className="flex flex-wrap gap-2">
+                  {quickTags.filter(tag => !tags.includes(tag)).map(tag => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => addTag(tag)}
+                      className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
+                    >
+                      <Hash className="w-3 h-3 inline mr-1" />
+                      {tag}
+                    </button>
+                  ))}
+                  {userProfile?.university && (
+                    <button
+                      type="button"
+                      onClick={() => addTag(userProfile.university)}
+                      className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                    >
+                      <MapPin className="w-3 h-3 inline mr-1" />
+                      {userProfile.university}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* File Upload & Actions */}
+        {isExpanded && (
+          <div className="mt-4 flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*,video/*,.pdf,.doc,.docx"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                📎 <span>Files</span>
+              </button>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                Drag & drop files or paste images
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-3">
+              {!isCompact && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsExpanded(false);
+                    setContent('');
+                    setFiles([]);
+                    setTags([]);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+              <button
+                type="submit"
+                disabled={(!content.trim() && files.length === 0) || loading}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-2 rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 transition-all duration-300 font-medium"
+              >
+                {loading ? '🚀 Posting...' : '✨ Share'}
+              </button>
+            </div>
+          </div>
+        )}
+        
+        {/* File Previews */}
+        {files.length > 0 && isExpanded && (
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3">
+            {files.map((file, index) => (
+              <div key={index} className="relative group">
+                <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 text-center">
+                  <div className="text-2xl mb-2">{getFileIcon(file.type)}</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400 truncate">{file.name}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeFile(index)}
+                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                >
+                  <X className="w-3 h-3" />
+                </button>
               </div>
             ))}
           </div>
         )}
-        
-        <div className="flex justify-end mt-4">
-          <button
-            type="submit"
-            disabled={(!content.trim() && files.length === 0) || loading}
-            className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-8 py-3 rounded-full hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 transition-all duration-300 transform hover:scale-105 shadow-lg font-bold"
-          >
-            {loading ? '🚀 Posting...' : '✨ Share'}
-          </button>
-        </div>
       </form>
+      
+      {/* Drag & Drop Overlay */}
+      <div 
+        onDrop={handleDrop}
+        onDragOver={(e) => e.preventDefault()}
+        className="absolute inset-0 bg-purple-100 dark:bg-purple-900/20 border-2 border-dashed border-purple-400 rounded-2xl opacity-0 pointer-events-none transition-opacity"
+      >
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <div className="text-4xl mb-2">📁</div>
+            <div className="text-purple-600 dark:text-purple-400 font-medium">Drop files here</div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

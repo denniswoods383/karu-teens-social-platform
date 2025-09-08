@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import PostCard from './PostCard';
 import PostSkeleton from './PostSkeleton';
+import CreatePost from './CreatePost';
 import { useInView } from 'react-intersection-observer';
 import { useAuth } from '../../hooks/useSupabase';
+import { X } from 'lucide-react';
 import useSWR from 'swr';
 
 type FeedFilter = 'all' | 'my_school' | 'my_subjects' | 'unanswered' | 'resources';
@@ -23,6 +25,7 @@ export default function PostFeed() {
   const [page, setPage] = useState(0);
   const [activeFilter, setActiveFilter] = useState<FeedFilter>('all');
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [showComposer, setShowComposer] = useState(false);
   const { user } = useAuth();
   const { ref, inView } = useInView({ threshold: 0 });
   const { data: cachedPosts, mutate } = useSWR(`posts-${activeFilter}`);
@@ -65,6 +68,20 @@ export default function PostFeed() {
     setHasMore(true);
     loadPosts(0, false);
   }, [activeFilter]);
+
+  const handlePostCreated = (post: any) => {
+    if (post.isError) {
+      setPosts(prev => prev.filter(p => p.id !== post.tempId));
+      return;
+    }
+    
+    if (post.isUpdate) {
+      setPosts(prev => prev.map(p => p.id === post.tempId ? post : p));
+      return;
+    }
+    
+    setPosts(prev => [post, ...prev]);
+  };
   
   useEffect(() => {
     if (inView && hasMore && !loading) {
@@ -189,7 +206,41 @@ export default function PostFeed() {
   }
 
   return (
-    <div className="space-y-6">
+    <>
+      {/* Mobile Sticky Ask Button */}
+      <button
+        onClick={() => setShowComposer(true)}
+        className="fixed bottom-20 right-6 w-14 h-14 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center z-40 md:hidden"
+      >
+        <span className="text-xl">❓</span>
+      </button>
+      
+      {/* Mobile Composer Modal */}
+      {showComposer && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-t-2xl md:rounded-2xl w-full md:max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Create Post</h3>
+              <button
+                onClick={() => setShowComposer(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-4">
+              <CreatePost 
+                onPostCreated={(post) => {
+                  handlePostCreated(post);
+                  if (!post.isOptimistic) setShowComposer(false);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <div className="space-y-6">
       {/* Feed Filters */}
       <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="flex items-center space-x-2 overflow-x-auto pb-2">
@@ -228,12 +279,16 @@ export default function PostFeed() {
       </div>
       {posts.length > 0 ? (
         posts.map((post: any, index: number) => (
-          <div key={post.id} className="relative">
+          <div key={post.id} className={`relative ${post.isOptimistic ? 'opacity-70' : ''}`}>
             <PostCard post={post} />
-            {/* Show relevance indicator for top posts */}
-            {index < 3 && post.score > 50 && (
+            {index < 3 && post.score > 50 && !post.isOptimistic && (
               <div className="absolute top-2 right-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full">
                 🎯 Relevant
+              </div>
+            )}
+            {post.isOptimistic && (
+              <div className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
+                🚀 Posting...
               </div>
             )}
           </div>
@@ -276,6 +331,7 @@ export default function PostFeed() {
           <p>🎉 You've seen all posts!</p>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
