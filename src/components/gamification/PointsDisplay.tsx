@@ -1,5 +1,6 @@
 import { useGamificationStore } from '../../store/gamificationStore';
 import { useState, useEffect } from 'react';
+import '../../styles/design-system.css';
 
 const PointsDisplay = () => {
   const { 
@@ -46,33 +47,32 @@ const PointsDisplay = () => {
     <>
       {/* Subtle Points Notification */}
       {showPointsNotification && (
-        <div className="fixed top-20 right-4 z-50 bg-green-500 text-white px-3 py-2 rounded-lg shadow-lg animate-bounce">
+        <div className="fixed top-20 right-4 z-50 bg-green-500 text-white px-3 py-2 rounded-lg shadow-lg animate-bounce-in">
           <span className="text-sm font-medium">+{notificationData.points} 🎉</span>
         </div>
       )}
       
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-lg shadow-lg">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold">Lv.{level}</div>
-              <div className="text-xs opacity-80">Level</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">{streak}🔥</div>
-              <div className="text-xs opacity-80">Day Streak</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold">{weeklyProgress}/{weeklyGoal}</div>
-              <div className="text-xs opacity-80">Weekly Goal</div>
-            </div>
+      <div className="card-hero" style={{ background: 'var(--gradient-secondary)', color: 'white' }}>
+        {/* Metrics Display */}
+        <div className="metric-group mb-6">
+          <div className="metric">
+            <div className="metric-value text-white">Lv.{level}</div>
+            <div className="metric-label text-white/70">Level</div>
+          </div>
+          <div className="metric">
+            <div className="metric-value text-white">{streak}🔥</div>
+            <div className="metric-label text-white/70">Day Streak</div>
+          </div>
+          <div className="metric">
+            <div className="metric-value text-white">{weeklyProgress}/{weeklyGoal}</div>
+            <div className="metric-label text-white/70">Weekly Goal</div>
           </div>
           
           {/* Streak Freeze Button */}
           {!streakFreezeUsed && (
             <button
               onClick={handleStreakFreeze}
-              className="bg-white/20 hover:bg-white/30 px-2 py-1 rounded text-xs transition-colors"
+              className="btn btn-sm bg-white/20 hover:bg-white/30 text-white border-none ml-auto"
               title="Use monthly streak freeze"
             >
               🧊 Freeze
@@ -80,39 +80,43 @@ const PointsDisplay = () => {
           )}
         </div>
         
-        {/* Actionable Level Progress */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span>Next level in {pointsToNext} pts</span>
+        {/* Progress Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">Next level in {pointsToNext} points</span>
             <button 
               onClick={() => setShowActions(!showActions)}
-              className="text-yellow-300 hover:text-yellow-100 transition-colors"
+              className="btn btn-sm bg-white/20 hover:bg-white/30 text-white border-none"
             >
               {showActions ? '▼' : '▶'} How to earn
             </button>
           </div>
           
-          <div className="w-full bg-white/20 rounded-full h-2">
+          {/* Level Progress */}
+          <div className="progress">
             <div 
-              className="bg-white h-2 rounded-full transition-all duration-300"
+              className="progress-bar bg-white"
               style={{ width: `${(points % 100)}%` }}
             />
           </div>
           
-          {/* Weekly Progress Bar */}
-          <div className="w-full bg-white/20 rounded-full h-1 mt-2">
+          {/* Weekly Progress */}
+          <div className="progress progress-sm">
             <div 
-              className="bg-yellow-300 h-1 rounded-full transition-all duration-300"
-              style={{ width: `${Math.min(weeklyPercentage, 100)}%` }}
+              className="progress-bar" 
+              style={{ 
+                background: 'var(--gradient-warning)',
+                width: `${Math.min(weeklyPercentage, 100)}%` 
+              }}
             />
           </div>
           
-          {/* Actionable Suggestions */}
+          {/* Action Suggestions */}
           {showActions && (
-            <div className="mt-2 space-y-1 text-sm bg-white/10 rounded p-2">
+            <div className="bg-white/10 rounded-lg p-4 space-y-2 animate-fade-in">
               {nextActions.map((action, index) => (
-                <div key={index} className="flex items-center text-yellow-200">
-                  <span className="mr-2">•</span>
+                <div key={index} className="flex items-center text-sm text-white/90">
+                  <span className="w-2 h-2 bg-yellow-300 rounded-full mr-3 flex-shrink-0"></span>
                   {action}
                 </div>
               ))}

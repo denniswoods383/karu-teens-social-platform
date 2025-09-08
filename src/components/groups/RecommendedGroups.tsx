@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import '../../styles/design-system.css';
 
 interface Group {
   id: string;
@@ -56,32 +57,32 @@ export default function RecommendedGroups() {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-      <div className="flex items-center justify-between mb-4">
+    <div className="card">
+      <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-gray-900">🎯 Perfect Study Groups for You</h2>
-        <button className="text-purple-600 hover:text-purple-700 text-sm font-medium">
+        <button className="btn btn-sm" style={{ color: 'var(--color-primary)' }}>
           Explore More
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid-3">
         {groups.map((group) => (
-          <div key={group.id} className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+          <div key={group.id} className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-all duration-200 animate-fade-in">
             {/* Header */}
-            <div className="flex items-start justify-between mb-3">
+            <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="font-semibold text-gray-900 text-sm mb-1">{group.name}</h3>
-                <span className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full">
+                <h3 className="font-semibold text-gray-900 mb-2">{group.name}</h3>
+                <div className="badge badge-outline" style={{ color: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}>
                   {group.subject}
-                </span>
+                </div>
               </div>
               <button
                 onClick={() => handleJoinGroup(group.id)}
                 disabled={group.isJoined}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                className={`btn btn-sm ${
                   group.isJoined
-                    ? 'bg-green-100 text-green-700 cursor-not-allowed'
-                    : 'bg-purple-600 text-white hover:bg-purple-700 hover:scale-105 active:scale-95'
+                    ? 'badge badge-success cursor-not-allowed'
+                    : 'btn-primary'
                 }`}
               >
                 {group.isJoined ? '✓ You\'re in!' : 'Join Now'}
@@ -89,12 +90,13 @@ export default function RecommendedGroups() {
             </div>
 
             {/* Active Members */}
-            <div className="flex items-center mb-2">
-              <div className="flex -space-x-2 mr-2">
+            <div className="flex items-center mb-3">
+              <div className="flex -space-x-2 mr-3">
                 {group.memberAvatars.slice(0, 3).map((avatar, index) => (
                   <div
                     key={index}
-                    className="w-6 h-6 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 border-2 border-white flex items-center justify-center"
+                    className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center"
+                    style={{ background: 'var(--gradient-primary)' }}
                   >
                     <span className="text-xs text-white font-medium">
                       {String.fromCharCode(65 + index)}
@@ -107,23 +109,24 @@ export default function RecommendedGroups() {
                   </div>
                 )}
               </div>
-              <span className="text-xs text-gray-600">
-                <span className="font-medium text-green-600">{group.activeMembers}</span> students online
+              <span className="text-sm text-gray-600">
+                <span className="font-semibold" style={{ color: 'var(--color-success)' }}>{group.activeMembers}</span> students online
               </span>
             </div>
 
-            {/* Next Session */}
-            <div className="flex items-center mb-2">
-              <span className="text-xs text-gray-500 mr-1">📅</span>
-              <span className="text-xs text-gray-700 font-medium">{group.nextSession}</span>
-            </div>
-
-            {/* Top Answers */}
-            <div className="flex items-center">
-              <span className="text-xs text-gray-500 mr-1">🏆</span>
-              <span className="text-xs text-gray-700">
-                <span className="font-medium text-orange-600">{group.topAnswers}</span> helpful answers shared
-              </span>
+            {/* Session & Answers Info */}
+            <div className="space-y-2">
+              <div className="flex items-center">
+                <span className="text-gray-500 mr-2">📅</span>
+                <span className="text-sm text-gray-700 font-medium">{group.nextSession}</span>
+              </div>
+              
+              <div className="flex items-center">
+                <span className="text-gray-500 mr-2">🏆</span>
+                <span className="text-sm text-gray-700">
+                  <span className="font-semibold" style={{ color: 'var(--color-warning)' }}>{group.topAnswers}</span> helpful answers shared
+                </span>
+              </div>
             </div>
           </div>
         ))}

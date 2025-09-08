@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useSupabase';
 import { supabase } from '../../lib/supabase';
 import { CheckCircle, AlertCircle, School, BookOpen, Calendar, Shield } from 'lucide-react';
+import '../../styles/design-system.css';
 
 interface ProfileData {
   university?: string;
@@ -75,23 +76,25 @@ export default function ProfileCompletion() {
   if (isComplete && !showNudge) return null;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-2">
+    <div className="card animate-slide-up">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-3">
           {isComplete ? (
-            <div className="flex items-center space-x-2 text-green-600">
-              <Shield className="w-5 h-5" />
-              <span className="font-semibold">✅ Verified Student</span>
+            <div className="flex items-center space-x-2">
+              <div className="badge badge-success">
+                <Shield className="w-4 h-4" />
+                Verified Student
+              </div>
             </div>
           ) : (
-            <h3 className="font-semibold text-gray-900">Complete Your Profile</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Complete Your Profile</h3>
           )}
         </div>
         
         {!isComplete && (
           <button
             onClick={() => setShowNudge(false)}
-            className="text-gray-400 hover:text-gray-600 text-sm"
+            className="btn btn-sm btn-secondary"
           >
             Dismiss
           </button>
@@ -99,10 +102,10 @@ export default function ProfileCompletion() {
       </div>
 
       {isComplete ? (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+        <div className="bg-green-50 rounded-lg p-4 animate-fade-in">
           <div className="flex items-center space-x-2 text-green-700 mb-2">
-            <CheckCircle className="w-4 h-4" />
-            <span className="text-sm font-medium">Profile Complete!</span>
+            <CheckCircle className="w-5 h-5" />
+            <span className="font-medium">Profile Complete!</span>
           </div>
           <div className="text-sm text-green-600">
             🎉 You've unlocked: Priority support, exclusive study groups, and early access to new features
@@ -111,38 +114,38 @@ export default function ProfileCompletion() {
       ) : (
         <>
           {/* Progress Bar */}
-          <div className="mb-4">
-            <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-gray-600">{completedCount}/{completionItems.length} completed</span>
-              <span className="font-medium text-purple-600">{Math.round(completionPercentage)}%</span>
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-gray-600">{completedCount}/{completionItems.length} completed</span>
+              <span className="font-semibold" style={{ color: 'var(--color-primary)' }}>{Math.round(completionPercentage)}%</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="progress">
               <div 
-                className="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full transition-all duration-300"
+                className="progress-bar"
                 style={{ width: `${completionPercentage}%` }}
               />
             </div>
           </div>
 
           {/* Completion Items */}
-          <div className="space-y-2">
+          <div className="space-y-3">
             {completionItems.map((item) => (
-              <div key={item.key} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-colors">
+              <div key={item.key} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
                 <div className="flex items-center space-x-3">
-                  <div className={`p-1 rounded ${item.completed ? 'text-green-600' : 'text-gray-400'}`}>
+                  <div className={`p-2 rounded-lg ${item.completed ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
                     {item.completed ? (
                       <CheckCircle className="w-4 h-4" />
                     ) : (
                       <item.icon className="w-4 h-4" />
                     )}
                   </div>
-                  <span className={`text-sm ${item.completed ? 'text-gray-500 line-through' : 'text-gray-700'}`}>
+                  <span className={`${item.completed ? 'text-gray-500 line-through' : 'text-gray-700 font-medium'}`}>
                     {item.label}
                   </span>
                 </div>
                 
                 {!item.completed && (
-                  <button className="text-xs text-purple-600 hover:text-purple-700 font-medium">
+                  <button className="btn btn-sm" style={{ background: 'var(--color-primary)', color: 'white' }}>
                     {item.action}
                   </button>
                 )}
@@ -151,12 +154,12 @@ export default function ProfileCompletion() {
           </div>
 
           {/* Benefits Preview */}
-          <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-            <div className="flex items-center space-x-2 text-purple-700 mb-1">
+          <div className="mt-6 p-4 bg-purple-50 rounded-lg">
+            <div className="flex items-center space-x-2 text-purple-700 mb-2">
               <AlertCircle className="w-4 h-4" />
-              <span className="text-sm font-medium">Unlock Verified Student Benefits</span>
+              <span className="font-medium">Unlock Verified Student Benefits</span>
             </div>
-            <div className="text-xs text-purple-600">
+            <div className="text-sm text-purple-600">
               Priority support • Exclusive groups • Early features • Verified badge
             </div>
           </div>
