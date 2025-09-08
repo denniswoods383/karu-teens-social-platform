@@ -3,17 +3,52 @@ import { supabase } from '../../lib/supabase';
 import PostCard from './PostCard';
 import PostSkeleton from './PostSkeleton';
 import { useInView } from 'react-intersection-observer';
+import { useAuth } from '../../hooks/useSupabase';
 import useSWR from 'swr';
+
+type FeedFilter = 'all' | 'my_school' | 'my_subjects' | 'unanswered' | 'resources';
+
+interface FeedFilters {
+  [key: string]: {
+    label: string;
+    icon: string;
+    color: string;
+  };
+}
 
 export default function PostFeed() {
   const [posts, setPosts] = useState([]);
-  const { data: cachedPosts, mutate } = useSWR('posts');
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
+  const [activeFilter, setActiveFilter] = useState<FeedFilter>('all');
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const { user } = useAuth();
   const { ref, inView } = useInView({ threshold: 0 });
+  const { data: cachedPosts, mutate } = useSWR(`posts-${activeFilter}`);
+  
+  const filters: FeedFilters = {
+    all: { label: 'All', icon: '🌟', color: 'bg-blue-500' },
+    my_school: { label: 'My School', icon: '🏫', color: 'bg-green-500' },
+    my_subjects: { label: 'My Subjects', icon: '📚', color: 'bg-purple-500' },
+    unanswered: { label: 'Unanswered', icon: '❓', color: 'bg-orange-500' },
+    resources: { label: 'Resources', icon: '📄', color: 'bg-indigo-500' }
+  };
   
   const POSTS_PER_PAGE = 10;
+
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('profiles')
+        .select('university, subjects')
+        .eq('id', user.id)
+        .single();
+      setUserProfile(data);
+    };
+    loadUserProfile();
+  }, [user]);
 
   useEffect(() => {
     if (cachedPosts) {
@@ -22,7 +57,14 @@ export default function PostFeed() {
     } else {
       loadPosts(0, false);
     }
-  }, [cachedPosts]);
+  }, [cachedPosts, activeFilter]);
+
+  useEffect(() => {
+    setPosts([]);
+    setPage(0);
+    setHasMore(true);
+    loadPosts(0, false);
+  }, [activeFilter]);
   
   useEffect(() => {
     if (inView && hasMore && !loading) {
@@ -33,20 +75,98 @@ export default function PostFeed() {
     }
   }, [inView, hasMore, loading, page]);
 
+  const buildQuery = () => {
+    let query = supabase
+      .from('posts')
+      .select(`
+        *,
+        profiles!posts_user_id_fkey(name, avatar_url, university, subjects),
+        comments(count),
+        post_likes(count)
+      `);
+
+    switch (activeFilter) {
+      case 'my_school':
+        if (userProfile?.university) {
+          query = query.eq('profiles.university', userProfile.university);
+        }
+        break;
+      case 'my_subjects':
+        if (userProfile?.subjects?.length > 0) {
+          query = query.overlaps('tags', userProfile.subjects);
+        }
+        break;
+      case 'unanswered':
+        query = query.eq('has_accepted_answer', false);
+        break;
+      case 'resources':
+        query = query.eq('type', 'resource');
+        break;
+    }
+
+    return query;
+  };
+
+  const calculatePostScore = (post: any) => {
+    let score = 0;
+    
+    // Subject relevance (highest priority)
+    if (userProfile?.subjects?.some((subject: string) => 
+      post.tags?.includes(subject) || post.content?.toLowerCase().includes(subject.toLowerCase())
+    )) {
+      score += 100;
+    }
+    
+    // School relevance
+    if (userProfile?.university && post.profiles?.university === userProfile.university) {
+      score += 50;
+    }
+    
+    // Needs help (questions without accepted answers)
+    if (post.type === 'question' && !post.has_accepted_answer) {
+      score += 30;
+    }
+    
+    // Has accepted solution (valuable content)
+    if (post.has_accepted_answer) {
+      score += 20;
+    }
+    
+    // Engagement score
+    const likes = post.post_likes?.[0]?.count || 0;
+    const comments = post.comments?.[0]?.count || 0;
+    score += (likes * 2) + (comments * 3);
+    
+    // Recency bonus (decay over time)
+    const hoursOld = (Date.now() - new Date(post.created_at).getTime()) / (1000 * 60 * 60);
+    const recencyBonus = Math.max(0, 24 - hoursOld) * 2;
+    score += recencyBonus;
+    
+    return score;
+  };
+
   const loadPosts = async (pageNum = 0, append = false) => {
     try {
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*')
+      setLoading(true);
+      const query = buildQuery()
         .order('created_at', { ascending: false })
         .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
       
-      if (!error) {
-        if (data && data.length < POSTS_PER_PAGE) {
+      const { data, error } = await query;
+      
+      if (!error && data) {
+        // Sort by calculated score for personalized ranking
+        const scoredPosts = data
+          .map(post => ({ ...post, score: calculatePostScore(post) }))
+          .sort((a, b) => b.score - a.score);
+        
+        if (scoredPosts.length < POSTS_PER_PAGE) {
           setHasMore(false);
         }
-        const newPosts = append ? [...posts, ...(data || [])] : (data || []);
+        
+        const newPosts = append ? [...posts, ...scoredPosts] : scoredPosts;
         setPosts(newPosts);
+        
         if (!append) {
           mutate(newPosts, false);
         }
@@ -70,13 +190,77 @@ export default function PostFeed() {
 
   return (
     <div className="space-y-6">
+      {/* Feed Filters */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="flex items-center space-x-2 overflow-x-auto pb-2">
+          {Object.entries(filters).map(([key, filter]) => (
+            <button
+              key={key}
+              onClick={() => setActiveFilter(key as FeedFilter)}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
+                activeFilter === key
+                  ? `${filter.color} text-white shadow-lg`
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              <span>{filter.icon}</span>
+              <span>{filter.label}</span>
+            </button>
+          ))}
+        </div>
+        
+        {activeFilter !== 'all' && (
+          <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+            {activeFilter === 'my_school' && userProfile?.university && (
+              <span>📍 Showing posts from {userProfile.university}</span>
+            )}
+            {activeFilter === 'my_subjects' && userProfile?.subjects?.length > 0 && (
+              <span>🎯 Filtered by: {userProfile.subjects.join(', ')}</span>
+            )}
+            {activeFilter === 'unanswered' && (
+              <span>❓ Questions that need your help</span>
+            )}
+            {activeFilter === 'resources' && (
+              <span>📚 Study materials and resources</span>
+            )}
+          </div>
+        )}
+      </div>
       {posts.length > 0 ? (
-        posts.map((post: any) => (
-          <PostCard key={post.id} post={post} />
+        posts.map((post: any, index: number) => (
+          <div key={post.id} className="relative">
+            <PostCard post={post} />
+            {/* Show relevance indicator for top posts */}
+            {index < 3 && post.score > 50 && (
+              <div className="absolute top-2 right-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full">
+                🎯 Relevant
+              </div>
+            )}
+          </div>
         ))
       ) : (
         <div className="text-center py-12">
-          <p className="text-gray-500">No posts yet. Be the first to post!</p>
+          <div className="text-6xl mb-4">
+            {activeFilter === 'my_subjects' ? '📚' : 
+             activeFilter === 'my_school' ? '🏫' :
+             activeFilter === 'unanswered' ? '❓' :
+             activeFilter === 'resources' ? '📄' : '🌟'}
+          </div>
+          <p className="text-gray-500 text-lg mb-2">
+            {activeFilter === 'all' ? 'No posts yet. Be the first to post!' :
+             activeFilter === 'my_subjects' ? 'No posts in your subjects yet.' :
+             activeFilter === 'my_school' ? 'No posts from your school yet.' :
+             activeFilter === 'unanswered' ? 'All questions have been answered! 🎉' :
+             'No resources shared yet.'}
+          </p>
+          {activeFilter !== 'all' && (
+            <button
+              onClick={() => setActiveFilter('all')}
+              className="text-blue-600 hover:text-blue-700 font-medium"
+            >
+              View all posts →
+            </button>
+          )}
         </div>
       )}
       

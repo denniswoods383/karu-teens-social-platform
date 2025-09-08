@@ -16,6 +16,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   const [uploading, setUploading] = useState(false);
   const [university, setUniversity] = useState('');
   const [subjects, setSubjects] = useState<string[]>([]);
+  const [goals, setGoals] = useState<string[]>([]);
   const [showChecklist, setShowChecklist] = useState(false);
   const router = useRouter();
 
@@ -28,6 +29,12 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   const popularSubjects = [
     'Computer Science', 'Business', 'Engineering', 'Medicine', 'Law',
     'Economics', 'Mathematics', 'Biology', 'Chemistry', 'Physics'
+  ];
+
+  const studyGoals = [
+    'Pass KCSE with A-', 'Get university admission', 'Improve grades',
+    'Master difficult subjects', 'Join study groups', 'Find study partners',
+    'Access past papers', 'Get homework help', 'Prepare for exams'
   ];
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,6 +91,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
           avatar_url: avatar_url || undefined,
           university,
           subjects,
+          goals,
           has_completed_onboarding: true,
         })
         .eq('id', user.id);
@@ -213,6 +221,44 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
       case 3:
         return (
           <div>
+            <h2 className="text-2xl font-bold mb-4">What are your study goals?</h2>
+            <p className="text-gray-600 mb-6">This helps us personalize your feed with relevant content.</p>
+            <div className="grid grid-cols-1 gap-2 mb-4 max-h-48 overflow-y-auto">
+              {studyGoals.map(goal => (
+                <button
+                  key={goal}
+                  onClick={() => {
+                    if (goals.includes(goal)) {
+                      setGoals(goals.filter(g => g !== goal));
+                    } else {
+                      setGoals([...goals, goal]);
+                    }
+                  }}
+                  className={`p-3 text-sm rounded-lg border transition-colors text-left ${
+                    goals.includes(goal) 
+                      ? 'bg-purple-600 text-white border-purple-600' 
+                      : 'bg-white text-gray-700 border-gray-300 hover:border-purple-300'
+                  }`}
+                >
+                  {goal}
+                </button>
+              ))}
+            </div>
+            <div className="flex justify-between">
+              <button onClick={() => setStep(2)} className="text-gray-600">Back</button>
+              <button 
+                onClick={() => setStep(4)} 
+                disabled={goals.length === 0}
+                className="bg-purple-600 text-white py-2 px-4 rounded-lg disabled:opacity-50"
+              >
+                Next ({goals.length} selected)
+              </button>
+            </div>
+          </div>
+        );
+      case 4:
+        return (
+          <div>
             <h2 className="text-2xl font-bold mb-4">Add a profile picture</h2>
             <p className="text-gray-600 mb-6">Help your study mates recognize you (optional).</p>
             <input type="file" accept="image/*" onChange={handleAvatarChange} className="mb-4 w-full" />
@@ -224,7 +270,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
               rows={3}
             />
             <div className="flex justify-between">
-              <button onClick={() => setStep(2)} className="text-gray-600">Back</button>
+              <button onClick={() => setStep(3)} className="text-gray-600">Back</button>
               <button onClick={updateProfile} className="bg-green-600 text-white py-3 px-6 rounded-lg" disabled={uploading}>
                 {uploading ? 'Setting up...' : 'Complete Setup'}
               </button>
