@@ -15,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'Karu Teens <noreply@karuteens.com>',
+        from: 'Karu Teens <noreply@karuteens.site>',
         to: [to],
         subject,
         html

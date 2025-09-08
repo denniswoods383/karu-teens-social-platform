@@ -112,7 +112,7 @@ export default function App({ Component, pageProps }: AppProps) {
       </SWRConfig>
       <Script
         src="https://plausible.io/js/script.js"
-        data-domain="karuteens.com"
+        data-domain="karuteens.site"
         strategy="afterInteractive"
       />
     </>

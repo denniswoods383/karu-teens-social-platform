@@ -73,7 +73,7 @@ A modern social media platform built for university students with real-time mess
    npm run dev
    ```
 
-5. **Open [https://your-domain.com](https://your-domain.com)**
+5. **Open [https://karuteens.site](https://karuteens.site)**
 
 ## 📱 Features Overview
 
