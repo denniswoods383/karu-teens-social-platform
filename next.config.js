@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  compress: true,
+  poweredByHeader: false,
+  generateEtags: false,
   images: {
     domains: [
       'res.cloudinary.com',
@@ -17,6 +20,8 @@ const nextConfig = {
     minimumCacheTTL: 60,
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    loader: 'default',
+    priority: true,
   },
   async headers() {
     return [
@@ -45,9 +50,30 @@ const nextConfig = {
             key: 'Cache-Control',
             value: 'public, max-age=300, s-maxage=600'
           }
+        ],
+      },
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY'
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block'
+          }
         ]
       }
     ];
+  },
+  experimental: {
+    optimizeCss: true,
+    scrollRestoration: true
   }
 }
 

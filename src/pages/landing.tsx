@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
+import Head from 'next/head';
 import { useRouter } from 'next/router';
 
 export default function LandingPage() {
@@ -52,7 +53,52 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-hidden">
+    <>
+      <Head>
+        <title>KaruTeens - Kenya's #1 University Student Platform | Study Smarter Together</title>
+        <meta name="description" content="Join 50,000+ Kenyan university students excelling through AI-powered learning, study groups, and academic resources. Free to start, built for success." />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="keywords" content="Kenya university students, study platform, AI tutoring, study groups, academic resources, KCSE, CBC, university prep" />
+        
+        {/* Open Graph */}
+        <meta property="og:title" content="KaruTeens - Kenya's #1 University Student Platform" />
+        <meta property="og:description" content="Join 50,000+ Kenyan university students excelling through AI-powered learning and collaboration." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://karuteens.site" />
+        <meta property="og:image" content="https://karuteens.site/og-image.jpg" />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="KaruTeens - Kenya's #1 University Student Platform" />
+        <meta name="twitter:description" content="AI-powered learning platform for Kenyan university students" />
+        
+        {/* Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "EducationalOrganization",
+            "name": "KaruTeens",
+            "description": "Kenya's leading university student platform",
+            "url": "https://karuteens.site",
+            "logo": "https://karuteens.site/logo.png",
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "telephone": "+254-700-123-460",
+              "contactType": "customer service",
+              "email": "support@karuteens.site"
+            },
+            "address": {
+              "@type": "PostalAddress",
+              "addressCountry": "KE"
+            }
+          })}
+        </script>
+        
+        <link rel="canonical" href="https://karuteens.site" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-hidden">
       {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
@@ -61,7 +107,7 @@ export default function LandingPage() {
       </div>
 
       {/* Navigation */}
-      <nav className="relative z-50 flex items-center justify-between p-6">
+      <nav className="sticky top-0 z-50 flex items-center justify-between p-6 bg-slate-900/80 backdrop-blur-lg border-b border-purple-500/20">
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -78,12 +124,24 @@ export default function LandingPage() {
         <motion.div 
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="flex items-center space-x-4"
+          className="flex items-center space-x-6"
         >
-          <Link href="/auth/login" className="px-4 py-2 text-purple-300 hover:text-white transition-colors">
+          <Link href="/features" className="text-purple-300 hover:text-white transition-colors text-sm">
+            Features
+          </Link>
+          <Link href="/pricing" className="text-purple-300 hover:text-white transition-colors text-sm">
+            Pricing
+          </Link>
+          <Link href="/help" className="text-purple-300 hover:text-white transition-colors text-sm">
+            Help
+          </Link>
+          <Link href="/contact" className="text-purple-300 hover:text-white transition-colors text-sm">
+            Contact
+          </Link>
+          <Link href="/auth/login" className="px-4 py-2 text-purple-300 hover:text-white transition-colors text-sm">
             Login
           </Link>
-          <Link href="/auth/register" className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full hover:from-purple-700 hover:to-pink-700 transition-all duration-300 transform hover:scale-105">
+          <Link href="/auth/register" className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full hover:from-purple-700 hover:to-pink-700 transition-all duration-300 transform hover:scale-105 text-sm">
             Get Started Free
           </Link>
         </motion.div>
@@ -113,14 +171,16 @@ export default function LandingPage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => router.push('/auth/register')}
-                className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg"
+                className="min-h-[48px] px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-lg font-semibold hover:from-purple-700 hover:to-pink-700 focus:ring-4 focus:ring-purple-300 focus:outline-none transition-all duration-300 shadow-lg touch-manipulation"
+                aria-label="Start learning for free - Sign up now"
               >
                 Start Learning Free 🚀
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-8 py-4 border-2 border-purple-400 rounded-full text-lg font-semibold hover:bg-purple-400 hover:text-purple-900 transition-all duration-300"
+                className="min-h-[48px] px-8 py-4 border-2 border-purple-400 rounded-full text-lg font-semibold hover:bg-purple-400 hover:text-purple-900 focus:ring-4 focus:ring-purple-300 focus:outline-none transition-all duration-300 touch-manipulation"
+                aria-label="Watch platform demo video"
               >
                 Watch Demo 📹
               </motion.button>
@@ -364,11 +424,40 @@ export default function LandingPage() {
             </div>
           </div>
           
-          <div className="border-t border-purple-500/20 mt-12 pt-8 text-center text-gray-400 text-sm">
-            <p>&copy; 2024 KaruTeens. Built with ❤️ for Kenyan university students.</p>
+          <div className="border-t border-purple-500/20 mt-12 pt-8">
+            <div className="grid md:grid-cols-3 gap-8 mb-8">
+              <div>
+                <h5 className="font-semibold mb-3 text-white">Contact Information</h5>
+                <div className="space-y-2 text-sm text-gray-400">
+                  <p>📧 support@karuteens.site</p>
+                  <p>🚨 safety@karuteens.site</p>
+                  <p>📱 Response within 24 hours</p>
+                </div>
+              </div>
+              <div>
+                <h5 className="font-semibold mb-3 text-white">Trust & Security</h5>
+                <div className="space-y-2 text-sm text-gray-400">
+                  <p>🔒 SSL Secured</p>
+                  <p>🛡️ Kenya Data Protection Act Compliant</p>
+                  <p>✅ Safe for Students Certified</p>
+                </div>
+              </div>
+              <div>
+                <h5 className="font-semibold mb-3 text-white">Pricing Transparency</h5>
+                <div className="space-y-2 text-sm text-gray-400">
+                  <p>💰 Free to start, always</p>
+                  <p>📊 Pro: KSh 40/month</p>
+                  <p>🔄 Cancel anytime</p>
+                </div>
+              </div>
+            </div>
+            <div className="text-center text-gray-400 text-sm">
+              <p>&copy; 2024 KaruTeens Productions. Built with ❤️ for Kenyan university students.</p>
+            </div>
           </div>
         </div>
       </footer>
+      </div>
 
       <style jsx>{`
         @keyframes blob {
@@ -387,6 +476,6 @@ export default function LandingPage() {
           animation-delay: 4s;
         }
       `}</style>
-    </div>
+    </>
   );
 }
