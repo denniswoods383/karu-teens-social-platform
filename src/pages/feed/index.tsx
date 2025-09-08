@@ -4,6 +4,7 @@ import CreatePost from '../../components/posts/CreatePost';
 import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import GlobalSearch from '../../components/search/GlobalSearch';
 import PointsDisplay from '../../components/gamification/PointsDisplay';
+import ProfileCompletion from '../../components/profile/ProfileCompletion';
 import FeedStories from '../../components/stories/FeedStories';
 import RecommendedGroups from '../../components/groups/RecommendedGroups';
 import PastPapersHero from '../../components/pastpapers/PastPapersHero';
@@ -62,6 +63,7 @@ export default function FeedPage() {
         <div className="pt-20 pb-24 max-w-3xl mx-auto px-4">
           <div className="space-y-6">
             <PointsDisplay />
+            <ProfileCompletion />
             <FeedStories />
             <PastPapersHero />
             <RecommendedGroups />

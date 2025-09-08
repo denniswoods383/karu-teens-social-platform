@@ -1,0 +1,150 @@
+/* Data Saver Mode Styles */
+
+/* Compress and blur images when data saver is enabled */
+[data-saver-enabled="true"] img {
+  transition: filter 0.3s ease;
+}
+
+[data-saver-enabled="true"][data-blur-previews="true"] .blur-preview {
+  filter: blur(8px);
+  cursor: pointer;
+}
+
+[data-saver-enabled="true"][data-blur-previews="true"] .blur-preview:hover {
+  filter: blur(4px);
+}
+
+[data-saver-enabled="true"][data-blur-previews="true"] .blur-preview.unblurred {
+  filter: none;
+}
+
+/* Prefer text content */
+[data-saver-enabled="true"][data-prefer-text="true"] .media-content {
+  display: none;
+}
+
+[data-saver-enabled="true"][data-prefer-text="true"] .media-content.show-media {
+  display: block;
+}
+
+/* Show media toggle button when preferring text */
+[data-saver-enabled="true"][data-prefer-text="true"] .show-media-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: #3b82f6;
+  color: white;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  margin: 0.5rem 0;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+[data-saver-enabled="true"][data-prefer-text="true"] .show-media-btn:hover {
+  background-color: #2563eb;
+}
+
+/* Hide media toggle when data saver is off */
+[data-saver-enabled="false"] .show-media-btn {
+  display: none;
+}
+
+/* Reduce animation and transitions for better performance */
+[data-saver-enabled="true"] * {
+  animation-duration: 0.1s !important;
+  transition-duration: 0.1s !important;
+}
+
+/* Simplify gradients */
+[data-saver-enabled="true"] .bg-gradient-to-r,
+[data-saver-enabled="true"] .bg-gradient-to-br,
+[data-saver-enabled="true"] .bg-gradient-to-l {
+  background: linear-gradient(45deg, var(--tw-gradient-from), var(--tw-gradient-to)) !important;
+}
+
+/* Reduce shadow complexity */
+[data-saver-enabled="true"] .shadow-lg,
+[data-saver-enabled="true"] .shadow-xl {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Data saver indicator */
+.data-saver-indicator {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  background-color: #10b981;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  z-index: 1000;
+  display: none;
+}
+
+[data-saver-enabled="true"] .data-saver-indicator {
+  display: block;
+}
+
+/* Loading placeholders for slow connections */
+.loading-placeholder {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+[data-saver-enabled="true"] .loading-placeholder {
+  animation-duration: 3s;
+}
+
+/* Responsive images for data saving */
+[data-compress-images="true"] img {
+  image-rendering: auto;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+}
+
+/* Lazy loading styles */
+.lazy-image {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.lazy-image.loaded {
+  opacity: 1;
+}
+
+[data-saver-enabled="true"] .lazy-image {
+  transition: opacity 0.1s;
+}
+
+/* Connection quality indicator */
+.connection-indicator {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.connection-indicator.slow {
+  color: #ef4444;
+}
+
+.connection-indicator.medium {
+  color: #f59e0b;
+}
+
+.connection-indicator.fast {
+  color: #10b981;
+}
