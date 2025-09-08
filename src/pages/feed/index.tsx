@@ -6,6 +6,7 @@ import GlobalSearch from '../../components/search/GlobalSearch';
 import PointsDisplay from '../../components/gamification/PointsDisplay';
 import FeedStories from '../../components/stories/FeedStories';
 import RecommendedGroups from '../../components/groups/RecommendedGroups';
+import PastPapersHero from '../../components/pastpapers/PastPapersHero';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useGamificationStore } from '../../store/gamificationStore';
@@ -62,6 +63,7 @@ export default function FeedPage() {
           <div className="space-y-6">
             <PointsDisplay />
             <FeedStories />
+            <PastPapersHero />
             <RecommendedGroups />
             <CreatePost onPostCreated={handlePostCreated} />
             <PostFeed key={refreshPosts.toString()} />

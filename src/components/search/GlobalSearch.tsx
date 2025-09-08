@@ -1,16 +1,20 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Search, User, FileText, ShoppingBag, Clock, TrendingUp, Filter } from 'lucide-react';
+import { Search, User, FileText, Users, BookOpen, Clock, TrendingUp, Filter, X } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../hooks/useSupabase';
 
 interface SearchResult {
   id: string;
-  type: 'user' | 'post' | 'marketplace';
+  type: 'user' | 'post' | 'group' | 'question' | 'pastpaper';
   title: string;
   subtitle?: string;
   avatar?: string;
-  rank?: number;
+  difficulty?: string;
+  subject?: string;
+  year?: number;
+  answered?: boolean;
+  university?: string;
 }
 
 export default function GlobalSearch() {
@@ -18,8 +22,17 @@ export default function GlobalSearch() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [popularSearches, setPopularSearches] = useState<string[]>([]);
+  const [filters, setFilters] = useState({
+    subject: '',
+    difficulty: '',
+    university: '',
+    year: '',
+    type: '',
+    answered: ''
+  });
   const router = useRouter();
   const { user } = useAuth();
 
@@ -66,77 +79,110 @@ export default function GlobalSearch() {
   const performSearch = async (searchQuery: string) => {
     setLoading(true);
     try {
-      // Try RPC function first, fallback to manual search
-      let searchResults: SearchResult[] = [];
+      const results: SearchResult[] = [];
       
-      try {
-        const { data, error } = await supabase.rpc('global_search', { p_search_term: searchQuery });
-        if (!error && data) {
-          searchResults = data;
-        } else {
-          throw new Error('RPC failed, using fallback');
-        }
-      } catch (rpcError) {
-        console.log('Using fallback search method');
-        // Fallback: Manual search
-        const results = [];
-        
-        // Search users
-        const { data: users } = await supabase
+      // Apply filters
+      const shouldIncludeType = (type: string) => !filters.type || filters.type === type;
+      
+      // Search users (people)
+      if (shouldIncludeType('user')) {
+        let userQuery = supabase
           .from('profiles')
-          .select('id, username, full_name, avatar_url')
-          .or(`username.ilike.%${searchQuery}%,full_name.ilike.%${searchQuery}%`)
-          .limit(5);
+          .select('id, username, full_name, avatar_url, university')
+          .or(`username.ilike.%${searchQuery}%,full_name.ilike.%${searchQuery}%`);
+        
+        if (filters.university) userQuery = userQuery.eq('university', filters.university);
+        
+        const { data: users } = await userQuery.limit(3);
         
         users?.forEach(user => {
           results.push({
             id: user.id,
-            type: 'user' as const,
+            type: 'user',
             title: user.full_name || user.username,
-            subtitle: `@${user.username}`,
-            avatar: user.avatar_url
+            subtitle: `@${user.username} • ${user.university}`,
+            avatar: user.avatar_url,
+            university: user.university
           });
         });
+      }
+      
+      // Search groups
+      if (shouldIncludeType('group')) {
+        let groupQuery = supabase
+          .from('study_groups')
+          .select('id, name, subject, member_count')
+          .or(`name.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
         
-        // Search posts
-        const { data: posts, error: postsError } = await supabase
+        if (filters.subject) groupQuery = groupQuery.eq('subject', filters.subject);
+        
+        const { data: groups } = await groupQuery.limit(3);
+        
+        groups?.forEach(group => {
+          results.push({
+            id: group.id,
+            type: 'group',
+            title: group.name,
+            subtitle: `${group.subject} • ${group.member_count} members`,
+            subject: group.subject
+          });
+        });
+      }
+      
+      // Search questions
+      if (shouldIncludeType('question')) {
+        let questionQuery = supabase
           .from('posts')
-          .select('id, content, user_id')
-          .ilike('content', `%${searchQuery}%`)
-          .limit(5);
+          .select('id, content, tags, created_at, answer_count')
+          .eq('type', 'question')
+          .ilike('content', `%${searchQuery}%`);
         
-        console.log('Post search results:', posts, 'Error:', postsError);
+        if (filters.subject) questionQuery = questionQuery.contains('tags', [filters.subject]);
+        if (filters.answered === 'unanswered') questionQuery = questionQuery.eq('answer_count', 0);
+        if (filters.answered === 'answered') questionQuery = questionQuery.gt('answer_count', 0);
         
-        posts?.forEach(post => {
+        const { data: questions } = await questionQuery.limit(3);
+        
+        questions?.forEach(question => {
           results.push({
-            id: post.id,
-            type: 'post' as const,
-            title: post.content.substring(0, 50) + (post.content.length > 50 ? '...' : ''),
-            subtitle: `Post content`
+            id: question.id,
+            type: 'question',
+            title: question.content.substring(0, 60) + (question.content.length > 60 ? '...' : ''),
+            subtitle: `${question.answer_count || 0} answers • ${question.tags?.join(', ') || 'General'}`,
+            answered: (question.answer_count || 0) > 0
           });
         });
+      }
+      
+      // Search past papers
+      if (shouldIncludeType('pastpaper')) {
+        let paperQuery = supabase
+          .from('past_papers')
+          .select('id, subject, year, university, difficulty, question_count')
+          .or(`subject.ilike.%${searchQuery}%,university.ilike.%${searchQuery}%`);
         
-        // Search marketplace
-        const { data: items } = await supabase
-          .from('marketplace_items')
-          .select('id, title, description, price')
-          .or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`)
-          .eq('is_available', true)
-          .limit(5);
+        if (filters.subject) paperQuery = paperQuery.eq('subject', filters.subject);
+        if (filters.difficulty) paperQuery = paperQuery.eq('difficulty', filters.difficulty);
+        if (filters.university) paperQuery = paperQuery.eq('university', filters.university);
+        if (filters.year) paperQuery = paperQuery.eq('year', parseInt(filters.year));
         
-        items?.forEach(item => {
+        const { data: papers } = await paperQuery.limit(3);
+        
+        papers?.forEach(paper => {
           results.push({
-            id: item.id,
-            type: 'marketplace' as const,
-            title: item.title,
-            subtitle: `$${item.price}`
+            id: paper.id,
+            type: 'pastpaper',
+            title: `${paper.subject} ${paper.year}`,
+            subtitle: `${paper.university} • ${paper.question_count} questions • ${paper.difficulty}`,
+            subject: paper.subject,
+            year: paper.year,
+            difficulty: paper.difficulty,
+            university: paper.university
           });
         });
-        
-        searchResults = results;
       }
 
-      setResults(searchResults);
+      setResults(results);
       
     } catch (error) {
       console.error('Search failed:', error);
@@ -154,12 +200,15 @@ export default function GlobalSearch() {
       case 'user':
         router.push(`/profile/${result.id}`);
         break;
+      case 'question':
       case 'post':
-        // Trigger post modal
         window.dispatchEvent(new CustomEvent('openPostModal', { detail: { postId: result.id } }));
         break;
-      case 'marketplace':
-        router.push(`/marketplace#item-${result.id}`);
+      case 'group':
+        router.push(`/groups/${result.id}`);
+        break;
+      case 'pastpaper':
+        router.push(`/pastpapers/${result.id}`);
         break;
     }
   };
@@ -173,7 +222,9 @@ export default function GlobalSearch() {
     switch (type) {
       case 'user': return <User className="w-4 h-4" />;
       case 'post': return <FileText className="w-4 h-4" />;
-      case 'marketplace': return <ShoppingBag className="w-4 h-4" />;
+      case 'question': return <FileText className="w-4 h-4 text-blue-500" />;
+      case 'group': return <Users className="w-4 h-4" />;
+      case 'pastpaper': return <BookOpen className="w-4 h-4" />;
       default: return <Search className="w-4 h-4" />;
     }
   };
@@ -188,16 +239,104 @@ export default function GlobalSearch() {
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => {
             if (query.length >= 2) setShowResults(true);
-            else setShowResults(true); // Show history/suggestions
+            else setShowResults(true);
           }}
           onBlur={() => setTimeout(() => setShowResults(false), 200)}
-          placeholder="Search users, posts, marketplace..."
-          className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          placeholder="Search people, groups, questions, past papers..."
+          className="w-full pl-10 pr-16 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         />
-        <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          <Filter className="w-4 h-4" />
+        </button>
       </div>
 
-      {showResults && (
+      {/* Filters Panel */}
+      {showFilters && (
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 z-50">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-medium text-gray-900 dark:text-white">Search Filters</h3>
+            <button
+              onClick={() => setShowFilters(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <select
+              value={filters.type}
+              onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-sm"
+            >
+              <option value="">All Types</option>
+              <option value="user">People</option>
+              <option value="group">Groups</option>
+              <option value="question">Questions</option>
+              <option value="pastpaper">Past Papers</option>
+            </select>
+            
+            <select
+              value={filters.subject}
+              onChange={(e) => setFilters(prev => ({ ...prev, subject: e.target.value }))}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-sm"
+            >
+              <option value="">All Subjects</option>
+              <option value="Mathematics">Mathematics</option>
+              <option value="Chemistry">Chemistry</option>
+              <option value="Physics">Physics</option>
+              <option value="Biology">Biology</option>
+            </select>
+            
+            <select
+              value={filters.difficulty}
+              onChange={(e) => setFilters(prev => ({ ...prev, difficulty: e.target.value }))}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-sm"
+            >
+              <option value="">All Levels</option>
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+            
+            <select
+              value={filters.university}
+              onChange={(e) => setFilters(prev => ({ ...prev, university: e.target.value }))}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-sm"
+            >
+              <option value="">All Universities</option>
+              <option value="University of Nairobi">UoN</option>
+              <option value="Kenyatta University">KU</option>
+              <option value="Moi University">Moi</option>
+            </select>
+            
+            <select
+              value={filters.year}
+              onChange={(e) => setFilters(prev => ({ ...prev, year: e.target.value }))}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-sm"
+            >
+              <option value="">All Years</option>
+              <option value="2023">2023</option>
+              <option value="2022">2022</option>
+              <option value="2021">2021</option>
+            </select>
+            
+            <select
+              value={filters.answered}
+              onChange={(e) => setFilters(prev => ({ ...prev, answered: e.target.value }))}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-sm"
+            >
+              <option value="">All Questions</option>
+              <option value="unanswered">Unanswered</option>
+              <option value="answered">Answered</option>
+            </select>
+          </div>
+        </div>
+      )}
+      
+      {showResults && !showFilters && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-96 overflow-y-auto z-50">
           {loading ? (
             <div className="p-4 text-center text-gray-500">Searching...</div>
@@ -223,8 +362,22 @@ export default function GlobalSearch() {
                         </p>
                       )}
                     </div>
-                    <div className="text-xs text-gray-400 capitalize">
-                      {result.type}
+                    <div className="flex items-center space-x-2">
+                      {result.answered === false && result.type === 'question' && (
+                        <span className="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded">Unanswered</span>
+                      )}
+                      {result.difficulty && (
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          result.difficulty === 'Easy' ? 'bg-green-100 text-green-600' :
+                          result.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-600' :
+                          'bg-red-100 text-red-600'
+                        }`}>
+                          {result.difficulty}
+                        </span>
+                      )}
+                      <span className="text-xs text-gray-400 capitalize">
+                        {result.type === 'pastpaper' ? 'Past Paper' : result.type}
+                      </span>
                     </div>
                   </button>
                 ))}
