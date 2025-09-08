@@ -1,11 +1,10 @@
 import { useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './useSupabase';
-import { useNotifications } from './useNotifications';
+import { showMessageNotification, showFollowNotification, showInfoNotification } from '../components/notifications/InAppNotification';
 
 export function useRealtimeNotifications(isPublicPage = false) {
   const { user } = useAuth();
-  const { addNotification } = useNotifications();
 
   useEffect(() => {
     if (isPublicPage || !user) return;
@@ -20,7 +19,7 @@ export function useRealtimeNotifications(isPublicPage = false) {
       }, (payload) => {
         const newPost = payload.new;
         if (newPost.user_id !== user.id) {
-          addNotification('📝 New post shared!', 'info');
+          showInfoNotification('📝 New post shared!', 'Check out what your comrades are sharing');
         }
       })
       .subscribe();
@@ -32,10 +31,22 @@ export function useRealtimeNotifications(isPublicPage = false) {
         event: 'INSERT',
         schema: 'public',
         table: 'messages'
-      }, (payload) => {
+      }, async (payload) => {
         const newMessage = payload.new;
         if (newMessage.receiver_id === user.id) {
-          addNotification('💬 New message received!', 'info');
+          // Get sender info
+          const { data: sender } = await supabase
+            .from('profiles')
+            .select('name, avatar_url')
+            .eq('id', newMessage.sender_id)
+            .single();
+          
+          showMessageNotification(
+            sender?.name || 'Someone',
+            newMessage.content,
+            newMessage.conversation_id,
+            sender?.avatar_url
+          );
         }
       })
       .subscribe();
@@ -65,7 +76,7 @@ export function useRealtimeNotifications(isPublicPage = false) {
       }, (payload) => {
         const newUser = payload.new;
         if (newUser.id !== user.id) {
-          addNotification('🎓 New student joined!', 'info');
+          showInfoNotification('🎓 New student joined!', `Welcome ${newUser.name || 'a new comrade'} to KaruTeens!`);
         }
       })
       .subscribe();
@@ -76,5 +87,5 @@ export function useRealtimeNotifications(isPublicPage = false) {
       // followsChannel.unsubscribe();
       usersChannel.unsubscribe();
     };
-  }, [user, addNotification, isPublicPage]);
+  }, [user, isPublicPage]);
 }

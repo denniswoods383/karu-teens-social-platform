@@ -117,18 +117,7 @@ export default function App({ Component, pageProps }: AppProps) {
           </>
         )}
       
-      {/* Global Toast Notifications */}
-      <div className="fixed top-4 right-4 z-[9999] space-y-2 pointer-events-none">
-        {notifications.map((notification) => (
-          <div key={notification.id} className="pointer-events-auto">
-            <ToastNotification
-              message={notification.message}
-              type={notification.type}
-              onClose={() => removeNotification(notification.id)}
-            />
-          </div>
-        ))}
-      </div>
+
       </ThemeProvider>
       </SWRConfig>
       <Script
