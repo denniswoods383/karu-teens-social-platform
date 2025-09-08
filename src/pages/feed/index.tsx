@@ -19,7 +19,7 @@ export default function FeedPage() {
   
   const handlePostCreated = () => {
     setRefreshPosts(prev => !prev);
-    addPoints(5);
+    addPoints(5, 'Posted content');
   };
   
   useEffect(() => {

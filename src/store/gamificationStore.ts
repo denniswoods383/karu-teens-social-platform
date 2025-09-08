@@ -15,12 +15,20 @@ interface GamificationState {
   points: number;
   level: number;
   streak: number;
+  weeklyGoal: number;
+  weeklyProgress: number;
   lastLoginDate: string | null;
+  streakFreezeUsed: boolean;
+  lastStreakFreezeDate: string | null;
   achievements: Achievement[];
-  addPoints: (points: number) => void;
+  addPoints: (points: number, action?: string) => void;
   updateStreak: () => void;
+  useStreakFreeze: () => boolean;
   unlockAchievement: (achievementId: string) => void;
   getLevel: () => number;
+  getPointsToNextLevel: () => number;
+  getNextLevelActions: () => string[];
+  resetWeeklyGoal: () => void;
 }
 
 const defaultAchievements: Achievement[] = [
@@ -37,33 +45,53 @@ export const useGamificationStore = create<GamificationState>()(
       points: 0,
       level: 1,
       streak: 0,
+      weeklyGoal: 50,
+      weeklyProgress: 0,
       lastLoginDate: null,
+      streakFreezeUsed: false,
+      lastStreakFreezeDate: null,
       achievements: defaultAchievements,
       
-      addPoints: (points: number) => {
+      addPoints: (points: number, action?: string) => {
         set((state) => {
           const newPoints = state.points + points;
           const newLevel = Math.floor(newPoints / 100) + 1;
-          return { points: newPoints, level: newLevel };
+          const newWeeklyProgress = Math.min(state.weeklyProgress + points, state.weeklyGoal);
+          
+          // Show subtle point notification
+          if (typeof window !== 'undefined' && action) {
+            const event = new CustomEvent('showPointsNotification', {
+              detail: { points, action }
+            });
+            window.dispatchEvent(event);
+          }
+          
+          return { 
+            points: newPoints, 
+            level: newLevel,
+            weeklyProgress: newWeeklyProgress
+          };
         });
       },
       
       updateStreak: () => {
         const today = new Date().toDateString();
-        const { lastLoginDate, streak } = get();
+        const { lastLoginDate, streak, streakFreezeUsed } = get();
         
         if (lastLoginDate === today) return;
         
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
         
+        const isConsecutive = lastLoginDate === yesterday.toDateString();
+        
         set({
           lastLoginDate: today,
-          streak: lastLoginDate === yesterday.toDateString() ? streak + 1 : 1
+          streak: isConsecutive ? streak + 1 : (streakFreezeUsed ? streak : 1)
         });
         
         // Award streak achievements
-        const newStreak = lastLoginDate === yesterday.toDateString() ? streak + 1 : 1;
+        const newStreak = isConsecutive ? streak + 1 : (streakFreezeUsed ? streak : 1);
         if (newStreak === 7) {
           get().unlockAchievement('week_streak');
         }
@@ -80,11 +108,52 @@ export const useGamificationStore = create<GamificationState>()(
         
         const achievement = get().achievements.find(a => a.id === achievementId);
         if (achievement && !achievement.unlocked) {
-          get().addPoints(achievement.points);
+          get().addPoints(achievement.points, `Achievement: ${achievement.title}`);
         }
       },
       
+      useStreakFreeze: () => {
+        const { streakFreezeUsed, lastStreakFreezeDate } = get();
+        const now = new Date();
+        const lastFreeze = lastStreakFreezeDate ? new Date(lastStreakFreezeDate) : null;
+        
+        // Reset freeze availability monthly
+        const canUseFreeze = !streakFreezeUsed || 
+          (lastFreeze && now.getMonth() !== lastFreeze.getMonth());
+        
+        if (canUseFreeze) {
+          set({
+            streakFreezeUsed: true,
+            lastStreakFreezeDate: now.toISOString()
+          });
+          return true;
+        }
+        return false;
+      },
+      
       getLevel: () => Math.floor(get().points / 100) + 1,
+      
+      getPointsToNextLevel: () => {
+        const { points } = get();
+        const currentLevelPoints = Math.floor(points / 100) * 100;
+        return (currentLevelPoints + 100) - points;
+      },
+      
+      getNextLevelActions: () => {
+        const pointsNeeded = get().getPointsToNextLevel();
+        const actions = [];
+        
+        if (pointsNeeded >= 10) actions.push('Answer a question (+10)');
+        if (pointsNeeded >= 5) actions.push('Ask a question (+5)');
+        if (pointsNeeded >= 3) actions.push('Like helpful posts (+1-3)');
+        if (pointsNeeded >= 15) actions.push('Get your answer accepted (+15)');
+        
+        return actions.slice(0, 2); // Show max 2 suggestions
+      },
+      
+      resetWeeklyGoal: () => {
+        set({ weeklyProgress: 0 });
+      },
     }),
     {
       name: 'gamification-storage',
