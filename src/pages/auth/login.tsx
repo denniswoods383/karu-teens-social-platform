@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
 
@@ -9,14 +9,57 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [rememberDevice, setRememberDevice] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isMagicLinkLoading, setIsMagicLinkLoading] = useState(false);
   const [language, setLanguage] = useState('EN');
   const [isNavigating, setIsNavigating] = useState(false);
+  const [capsLockOn, setCapsLockOn] = useState(false);
+  const [showMagicLinkSent, setShowMagicLinkSent] = useState(false);
   const router = useRouter();
 
   const handleNavigation = (href: string) => {
     setIsNavigating(true);
     router.push(href);
   };
+
+  const handleMagicLink = async () => {
+    if (!email) {
+      alert('Please enter your email first');
+      return;
+    }
+    
+    setIsMagicLinkLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: 'https://karuteens.site/feed'
+        }
+      });
+      
+      if (error) {
+        alert(error.message);
+      } else {
+        setShowMagicLinkSent(true);
+      }
+    } catch (error) {
+      alert('Failed to send magic link. Please try again.');
+    } finally {
+      setIsMagicLinkLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    setCapsLockOn(e.getModifierState('CapsLock'));
+  };
+
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      setCapsLockOn(e.getModifierState('CapsLock'));
+    };
+    
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []);
 
   const handleSocialLogin = async (provider: 'google' | 'azure') => {
     try {
@@ -118,8 +161,36 @@ export default function LoginPage() {
             <div className="bg-white/95 backdrop-blur-lg rounded-2xl p-8 shadow-2xl">
               <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">Log in</h1>
               
-              {/* Social Login Buttons - Prioritized */}
+              {/* Magic Link - Primary Option */}
               <div className="space-y-3 mb-6">
+                {showMagicLinkSent ? (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                    <div className="text-green-600 font-medium mb-1">📧 Check your email!</div>
+                    <p className="text-sm text-green-700">We sent a magic link to {email}</p>
+                    <button 
+                      onClick={() => setShowMagicLinkSent(false)}
+                      className="text-xs text-green-600 hover:underline mt-2"
+                    >
+                      Try a different email
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={handleMagicLink}
+                    disabled={isMagicLinkLoading || !email}
+                    className="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 hover:scale-105 transform transition-all duration-200 active:scale-95 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isMagicLinkLoading ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    ) : (
+                      <span className="mr-2">🔗</span>
+                    )}
+                    <span className="font-semibold">
+                      {isMagicLinkLoading ? 'Sending...' : 'Send Magic Link (No Password)'}
+                    </span>
+                  </button>
+                )}
+                
                 <button 
                   onClick={() => handleSocialLogin('google')}
                   className="w-full flex items-center justify-center px-4 py-3 bg-white border-2 border-blue-500 rounded-lg hover:bg-blue-50 hover:scale-105 transform transition-all duration-200 active:scale-95 shadow-sm"
@@ -146,15 +217,11 @@ export default function LoginPage() {
                   <span className="font-semibold text-gray-700">Continue with Microsoft</span>
                 </button>
               </div>
-              
-              <div className="text-center mb-4">
-                <p className="text-sm text-gray-600">✨ Quick & secure - no password needed</p>
-              </div>
 
               {/* Divider */}
               <div className="flex items-center mb-6">
                 <div className="flex-1 border-t border-gray-300"></div>
-                <span className="px-4 text-gray-500 text-sm">or</span>
+                <span className="px-4 text-gray-500 text-sm">or use password</span>
                 <div className="flex-1 border-t border-gray-300"></div>
               </div>
 
@@ -162,11 +229,11 @@ export default function LoginPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <input
-                    type="text"
-                    placeholder="Email or phone"
+                    type="email"
+                    placeholder="Email address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-gray-900 placeholder-gray-500"
                     required
                   />
                 </div>
@@ -176,32 +243,57 @@ export default function LoginPage() {
                     placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    onKeyDown={handleKeyDown}
+                    className="w-full px-4 py-3 pr-12 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-gray-900 placeholder-gray-500"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-800 p-1"
+                    title={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showPassword ? '👁️' : '👁️‍🗨️'}
+                    {showPassword ? (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
                   </button>
+                  {capsLockOn && (
+                    <div className="absolute -bottom-6 left-0 text-xs text-amber-600 flex items-center">
+                      <span className="mr-1">⚠️</span>
+                      Caps Lock is on
+                    </div>
+                  )}
                 </div>
 
-                {/* Remember & Forgot */}
-                <div className="flex items-center justify-between">
+                {/* Forgot Password - Prominent */}
+                <div className="text-center mb-4">
+                  <Link 
+                    href="/auth/forgot-password" 
+                    className="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium text-sm hover:underline"
+                  >
+                    <span className="mr-1">🔑</span>
+                    Forgot your password?
+                  </Link>
+                </div>
+                
+                {/* Remember Device */}
+                <div className="flex items-center justify-center">
                   <label className="flex items-center">
                     <input
                       type="checkbox"
                       checked={rememberDevice}
                       onChange={(e) => setRememberDevice(e.target.checked)}
-                      className="mr-2 rounded"
+                      className="mr-2 rounded text-purple-600 focus:ring-purple-500"
                     />
                     <span className="text-sm text-gray-600">Remember this device (30 days)</span>
                   </label>
-                  <Link href="/auth/forgot-password" className="text-sm text-purple-600 hover:text-purple-700">
-                    Forgot password?
-                  </Link>
                 </div>
 
                 {/* Submit Button */}
@@ -233,12 +325,12 @@ export default function LoginPage() {
                 </button>
               </div>
 
-              {/* Fine Print */}
-              <p className="text-xs text-gray-500 text-center mt-6">
+              {/* Fine Print - Small but Present */}
+              <p className="text-xs text-gray-400 text-center mt-6 leading-relaxed">
                 By continuing, you agree to our{' '}
-                <Link href="/terms" className="text-purple-600 hover:underline">Terms</Link>
+                <Link href="/terms" className="text-purple-500 hover:text-purple-600 hover:underline">Terms of Service</Link>
                 {' '}and{' '}
-                <Link href="/privacy" className="text-purple-600 hover:underline">Privacy</Link>.
+                <Link href="/privacy" className="text-purple-500 hover:text-purple-600 hover:underline">Privacy Policy</Link>.
               </p>
             </div>
           </div>
