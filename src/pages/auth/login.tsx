@@ -37,12 +37,12 @@ export default function LoginPage() {
       });
       
       if (error) {
-        alert(error.message);
+        alert('Unable to send magic link. Please check your email address and try again.');
       } else {
         setShowMagicLinkSent(true);
       }
     } catch (error) {
-      alert('Failed to send magic link. Please try again.');
+      alert('Something went wrong. Please check your connection and try again.');
     } finally {
       setIsMagicLinkLoading(false);
     }
@@ -71,10 +71,10 @@ export default function LoginPage() {
       });
       
       if (error) {
-        alert(error.message);
+        alert('Social login failed. Please try again or use email instead.');
       }
     } catch (error) {
-      alert('Social login failed. Please try again.');
+      alert('Connection issue. Please check your internet and try again.');
     }
   };
 
@@ -89,12 +89,18 @@ export default function LoginPage() {
       });
       
       if (error) {
-        alert(error.message);
+        if (error.message.includes('Invalid login credentials')) {
+          alert('Email or password is incorrect (try resetting your password).');
+        } else if (error.message.includes('Email not confirmed')) {
+          alert('Please check your email and click the confirmation link first.');
+        } else {
+          alert('Login failed. Please check your details and try again.');
+        }
       } else {
         router.push('/feed');
       }
     } catch (error) {
-      alert('Login failed. Please try again.');
+      alert('Something went wrong. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -230,7 +236,7 @@ export default function LoginPage() {
                 <div>
                   <input
                     type="email"
-                    placeholder="Email address"
+                    placeholder="Enter your university email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-gray-900 placeholder-gray-500"
@@ -240,7 +246,7 @@ export default function LoginPage() {
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Password"
+                    placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     onKeyDown={handleKeyDown}
@@ -305,23 +311,23 @@ export default function LoginPage() {
                   {isLoading ? (
                     <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      Logging in...
+                      Signing you in...
                     </div>
                   ) : (
-                    'Log in'
+                    'Sign In'
                   )}
                 </button>
               </form>
 
               {/* Sign Up Link */}
               <div className="text-center mt-6">
-                <span className="text-gray-600">New here? </span>
+                <span className="text-gray-600">New to KaruTeens? </span>
                 <button 
                   onClick={() => handleNavigation('/auth/register')}
                   className="text-purple-600 hover:text-purple-700 font-semibold transition-colors hover:scale-105 transform"
                   disabled={isNavigating}
                 >
-                  {isNavigating ? 'Loading...' : 'Create an account'}
+                  {isNavigating ? 'Loading...' : 'Join thousands of students'}
                 </button>
               </div>
 

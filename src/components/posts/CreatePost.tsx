@@ -306,7 +306,7 @@ export default function CreatePost({ onPostCreated, isCompact = false }: CreateP
                 📎 <span>Files</span>
               </button>
               <div className="text-sm text-gray-500 dark:text-gray-400">
-                Drag & drop files or paste images
+                💡 Drag files, paste images, or click to browse
               </div>
             </div>
             
@@ -330,7 +330,7 @@ export default function CreatePost({ onPostCreated, isCompact = false }: CreateP
                 disabled={(!content.trim() && files.length === 0) || loading}
                 className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-2 rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 transition-all duration-300 font-medium"
               >
-                {loading ? '🚀 Posting...' : '✨ Share'}
+                {loading ? '🚀 Sharing with your community...' : '✨ Share with Students'}
               </button>
             </div>
           </div>

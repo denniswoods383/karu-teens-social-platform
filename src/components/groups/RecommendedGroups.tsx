@@ -58,9 +58,9 @@ export default function RecommendedGroups() {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-900">Recommended Groups</h2>
+        <h2 className="text-xl font-bold text-gray-900">🎯 Perfect Study Groups for You</h2>
         <button className="text-purple-600 hover:text-purple-700 text-sm font-medium">
-          View All
+          Explore More
         </button>
       </div>
 
@@ -84,7 +84,7 @@ export default function RecommendedGroups() {
                     : 'bg-purple-600 text-white hover:bg-purple-700 hover:scale-105 active:scale-95'
                 }`}
               >
-                {group.isJoined ? '✓ Joined' : 'Join'}
+                {group.isJoined ? '✓ You\'re in!' : 'Join Now'}
               </button>
             </div>
 
@@ -108,7 +108,7 @@ export default function RecommendedGroups() {
                 )}
               </div>
               <span className="text-xs text-gray-600">
-                <span className="font-medium text-green-600">{group.activeMembers}</span> active now
+                <span className="font-medium text-green-600">{group.activeMembers}</span> students online
               </span>
             </div>
 
@@ -122,7 +122,7 @@ export default function RecommendedGroups() {
             <div className="flex items-center">
               <span className="text-xs text-gray-500 mr-1">🏆</span>
               <span className="text-xs text-gray-700">
-                <span className="font-medium text-orange-600">{group.topAnswers}</span> top answers this week
+                <span className="font-medium text-orange-600">{group.topAnswers}</span> helpful answers shared
               </span>
             </div>
           </div>
