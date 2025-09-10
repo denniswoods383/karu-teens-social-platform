@@ -393,7 +393,7 @@ export const NotificationInbox = () => {
       
       if (data) {
         setInboxNotifications(data);
-        setUnreadCount(data.filter(n => !n.read).length);
+        setUnreadCount(data.filter((n: any) => !n.read).length);
       }
     };
     
@@ -407,7 +407,7 @@ export const NotificationInbox = () => {
       .eq('id', notificationId);
     
     setInboxNotifications(prev => 
-      prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+      prev.map((n: any) => n.id === notificationId ? { ...n, read: true } : n)
     );
     setUnreadCount(prev => Math.max(0, prev - 1));
   };
@@ -421,7 +421,7 @@ export const NotificationInbox = () => {
       .eq('user_id', user.id)
       .eq('read', false);
     
-    setInboxNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setInboxNotifications(prev => prev.map((n: any) => ({ ...n, read: true })));
     setUnreadCount(0);
   };
 
@@ -461,10 +461,10 @@ export const NotificationInbox = () => {
                 <div
                   key={notification.id}
                   className={`p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer ${
-                    !notification.read ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                    !(notification as any).read ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                   }`}
                   onClick={() => {
-                    if (!notification.read) markAsRead(notification.id);
+                    if (!(notification as any).read) markAsRead(notification.id);
                     if (notification.action) notification.action();
                   }}
                 >
@@ -481,7 +481,7 @@ export const NotificationInbox = () => {
                         {new Date(notification.created_at).toLocaleDateString()}
                       </p>
                     </div>
-                    {!notification.read && (
+                    {!(notification as any).read && (
                       <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
                     )}
                   </div>
