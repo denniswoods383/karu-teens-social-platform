@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useSupabase';
 import { supabase } from '../../lib/supabase';
 import { CheckCircle, AlertCircle, School, BookOpen, Calendar, Shield } from 'lucide-react';
-import '../../styles/design-system.css';
+
 
 interface ProfileData {
   university?: string;

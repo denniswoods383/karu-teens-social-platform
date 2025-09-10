@@ -1,6 +1,6 @@
 import { useGamificationStore } from '../../store/gamificationStore';
 import { useState, useEffect } from 'react';
-import '../../styles/design-system.css';
+
 
 const PointsDisplay = () => {
   const { 

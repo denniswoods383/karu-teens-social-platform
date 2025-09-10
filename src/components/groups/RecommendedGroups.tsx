@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import '../../styles/design-system.css';
+
 
 interface Group {
   id: string;

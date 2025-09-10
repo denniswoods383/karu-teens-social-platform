@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Clock, BookOpen, BarChart3, RotateCcw, Filter } from 'lucide-react';
-import '../../styles/design-system.css';
+
 
 interface PastPaper {
   id: string;
