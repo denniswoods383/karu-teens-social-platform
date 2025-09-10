@@ -70,9 +70,7 @@ const nextConfig = {
       }
     ];
   },
-  experimental: {
-    optimizePackageImports: ['framer-motion', '@headlessui/react', '@heroicons/react']
-  },
+
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production'
   },
