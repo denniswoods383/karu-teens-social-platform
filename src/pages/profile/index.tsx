@@ -6,6 +6,7 @@ import { uploadWithRetry } from '../../lib/multi-cloudinary';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import EditProfileModal from '../../components/profile/EditProfileModal';
+import ProfileCompletion from '../../components/profile/ProfileCompletion';
 import Image from 'next/image';
 import { useProfile, usePosts } from '../../hooks/useCachedData';
 import { memoryCache, CACHE_KEYS } from '../../lib/cache';
@@ -168,6 +169,7 @@ export default function ProfilePage() {
         <EnhancedNavbar />
         
         <div className="pt-20 pb-8 max-w-4xl mx-auto px-4">
+          <ProfileCompletion />
           {/* Profile Header */}
           <div className="bg-white rounded-2xl shadow-xl p-8 mb-6">
             <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">

@@ -9,6 +9,7 @@ import FeedStories from '../../components/stories/FeedStories';
 import RecommendedGroups from '../../components/groups/RecommendedGroups';
 import PastPapersHero from '../../components/pastpapers/PastPapersHero';
 import PostsDebug from '../../components/debug/PostsDebug';
+import ProfileCompletionButton from '../../components/profile/ProfileCompletionButton';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useGamificationStore } from '../../store/gamificationStore';
@@ -65,7 +66,7 @@ export default function FeedPage() {
           <div className="space-y-6">
             <PostsDebug />
             <PointsDisplay />
-            <ProfileCompletion />
+
             <FeedStories />
             <PastPapersHero />
             <RecommendedGroups />
@@ -82,6 +83,8 @@ export default function FeedPage() {
             onClose={closeModal}
           />
         )}
+        
+        <ProfileCompletionButton />
       </div>
     </ProtectedRoute>
   );
