@@ -97,6 +97,20 @@ export default function AIAssistant() {
     setAttachments(prev => [...prev, ...files]);
   };
 
+  const uploadToCloudinary = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'ml_default'); // You'll need to set this up
+    
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+      { method: 'POST', body: formData }
+    );
+    
+    const data = await response.json();
+    return data.secure_url;
+  };
+
   const removeAttachment = (index: number) => {
     setAttachments(prev => prev.filter((_, i) => i !== index));
   };
@@ -125,21 +139,33 @@ Please provide personalized answers based on this student's academic context.`;
     };
     
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = input;
+    const currentAttachments = [...attachments];
     setInput('');
     setAttachments([]);
     setIsLoading(true);
     
     try {
+      // Upload images to get URLs
+      const imageUrls: string[] = [];
+      for (const file of currentAttachments) {
+        if (file.type.startsWith('image/')) {
+          const url = await uploadToCloudinary(file);
+          imageUrls.push(url);
+        }
+      }
+      
       // Save user message
       await supabase.from('ai_conversations').insert({
         user_id: user?.id,
-        content: input,
-        is_user: true
+        content: currentInput,
+        is_user: true,
+        attachments: imageUrls
       });
       
       // Prepare context for AI
       const context = getPersonalizedContext();
-      const prompt = `${context}\n\nStudent Question: ${input}`;
+      const prompt = currentInput ? `${context}\n\nStudent Question: ${currentInput}` : 'Please analyze the uploaded images and help me understand the content.';
       
       // Call OpenRouter API
       const response = await fetch('/api/ai-chat', {
@@ -147,7 +173,7 @@ Please provide personalized answers based on this student's academic context.`;
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           message: prompt,
-          attachments: attachments.map(f => f.name)
+          imageUrls
         })
       });
       
@@ -189,9 +215,9 @@ Please provide personalized answers based on this student's academic context.`;
   const quickPrompts = [
     "Help me understand this concept",
     "Explain this assignment",
+    "Analyze this image/diagram",
     "Study tips for my subjects",
-    "Past paper practice questions",
-    "Career advice for my field"
+    "Past paper practice questions"
   ];
 
   return (
@@ -262,7 +288,13 @@ Please provide personalized answers based on this student's academic context.`;
                           {message.attachments && (
                             <div className="mt-2 space-y-1">
                               {message.attachments.map((file, index) => (
-                                <div key={index} className="text-xs opacity-75">📎 {file.name}</div>
+                                <div key={index}>
+                                  {typeof file === 'string' ? (
+                                    <img src={file} alt="Uploaded" className="max-w-xs rounded mt-2" />
+                                  ) : (
+                                    <div className="text-xs opacity-75">📎 {file.name}</div>
+                                  )}
+                                </div>
                               ))}
                             </div>
                           )}
@@ -316,7 +348,7 @@ Please provide personalized answers based on this student's academic context.`;
                     multiple
                     onChange={handleFileSelect}
                     className="hidden"
-                    accept=".pdf,.doc,.docx,.txt,.jpg,.png"
+                    accept="image/*,.pdf,.doc,.docx,.txt"
                   />
                   
                   <button
@@ -332,7 +364,7 @@ Please provide personalized answers based on this student's academic context.`;
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                    placeholder="Ask about homework, assignments, or study topics..."
+                    placeholder="Ask about homework, assignments, or upload images to analyze..."
                     className="input flex-1"
                     disabled={isLoading}
                   />

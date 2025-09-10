@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS ai_conversations (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  content TEXT NOT NULL,
+  content TEXT,
   is_user BOOLEAN NOT NULL DEFAULT true,
   attachments JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
