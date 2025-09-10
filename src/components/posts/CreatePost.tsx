@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useSupabase';
 import { uploadFile } from '../../lib/fileStorage';
 import { Trash2, X, Plus, Hash, MapPin } from 'lucide-react';
-import { postSchema, validateData } from '../../lib/validation';
+
 import { checkRateLimit, rateLimitErrors } from '../../lib/rateLimiting';
 import { showSuccessNotification } from '../notifications/InAppNotification';
 
@@ -15,6 +15,7 @@ interface CreatePostProps {
 export default function CreatePost({ onPostCreated, isCompact = false }: CreatePostProps) {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [currentPrompt, setCurrentPrompt] = useState(0);
@@ -71,9 +72,16 @@ export default function CreatePost({ onPostCreated, isCompact = false }: CreateP
     e.preventDefault();
     if (!user || (!content.trim() && files.length === 0)) return;
 
+    // Check rate limit
     const canPost = await checkRateLimit('posts');
     if (!canPost) {
       alert(rateLimitErrors.posts);
+      return;
+    }
+    
+    // Basic validation
+    if (!content.trim() && files.length === 0) {
+      alert('Please add some content or attach files');
       return;
     }
 
@@ -98,13 +106,23 @@ export default function CreatePost({ onPostCreated, isCompact = false }: CreateP
     try {
       let attachments = [];
       
-      for (const file of files) {
+      if (files.length > 0) {
+        setUploadStatus(`Uploading ${files.length} file(s)...`);
+      }
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        setUploadStatus(`Uploading ${file.name} (${i + 1}/${files.length})...`);
         const uploadResult = await uploadFile(file);
         attachments.push({
           type: file.type,
           url: uploadResult.url,
           name: uploadResult.originalName
         });
+      }
+      
+      if (files.length > 0) {
+        setUploadStatus('Upload complete! Creating post...');
       }
       
       const postData = {
@@ -129,6 +147,7 @@ export default function CreatePost({ onPostCreated, isCompact = false }: CreateP
         setFiles([]);
         setTags([]);
         setIsExpanded(false);
+        setUploadStatus('');
         
         showSuccessNotification('Post shared!', 'Your post is now live for everyone to see');
       } else {
@@ -138,6 +157,11 @@ export default function CreatePost({ onPostCreated, isCompact = false }: CreateP
       console.error('Failed to create post:', error);
       // Remove optimistic post on error
       onPostCreated?.({ tempId: optimisticPost.id, isError: true });
+      setUploadStatus('');
+      
+      // Show user-friendly error message
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create post';
+      alert(`Error: ${errorMessage}. Please try again.`);
     } finally {
       setLoading(false);
     }
@@ -330,7 +354,7 @@ export default function CreatePost({ onPostCreated, isCompact = false }: CreateP
                 disabled={(!content.trim() && files.length === 0) || loading}
                 className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-2 rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 transition-all duration-300 font-medium"
               >
-                {loading ? '🚀 Sharing with your community...' : '✨ Share with Students'}
+                {loading ? (uploadStatus || '🚀 Sharing with your community...') : '✨ Share with Students'}
               </button>
             </div>
           </div>
