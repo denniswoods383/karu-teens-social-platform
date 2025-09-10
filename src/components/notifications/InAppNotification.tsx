@@ -469,7 +469,7 @@ export const NotificationInbox = () => {
                   }}
                 >
                   <div className="flex items-start space-x-3">
-                    <span className="text-lg">{notification.icon || '📢'}</span>
+                    <span className="text-lg">{(notification as any).icon || '📢'}</span>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-900 dark:text-white text-sm">
                         {notification.title}
@@ -478,7 +478,7 @@ export const NotificationInbox = () => {
                         {notification.message}
                       </p>
                       <p className="text-gray-500 dark:text-gray-500 text-xs mt-2">
-                        {new Date(notification.created_at).toLocaleDateString()}
+                        {new Date((notification as any).created_at).toLocaleDateString()}
                       </p>
                     </div>
                     {!(notification as any).read && (
