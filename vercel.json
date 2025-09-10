@@ -1,16 +1,15 @@
 {
-  "name": "karu-teens-social",
-  "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase_anon_key",
+      "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME": "@cloudinary_cloud_name",
+      "OPENROUTER_API_KEY": "@openrouter_api_key"
     }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
+  },
+  "functions": {
+    "src/pages/api/**/*.ts": {
+      "maxDuration": 30
     }
-  ]
+  }
 }
