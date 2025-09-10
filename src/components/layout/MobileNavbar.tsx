@@ -6,9 +6,9 @@ export default function MobileNavbar() {
   
   const navItems = [
     { href: '/feed', icon: '🏠', label: 'Home' },
+    { href: '/ai-assistant', icon: '🤖', label: 'AI Help' },
     { href: '/study-groups', icon: '📚', label: 'Groups' },
     { href: '/messages', icon: '💬', label: 'Messages' },
-    { href: '/analytics', icon: '📊', label: 'Stats' },
     { href: '/profile', icon: '👤', label: 'Profile' }
   ];
 
