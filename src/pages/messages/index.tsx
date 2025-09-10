@@ -188,7 +188,7 @@ export default function MessagesPage() {
               // Show push notification for received messages
               if (newMessage.sender_id === selectedChat) {
                 const senderName = conversations.find(c => c.id === selectedChat)?.full_name || 'Someone';
-                showNotification(`New message from ${senderName}`, {
+                showNotification(user?.id || '', 'mentions', `New message from ${senderName}`, {
                   body: newMessage.content || 'Sent a file',
                   tag: `message-${newMessage.id}`,
                   data: { url: `/messages?user=${selectedChat}` }
