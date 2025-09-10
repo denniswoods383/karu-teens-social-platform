@@ -65,11 +65,7 @@ export default function FeedPage() {
         <div className="pt-20 pb-24 max-w-3xl mx-auto px-4">
           <div className="space-y-6">
             <PostsDebug />
-            <PointsDisplay />
-
             <FeedStories />
-            <PastPapersHero />
-            <RecommendedGroups />
             <CreatePost onPostCreated={handlePostCreated} />
             <PostFeed key={refreshPosts.toString()} />
           </div>

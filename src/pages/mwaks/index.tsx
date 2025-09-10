@@ -4,6 +4,7 @@ import { usePremiumStore } from '../../store/premiumStore';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useSupabase';
+import PastPapersHero from '../../components/pastpapers/PastPapersHero';
 
 const MWAKSHome = () => {
   const { isPremium, isFreeTrial, setUpgradeModal } = usePremiumStore();
@@ -85,6 +86,7 @@ const MWAKSHome = () => {
     <ProtectedRoute>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="max-w-4xl mx-auto">
+        <PastPapersHero />
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-gray-800 mb-4">MWAKS</h1>

@@ -4,6 +4,7 @@ import EnhancedNavbar from '../../components/layout/EnhancedNavbar';
 import { useAuth } from '../../hooks/useSupabase';
 import { useGamificationStore } from '../../store/gamificationStore';
 import { supabase } from '../../lib/supabase';
+import PointsDisplay from '../../components/gamification/PointsDisplay';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
 
@@ -198,6 +199,7 @@ export default function AnalyticsPage() {
         <EnhancedNavbar />
         
         <div className="max-w-6xl mx-auto px-2 sm:px-4 pt-16 sm:pt-20 pb-20 sm:pb-24">
+          <PointsDisplay />
           <div className="mb-4 sm:mb-8">
             <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white">📊 Analytics Hub</h1>
             <p className="text-gray-600 dark:text-gray-300 mt-2 text-sm sm:text-lg">Track your academic and social journey</p>

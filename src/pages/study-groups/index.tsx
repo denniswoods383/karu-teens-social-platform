@@ -6,6 +6,7 @@ import { usePremiumStore } from '../../store/premiumStore';
 import { useAuth } from '../../hooks/useSupabase';
 import { supabase } from '../../lib/supabase';
 import { useRouter } from 'next/router';
+import RecommendedGroups from '../../components/groups/RecommendedGroups';
 
 interface StudyGroup {
   id: string;
@@ -209,6 +210,7 @@ export default function StudyGroupsPage() {
         <EnhancedNavbar />
         
         <div className="max-w-7xl mx-auto px-2 sm:px-4 pt-16 sm:pt-20 pb-20 sm:pb-24">
+          <RecommendedGroups />
           {/* Header */}
           <div className="mb-4 sm:mb-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
