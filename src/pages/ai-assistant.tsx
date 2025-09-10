@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { Send, Bot, User, BookOpen, Upload, X } from 'lucide-react';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import EnhancedNavbar from '../components/layout/EnhancedNavbar';
-import '../styles/design-system.css';
+
 
 interface Message {
   id: string;

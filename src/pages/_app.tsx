@@ -1,5 +1,6 @@
 import '../styles/globals.css'
 import '../styles/mobile.css'
+import '../styles/design-system.css'
 import type { AppProps } from 'next/app'
 import { useAutoLogout } from '../hooks/useAutoLogout'
 import { useRealtimeNotifications } from '../hooks/useRealtimeNotifications'
