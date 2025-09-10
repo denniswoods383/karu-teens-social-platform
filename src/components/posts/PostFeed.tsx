@@ -97,29 +97,17 @@ export default function PostFeed() {
       .from('posts')
       .select(`
         *,
-        profiles!posts_user_id_fkey(name, avatar_url, university, subjects),
-        comments(count),
-        post_likes(count)
+        profiles!inner(full_name, avatar_url, university, subjects)
       `);
 
-    switch (activeFilter) {
-      case 'my_school':
-        if (userProfile?.university) {
-          query = query.eq('profiles.university', userProfile.university);
-        }
-        break;
-      case 'my_subjects':
-        if (userProfile?.subjects?.length > 0) {
-          query = query.overlaps('tags', userProfile.subjects);
-        }
-        break;
-      case 'unanswered':
-        query = query.eq('has_accepted_answer', false);
-        break;
-      case 'resources':
-        query = query.eq('type', 'resource');
-        break;
-    }
+    // Remove filters for now to show all posts
+    // switch (activeFilter) {
+    //   case 'my_school':
+    //     if (userProfile?.university) {
+    //       query = query.eq('profiles.university', userProfile.university);
+    //     }
+    //     break;
+    // }
 
     return query;
   };
@@ -150,8 +138,8 @@ export default function PostFeed() {
     }
     
     // Engagement score
-    const likes = post.post_likes?.[0]?.count || 0;
-    const comments = post.comments?.[0]?.count || 0;
+    const likes = post.likes_count || 0;
+    const comments = post.comments_count || 0;
     score += (likes * 2) + (comments * 3);
     
     // Recency bonus (decay over time)
