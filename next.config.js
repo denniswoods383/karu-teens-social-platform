@@ -71,8 +71,6 @@ const nextConfig = {
     ];
   },
   experimental: {
-    optimizeCss: true,
-    scrollRestoration: true,
     optimizePackageImports: ['framer-motion', '@headlessui/react', '@heroicons/react']
   },
   compiler: {
