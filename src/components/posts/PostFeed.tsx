@@ -95,10 +95,7 @@ export default function PostFeed() {
   const buildQuery = () => {
     let query = supabase
       .from('posts')
-      .select(`
-        *,
-        profiles!inner(full_name, avatar_url, university, subjects)
-      `);
+      .select('*');
 
     // Remove filters for now to show all posts
     // switch (activeFilter) {
