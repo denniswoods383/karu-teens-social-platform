@@ -1,12 +1,4 @@
 {
-  "build": {
-    "env": {
-      "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
-      "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase_anon_key",
-      "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME": "@cloudinary_cloud_name",
-      "OPENROUTER_API_KEY": "@openrouter_api_key"
-    }
-  },
   "functions": {
     "src/pages/api/**/*.ts": {
       "maxDuration": 30
